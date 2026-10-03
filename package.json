@@ -8,10 +8,11 @@
   },
   "scripts": {
     "dev": "node scripts/fetch-schedule.mjs && astro dev",
-    "build": "node scripts/fetch-schedule.mjs && astro check && astro build",
+    "build": "node scripts/fetch-schedule.mjs && astro check && astro build && node scripts/check-links.mjs",
     "preview": "astro preview",
     "schedule": "node scripts/fetch-schedule.mjs",
-    "test": "node --test scripts/*.test.mjs"
+    "test": "node --test scripts/*.test.mjs",
+    "og": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=\"$PWD/public/og.png\" \"file://$PWD/scripts/og/og.html\""
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

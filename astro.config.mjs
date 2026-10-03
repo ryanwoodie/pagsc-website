@@ -7,13 +7,15 @@ import sitemap from '@astrojs/sitemap';
 // and no base path after it). Locally the site runs at the root.
 const SITE = process.env.SITE_URL || 'https://www.pagsc.ca';
 const BASE = process.env.BASE_PATH || '/';
+/** @param {string} path */
+const to = (path) => BASE.replace(/\/$/, '') + path;
 
 export default defineConfig({
   site: SITE,
   base: BASE,
   output: 'static',
   trailingSlash: 'always',
-  build: { format: 'directory' },
+  build: { format: 'directory', inlineStylesheets: 'always' },
   integrations: [
     sitemap({
       filter: (page) => !page.includes('/discovery-flight/requested/'),
@@ -22,13 +24,13 @@ export default defineConfig({
   // Old WordPress paths (reference/current-site-audit.md). Emitted as static
   // redirect pages, which work on GitHub Pages.
   redirects: {
-    '/come-fly-with-us': '/discovery-flight/',
-    '/learn-to-soar-gliding': '/learn-to-fly/',
-    '/about-our-club': '/the-club/',
-    '/pictures-videos-gallery': '/the-club/',
-    '/members-fees': '/costs/',
-    '/useful-link': '/members/',
-    '/contact-us': '/find-us/',
-    '/members-section': '/members/',
+    '/come-fly-with-us': to('/discovery-flight/'),
+    '/learn-to-soar-gliding': to('/learn-to-fly/'),
+    '/about-our-club': to('/the-club/'),
+    '/pictures-videos-gallery': to('/the-club/'),
+    '/members-fees': to('/costs/'),
+    '/useful-link': to('/members/'),
+    '/contact-us': to('/find-us/'),
+    '/members-section': to('/members/'),
   },
 });

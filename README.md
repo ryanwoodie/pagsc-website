@@ -18,17 +18,36 @@ The rebuild of [pagsc.ca](https://www.pagsc.ca) for the Prince Albert Gliding an
 | `reference/current-site-audit.md` | What the current site does, and its URLs for redirects |
 | `reference/welcome-pack/` | Source of the nine-page welcome pack: the look and most of the copy |
 
-## Starting the build
+## Working on the site
 
-Open this folder in Claude Code and say:
+Needs Node 22.12 or later.
 
-> Read CLAUDE.md and the docs it lists, then start Phase 0 of docs/05-build-plan.md.
+```
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # fetch the schedule, type-check, build to dist/, check links
+npm run preview    # serve dist/
+npm test           # schedule parser tests
+```
 
-Nothing is scaffolded yet and git has not been initialised; Phase 0 does both.
+- Change a price, contact or figure in `content/club-facts.yaml` only. The build fails if a key is missing or misspelled, or if figures that depend on each other disagree.
+- `src/config.ts` holds the form endpoint and the welcome pack switch.
+- `SKIP_SCHEDULE=1 npm run build` builds without fetching the Flying Schedule.
+- `npm run og` regenerates `public/og.png` from `scripts/og/og.html` (needs Google Chrome).
+
+| Path | What it holds |
+| --- | --- |
+| `src/pages/` | One file per page |
+| `src/components/` | Header, footer, buttons, tiles, steps, cards, drawings, the form |
+| `src/lib/facts.ts` | Loads and checks `club-facts.yaml`; formatting helpers |
+| `src/lib/faq.ts` | Questions and answers, bound to the facts |
+| `scripts/` | Schedule fetch (build time), link check, OG image source |
+| `apps-script/` | The flight request endpoint, with deploy notes |
+| `.github/workflows/deploy.yml` | Build and deploy to GitHub Pages; scheduled refresh |
 
 ## Status
 
-- Strategy, page specs, facts and copy: written
-- Hosting: GitHub Pages chosen (see `docs/04-hosting-and-dns.md`)
-- Build: not started
+- Phases 0 and 1: done. Every page built, Lighthouse mobile 99 to 100 in all four categories.
+- Phase 2: endpoint written (`apps-script/`); waiting on Ryan to deploy it and on the welcome pack PDF. Until then the form falls back to email and the site shows `[NEEDED]` markers.
+- Phase 3: "Next flying days", redirects, sitemap, robots, structured data and OG image done. Analytics waits on Q10. Check "Next flying days" against the live sheet after the first deploy.
 - Open questions: see `docs/06-open-questions.md`
