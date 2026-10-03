@@ -60,7 +60,7 @@ The main conversion page. Top to bottom:
 
 Fields: name · email · phone · number of flyers · preferred dates (free text, with a hint that weekends are the main flying days) · a checkbox confirming each flyer is under the weight limit · optional message. One hidden honeypot field.
 
-On submit: go to `/discovery-flight/requested/`, which states who will reply and how soon (Q2), how to pay (online with the payment link, or by e-transfer on the day), and links the welcome pack.
+On submit: go to `/discovery-flight/requested/`, which states who will reply and how soon (Q2), how to pay (online with the payment link, or by e-transfer on the day), and links to "Your first day". The welcome pack is for prospective students, not guests: it is offered on Learn to fly (emailed on request) and kept at `/welcome-pack.pdf` for sharing.
 
 Backend: see "Form handling" below.
 

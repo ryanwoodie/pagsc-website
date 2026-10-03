@@ -18,7 +18,7 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'always' },
   integrations: [
     sitemap({
-      filter: (page) => !page.includes('/discovery-flight/requested/'),
+      filter: (page) => !page.includes('/discovery-flight/requested/') && !page.includes('/welcome-pack-sent/'),
     }),
   ],
   // Old WordPress paths (reference/current-site-audit.md). Emitted as static

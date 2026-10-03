@@ -7,7 +7,7 @@ Decisions and assets needed from Ryan. Each notes what is assumed until it is an
 | Q1 | Is the priority new members or more paid first flights? | Members. The Discovery Flight is presented as a first lesson. | Home hero wording |
 | Q2 | Who replies to flight requests, and how soon can the club promise a reply? | Not stated on the page until answered. | Phase 2 |
 | Q3 | Gift flights: after paying through the Wave link, what does the buyer receive, how does the recipient book, and does a gift flight expire? | Gift section shows the payment link and "email us to arrange the date". | Phase 2 |
-| Q4 | Should the WhatsApp group invite be on the public site, or only sent after a request? An open invite on a public page can attract spam. | Not on the site and not stored in this repository. The club sends it when confirming a request. | Phase 1 (Members) |
+| Q4 | Should the WhatsApp group invite be on the public site, or only sent after a request? An open invite on a public page can attract spam. | Answered 3 October 2026: the invite is in the welcome pack, which is public at `/welcome-pack.pdf` for students and sharing. It is not linked from the Discovery Flight pages and not stored in `club-facts.yaml`. | Done |
 | Q5 | Photographs and video. See the shot list below. Supplied 2 October 2026: winch launch clip (home hero), guest in the front seat (Discovery Flight, home), student at the glider (Learn to fly), running the wing (The club, home). Added 3 October: glider in flight (Why gliding), student on the runway (Learn to fly), young student with a club member (Youth and cadets), cockpit view over the prairie (Discovery Flight). Confirm the people shown have agreed to appear. | Drawn glider motif where no photo is supplied. | Launch quality |
 | Q6 | A typical number of flights and seasons from first lesson to solo and to licence, for an honest cost estimate. | "About $10 a lesson flight" only; no total. | Learn to fly |
 | Q7 | The 7-hour figure: keep it, replace it with the club's longest duration, or drop it? | Shown as "aloft on a single flight out of PAGSC". | Why gliding |
@@ -19,7 +19,7 @@ Decisions and assets needed from Ryan. Each notes what is assumed until it is an
 | Q13 | Is the Discovery Flight price on the Wave payment page $50, and does it offer the $40 group price? | $50, single flights only. | Phase 2 |
 | Q14 | Instructor names and photos for The club page. | Section omitted. | The club and the fleet |
 | Q16 | The club posts on Instagram (pa.gliding). Add it to the footer and `club-facts.yaml` beside Facebook? | Not linked. | None |
-| Q15 | Short lines written during the build where no copy was supplied: the 404 page ("Page not found. This address is not on the site."), the form's failure message ("Your request did not go through. Email us … or call … and we will book you in."), and the "Next flying days" labels ("Flying is on", "Delayed", "Cancelled", "Update posted", "No update posted yet", "Instructor signed up", "From the club's Flying Schedule, <time>. Flying depends on the weather."). Approve or replace. | As written. | Launch |
+| Q15 | Short lines written during the build where no copy was supplied: the 404 page ("Page not found. This address is not on the site."), the form's failure message ("Your request did not go through. Email us … or call … and we will book you in."), and the "Next flying days" labels ("Flying is on", "Delayed", "Cancelled", "Update posted", "No update posted yet", "Instructor signed up", "From the club's Flying Schedule, <time>. Flying depends on the weather."). Also: the "request received" page's "Before you come" line ("What to bring, how the day runs, and what happens if the weather turns."), the welcome pack section on Learn to fly ("Nine pages for new students: …", "Email me the welcome pack"), its sent page ("Check your email. The welcome pack is on its way. If it does not arrive in a few minutes, look in your spam folder."), and the email the script sends. Approve or replace. | As written. | Launch |
 
 ## Shot list (Q5)
 
@@ -36,5 +36,5 @@ Landscape, at least 2400px wide, taken at Birch Hills. People shown need to agre
 
 ## Also needed
 
-- The welcome pack exported as a PDF from its canvas, for the "requested" page.
+- ~~The welcome pack exported as a PDF~~ (supplied 3 October; at `public/welcome-pack.pdf`). Its booking pages describe signing up on the Flying Schedule, which suits students rather than one-off guests. Replace the file when the pack changes.
 - The Apps Script endpoint deployed under the club's Google account (Phase 2).

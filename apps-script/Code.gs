@@ -1,9 +1,10 @@
 /**
- * PAGSC Discovery Flight requests.
+ * PAGSC website forms.
  *
- * A Google Apps Script web app, owned by the club's Google account. The website's
- * request form posts here. Each valid request is added to the "Guest requests"
- * tab of a Google Sheet and emailed to the club.
+ * A Google Apps Script web app, owned by the club's Google account. Two forms post here:
+ *   form=flight  Discovery Flight requests: added to the "Guest requests" tab and emailed to the club.
+ *   form=pack    Welcome pack requests from prospective students: the visitor is emailed a link
+ *                to the pack, and the request is added to the "Student leads" tab and emailed to the club.
  *
  * Settings live in Project Settings > Script Properties, not in this file:
  *   SHEET_ID     the spreadsheet that holds the "Guest requests" tab
@@ -16,6 +17,8 @@
 
 var TAB = 'Guest requests';
 var HEADERS = ['Received', 'Name', 'Email', 'Phone', 'Flyers', 'Preferred dates', 'Weight confirmed', 'Message', 'Page'];
+var LEADS_TAB = 'Student leads';
+var LEADS_HEADERS = ['Received', 'Name', 'Email', 'Page'];
 var MAX = 2000; // longest accepted field, in characters
 
 function doPost(e) {
@@ -24,6 +27,8 @@ function doPost(e) {
 
   // Honeypot: people never see this field; bots fill it. Drop silently.
   if (p.website) return redirect(next);
+
+  if (p.form === 'pack') return packRequest(p, next);
 
   var req = {
     name: clean(p.name),
@@ -42,7 +47,7 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
-    sheet().appendRow([
+    sheet(TAB, HEADERS).appendRow([
       new Date(), req.name, req.email, req.phone, req.flyers, req.dates,
       req.weightOk ? 'Yes' : 'No', req.message, req.page
     ]);
@@ -72,6 +77,54 @@ function doPost(e) {
   return redirect(next);
 }
 
+function packRequest(p, next) {
+  var name = clean(p.name);
+  var email = clean(p.email);
+  var problems = [];
+  if (!name) problems.push('your name');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) problems.push('a valid email address');
+  if (problems.length) return errorPage(problems, next.replace(/welcome-pack-sent\/?$/, '#pack-h'));
+
+  // The pack sits at the root of the same site the visitor came from.
+  var packUrl = next.replace(/learn-to-fly\/welcome-pack-sent\/?$/, 'welcome-pack.pdf');
+  if (packUrl === next) packUrl = next.replace(/^(https:\/\/[^\/]+).*$/, '$1/welcome-pack.pdf');
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    sheet(LEADS_TAB, LEADS_HEADERS).appendRow([new Date(), name, email, clean(p.page)]);
+  } finally {
+    lock.releaseLock();
+  }
+
+  MailApp.sendEmail({
+    to: email,
+    replyTo: prop('CLUB_EMAIL'),
+    name: 'Prince Albert Gliding and Soaring Club',
+    subject: 'Your PAGSC welcome pack',
+    body: [
+      'Hi ' + name + ',',
+      '',
+      'Here is the club welcome pack: booking lessons on the Flying Schedule, the morning you fly, costs, the path to a licence and the fleet.',
+      '',
+      packUrl,
+      '',
+      'Your first lesson is a Discovery Flight. Reply to this email with any questions.',
+      '',
+      'Prince Albert Gliding and Soaring Club'
+    ].join('\n')
+  });
+
+  MailApp.sendEmail({
+    to: prop('CLUB_EMAIL'),
+    replyTo: email,
+    subject: 'Welcome pack sent to a prospective student: ' + name,
+    body: 'The website sent the welcome pack to ' + name + ' <' + email + '>.\nThey are in the "' + LEADS_TAB + '" tab.'
+  });
+
+  return redirect(next);
+}
+
 function doGet() {
   return HtmlService.createHtmlOutput('PAGSC flight requests endpoint.');
 }
@@ -93,12 +146,12 @@ function clean(v) {
     .replace(/^[=+\-@]/, "'$&");
 }
 
-function sheet() {
+function sheet(tab, headers) {
   var ss = SpreadsheetApp.openById(prop('SHEET_ID'));
-  var sh = ss.getSheetByName(TAB);
+  var sh = ss.getSheetByName(tab);
   if (!sh) {
-    sh = ss.insertSheet(TAB);
-    sh.appendRow(HEADERS);
+    sh = ss.insertSheet(tab);
+    sh.appendRow(headers);
     sh.setFrozenRows(1);
   }
   return sh;

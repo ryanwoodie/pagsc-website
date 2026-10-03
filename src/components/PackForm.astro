@@ -1,0 +1,87 @@
+---
+// "Email me the welcome pack" for prospective students. Posts to the same Apps Script
+// endpoint (form=pack), which emails the pack link and logs the lead for the club.
+import { FORM_ENDPOINT } from '../config';
+import { facts, telHref } from '../lib/facts';
+import { href } from '../lib/url';
+
+const next = new URL(href('/learn-to-fly/welcome-pack-sent/'), Astro.site).toString();
+const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeURIComponent('Welcome pack request')}`;
+---
+<form class="pack" method="post" action={action} data-endpoint={FORM_ENDPOINT || undefined} data-next={next}>
+  <input type="hidden" name="form" value="pack" />
+  <input type="hidden" name="page" value={Astro.url.pathname} />
+  <input type="hidden" name="next" value={next} />
+  <div class="hp" aria-hidden="true">
+    <label for="p-website">Leave this empty</label>
+    <input id="p-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+  <div class="pack__fields">
+    <div class="field">
+      <label for="p-name">Name</label>
+      <input id="p-name" name="name" type="text" autocomplete="name" required />
+    </div>
+    <div class="field">
+      <label for="p-email">Email</label>
+      <input id="p-email" name="email" type="email" autocomplete="email" required />
+    </div>
+  </div>
+  <button class="btn btn--ghost" type="submit">Email me the welcome pack</button>
+  <div class="form-error" role="alert" tabindex="-1" hidden>
+    <p><strong>That did not go through.</strong> Email us at <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> or call <a href={telHref}>{facts.contact.phone}</a> and we will send it.</p>
+  </div>
+</form>
+<script>
+  import '../scripts/enhance-form';
+</script>
+<style>
+  .pack {
+    display: grid;
+    gap: 16px;
+    max-width: 40rem;
+    margin-top: 16px;
+  }
+  .pack__fields {
+    display: grid;
+    gap: 16px;
+  }
+  @media (min-width: 640px) {
+    .pack__fields {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 600;
+  }
+  .field input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+  }
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .pack .btn {
+    justify-self: start;
+  }
+  .form-error {
+    background: var(--orange-tint);
+    padding: 14px 18px;
+  }
+  .form-error p {
+    margin: 0;
+  }
+</style>

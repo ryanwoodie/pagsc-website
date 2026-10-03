@@ -31,7 +31,8 @@ npm test           # schedule parser tests
 ```
 
 - Change a price, contact or figure in `content/club-facts.yaml` only. The build fails if a key is missing or misspelled, or if figures that depend on each other disagree.
-- `src/config.ts` holds the form endpoint and the welcome pack switch.
+- `src/config.ts` holds the form endpoint.
+- The welcome pack is `public/welcome-pack.pdf` (served at `/welcome-pack.pdf`). Replace the file to update it.
 - `SKIP_SCHEDULE=1 npm run build` builds without fetching the Flying Schedule.
 - `npm run og` regenerates `public/og.png` from `scripts/og/og.html` (needs Google Chrome).
 
@@ -48,6 +49,6 @@ npm test           # schedule parser tests
 ## Status
 
 - Phases 0 and 1: done. Every page built, Lighthouse mobile 99 to 100 in all four categories.
-- Phase 2: endpoint written (`apps-script/`); waiting on Ryan to deploy it and on the welcome pack PDF. Until then the form falls back to email and the site shows `[NEEDED]` markers.
+- Phase 2: endpoint deployed and wired. Welcome pack published for students, with an emailed-on-request form on Learn to fly.
 - Phase 3: "Next flying days", redirects, sitemap, robots, structured data and OG image done. Analytics waits on Q10. Check "Next flying days" against the live sheet after the first deploy.
 - Open questions: see `docs/06-open-questions.md`

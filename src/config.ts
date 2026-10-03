@@ -8,8 +8,3 @@
  */
 export const FORM_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA/exec';
 
-/**
- * The welcome pack PDF, once exported, goes in public/welcome-pack.pdf.
- * Set to true when the file is there.
- */
-export const WELCOME_PACK_READY = false;

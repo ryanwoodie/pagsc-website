@@ -7,6 +7,7 @@ import PathCards from '../../components/PathCards.astro';
 import Button from '../../components/Button.astro';
 import Tiles from '../../components/Tiles.astro';
 import Photo from '../../components/Photo.astro';
+import PackForm from '../../components/PackForm.astro';
 import studentPhoto from '../../assets/photos/student-on-runway.jpg';
 import { facts, fees, money, lessonBreakdown } from '../../lib/facts';
 import { pplHours, scratchHours } from '../../lib/faq';
@@ -90,6 +91,12 @@ const steps = t.steps.map((s) => ({
       <li><a href={facts.links.winch_launch_videos} rel="noopener"><strong>Safe winch launching videos</strong></a>: British Gliding Association</li>
       <li><a href={facts.links.glider_flying_handbook} rel="noopener"><strong>Glider Flying Handbook</strong></a>: free from the FAA</li>
     </ul>
+  </Section>
+
+  <Section labelledby="pack-h">
+    <h2 id="pack-h">The welcome pack</h2>
+    <p class="lead">Nine pages for new students: booking lessons on the Flying Schedule, the morning you fly, costs, the path to a licence and the fleet.</p>
+    <PackForm />
   </Section>
 
   <Section labelledby="ready-h">
