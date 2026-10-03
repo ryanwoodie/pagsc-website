@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Button from '../components/Button.astro';
+import { href } from '../lib/url';
+---
+<Base title="Page not found" description="This page is not on the site. Start from the home page." noindex>
+  <PageHero title="Page not found">
+    <p class="lead">This address is not on the site. Start from the home page.</p>
+    <div class="actions">
+      <Button href="/">Go home</Button>
+      <a class="more" href={href('/discovery-flight/')}>Discovery Flight</a>
+    </div>
+  </PageHero>
+</Base>

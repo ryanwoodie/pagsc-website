@@ -1,0 +1,34 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Section from '../../../components/Section.astro';
+import Button from '../../../components/Button.astro';
+import Needed from '../../../components/Needed.astro';
+import { facts } from '../../../lib/facts';
+import { WELCOME_PACK_READY } from '../../../config';
+---
+<Base
+  title="Request received"
+  description={`Your Discovery Flight request is with the ${facts.club.name}. A club member will reply to confirm a date and an arrival time.`}
+  noindex
+>
+  <PageHero title="Thanks. Your request is in.">
+    <p class="lead">A club member will reply to confirm a date and an arrival time.</p>
+  </PageHero>
+
+  <Section variant="plain" labelledby="pay-h">
+    <h2 id="pay-h">Paying</h2>
+    <p>Pay online now, or by e-transfer on the day.</p>
+    <div class="actions"><Button href={facts.links.discovery_flight_payment} external>Pay for a Discovery Flight</Button></div>
+  </Section>
+
+  <Section labelledby="before-h">
+    <h2 id="before-h">Before you come</h2>
+    <p>The welcome pack covers what to bring, how the day runs and how to check that flying is on.</p>
+    <div class="actions">
+      {WELCOME_PACK_READY
+        ? <Button href="/welcome-pack.pdf" variant="ghost">Download the welcome pack</Button>
+        : <Needed what="welcome pack PDF in public/welcome-pack.pdf" />}
+    </div>
+  </Section>
+</Base>

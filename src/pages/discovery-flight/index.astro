@@ -1,0 +1,110 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Steps from '../../components/Steps.astro';
+import Callout from '../../components/Callout.astro';
+import Button from '../../components/Button.astro';
+import Qa from '../../components/Qa.astro';
+import RequestForm from '../../components/RequestForm.astro';
+import { facts, df, money, num, lcfirst } from '../../lib/facts';
+import { beforeFirstFlight } from '../../lib/faq';
+import { clubJsonLd } from '../../lib/schema';
+
+const dt = facts.location.drive_times;
+const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date with the person flying.';
+---
+<Base
+  title={`Discovery Flight in a glider, ${money(df.price)}`}
+  description={`Your first flight in a glider, with a club pilot, from ${facts.location.airfield} near Prince Albert. ${money(df.price)}, no experience or membership needed. Request a date.`}
+  jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
+>
+  <PageHero label="Discovery Flight" title="Your first flight in a glider">
+    <p class="lead">A winch launch to about {num(df.launch_height_feet)} feet in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
+    <div class="actions"><Button href="#request">Request a date</Button></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="what-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="what-h">What happens</h2>
+        <p class="lead">The winch pulls the glider into the air in seconds. At about {num(df.launch_height_feet)} feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
+      </div>
+      <div>
+        <h2 id="glance-h">At a glance</h2>
+        <ul class="defs">
+          <li><strong>Price</strong> {money(df.price)}, or {money(df.group_price_each)} each for a group of {df.group_minimum} or more</li>
+          <li><strong>When</strong> {lcfirst(df.when)}</li>
+          <li><strong>Where</strong> {facts.location.airfield}, {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon</li>
+          <li><strong>Who can fly</strong> maximum weight {df.max_weight_lbs} lbs. No experience and no membership needed.</li>
+          <li><strong>Season</strong> {lcfirst(df.season)}</li>
+        </ul>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="how-h">
+    <h2 id="how-h">How it works</h2>
+    <Steps
+      row
+      items={[
+        { title: 'Request a date', text: 'Use the form below.' },
+        { title: 'We confirm', text: 'A club member replies with a date and an arrival time.' },
+        { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="day-h">
+    <h2 id="day-h">Your first day</h2>
+    <div class="grid grid--2">
+      <div>
+        <h3>Bring</h3>
+        <ul class="ticks">{df.bring.map((b) => <li>{b}</li>)}</ul>
+      </div>
+      <div>
+        <h3>How the day runs</h3>
+        <ol class="day-list">{df.day.map((d) => <li>{d}</li>)}</ol>
+      </div>
+    </div>
+    <Callout lead="Weather">
+      <p>Gliding depends on the weather. If your day is cancelled, we rebook you at no charge.</p>
+    </Callout>
+  </Section>
+
+  <Section id="request" labelledby="req-h">
+    <h2 id="req-h">Request a date</h2>
+    <RequestForm />
+  </Section>
+
+  <Section labelledby="gift-h">
+    <h2 id="gift-h">Give a flight as a gift</h2>
+    <p class="lead">A Discovery Flight makes a good present for anyone who has looked up and wondered.</p>
+    <p>{giftAnswer} Email <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> to arrange the date.</p>
+    <div class="actions"><Button href={facts.links.discovery_flight_payment} variant="ghost" external>Buy a gift flight</Button></div>
+  </Section>
+
+  <Section labelledby="faq-h">
+    <h2 id="faq-h">Before a first flight</h2>
+    <Qa items={beforeFirstFlight} />
+  </Section>
+</Base>
+
+<style>
+  .inline-price {
+    font-family: var(--font-display);
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--orange-dark);
+    white-space: nowrap;
+  }
+  .day-list {
+    padding-left: 1.3em;
+  }
+  .day-list li {
+    margin-bottom: 8px;
+  }
+  .defs strong {
+    min-width: 7.5em;
+  }
+</style>

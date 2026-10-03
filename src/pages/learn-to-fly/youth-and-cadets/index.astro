@@ -1,0 +1,54 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Section from '../../../components/Section.astro';
+import Button from '../../../components/Button.astro';
+import { facts, fees, money, listJoin } from '../../../lib/facts';
+import { href } from '../../../lib/url';
+
+const y = facts.youth;
+const t = facts.training;
+const ya = fees.membership.youth_air_cadet;
+---
+<Base
+  title="Gliding for youth and Air Cadets"
+  description={`Youth membership is ${money(y.membership_price)} a year and bursaries give ${money(y.bursary_total)} toward flying. Start at any age, fly solo at ${t.solo_age}, earn a Glider Pilot Licence at ${t.licence_age}.`}
+>
+  <PageHero label="Youth and cadets" title="Youth and cadets: learn for less">
+    <p class="lead"><span class="big-figure">{money(y.bursary_total)}</span> toward {y.bursary_covers.toLowerCase()}: a {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club.</p>
+    <p>With the {money(y.membership_price)} youth membership, a glider licence can cost very little. Ask us and we'll help you apply.</p>
+    <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="parents-h">
+    <h2 id="parents-h">For parents</h2>
+    <ul class="ticks">
+      <li>{t.who_can_learn[0]}</li>
+      <li>Training can start at any age. Students need to reach the controls comfortably (roughly 5 ft tall) and be ready to learn (typically 12 and up).</li>
+      <li>Solo is possible from age {t.solo_age}, once the instructor is satisfied the student is ready.</li>
+      <li>A full Glider Pilot Licence can be held from age {t.licence_age}.</li>
+      <li>Carpooling is often available from {listJoin(facts.location.carpool_from)}.</li>
+    </ul>
+  </Section>
+
+  <Section labelledby="cadets-h">
+    <h2 id="cadets-h">Air Cadets</h2>
+    <p class="lead">{y.cadets}</p>
+  </Section>
+
+  <Section labelledby="cost-h">
+    <h2 id="cost-h">What it costs</h2>
+    <ul class="defs">
+      <li><strong>{money(ya.price)}</strong> youth and Air Cadet membership a {ya.per}, for members {ya.who.toLowerCase()}</li>
+      <li><strong>{money(fees.winch_launch)}</strong> a winch launch</li>
+      <li><strong>{money(fees.glider_rental_per_minute)}</strong> a minute of glider time</li>
+      <li><strong>Free</strong> instruction</li>
+    </ul>
+  </Section>
+
+  <Section labelledby="path-h">
+    <h2 id="path-h">The path</h2>
+    <p>The same five steps as every student: {listJoin(t.steps.map((s) => s.title.replace(/[:,].*$/, '').toLowerCase()).map((s) => s.replace('glide', 'GLIDE')))}.</p>
+    <p><a class="more" href={href('/learn-to-fly/#path-h')}>See the path to a licence</a></p>
+  </Section>
+</Base>

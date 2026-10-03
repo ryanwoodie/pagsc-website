@@ -1,0 +1,162 @@
+---
+// The Discovery Flight request form. Posts to the Apps Script endpoint (src/config.ts)
+// and works without JavaScript; the script redirects to /discovery-flight/requested/.
+// With JavaScript, an unreachable endpoint shows a plain message with the club's email and phone.
+import { FORM_ENDPOINT } from '../config';
+import { facts, df, telHref } from '../lib/facts';
+import { href } from '../lib/url';
+import Needed from './Needed.astro';
+
+const requested = new URL(href('/discovery-flight/requested/'), Astro.site).toString();
+const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeURIComponent('Discovery Flight request')}`;
+---
+<form
+  class="request"
+  method="post"
+  action={action}
+  enctype={FORM_ENDPOINT ? undefined : 'text/plain'}
+  data-endpoint={FORM_ENDPOINT || undefined}
+  data-next={requested}
+>
+  {!FORM_ENDPOINT && <p><Needed what="form endpoint URL in src/config.ts (Apps Script, Phase 2)" /></p>}
+  <input type="hidden" name="page" value={Astro.url.pathname} />
+  <input type="hidden" name="next" value={requested} />
+
+  <div class="hp" aria-hidden="true">
+    <label for="f-website">Leave this empty</label>
+    <input id="f-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+
+  <div class="field">
+    <label for="f-name">Name</label>
+    <input id="f-name" name="name" type="text" autocomplete="name" required />
+  </div>
+  <div class="field">
+    <label for="f-email">Email</label>
+    <input id="f-email" name="email" type="email" autocomplete="email" required />
+  </div>
+  <div class="field">
+    <label for="f-phone">Phone</label>
+    <input id="f-phone" name="phone" type="tel" autocomplete="tel" required />
+  </div>
+  <div class="field field--short">
+    <label for="f-flyers">Number of flyers</label>
+    <input id="f-flyers" name="flyers" type="number" inputmode="numeric" min="1" max="20" value="1" required />
+  </div>
+  <div class="field">
+    <label for="f-dates">Preferred dates</label>
+    <textarea id="f-dates" name="dates" rows="3" aria-describedby="f-dates-hint" required></textarea>
+    <p class="hint" id="f-dates-hint">Weekends are the main flying days.</p>
+  </div>
+  <div class="field field--check">
+    <input id="f-weight" name="weight_ok" type="checkbox" value="yes" required />
+    <label for="f-weight">Everyone flying weighs {df.max_weight_lbs} lbs or less.</label>
+  </div>
+  <div class="field">
+    <label for="f-message">Message <span class="optional">(optional)</span></label>
+    <textarea id="f-message" name="message" rows="4"></textarea>
+  </div>
+
+  <button class="btn" type="submit">Send request</button>
+
+  <div class="request__error" role="alert" tabindex="-1" hidden>
+    <p><strong>Your request did not go through.</strong> Email us at <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> or call <a href={telHref}>{facts.contact.phone}</a> and we will book you in.</p>
+  </div>
+</form>
+
+<script>
+  for (const form of document.querySelectorAll<HTMLFormElement>('form.request[data-endpoint]')) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = form.querySelector('button[type=submit]') as HTMLButtonElement;
+      const error = form.querySelector('.request__error') as HTMLElement;
+      button.disabled = true;
+      error.hidden = true;
+      try {
+        await fetch(form.dataset.endpoint!, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: new URLSearchParams(new FormData(form) as unknown as Record<string, string>),
+        });
+        window.location.href = form.dataset.next!;
+      } catch {
+        error.hidden = false;
+        button.disabled = false;
+        error.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .request {
+    display: grid;
+    gap: 18px;
+    max-width: 36rem;
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 600;
+  }
+  .optional {
+    font-weight: 400;
+    color: var(--grey);
+  }
+  .field input[type='text'],
+  .field input[type='email'],
+  .field input[type='tel'],
+  .field input[type='number'],
+  .field textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+  }
+  .field--short input {
+    max-width: 8rem;
+  }
+  .field--check {
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+  }
+  .field--check input {
+    width: 24px;
+    height: 24px;
+    margin: 2px 0 0;
+    accent-color: var(--orange);
+  }
+  .field--check label {
+    font-weight: 500;
+  }
+  .hint {
+    margin: 0;
+    color: var(--grey);
+    font-size: 0.95rem;
+  }
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .request .btn {
+    justify-self: start;
+    min-width: 12rem;
+  }
+  .request__error {
+    background: var(--orange-tint);
+    padding: 14px 18px;
+  }
+  .request__error p {
+    margin: 0;
+  }
+</style>

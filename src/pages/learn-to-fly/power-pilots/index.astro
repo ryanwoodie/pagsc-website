@@ -1,0 +1,54 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Section from '../../../components/Section.astro';
+import Button from '../../../components/Button.astro';
+import { facts, fees, money } from '../../../lib/facts';
+import { pplHours, scratchHours } from '../../../lib/faq';
+import { href } from '../../../lib/url';
+
+const p = facts.power_pilots;
+const c = p.credit_back;
+---
+<Base
+  title="Glider licence for power pilots"
+  description={`Hold a PPL(A)? Ground school and the written exam are waived, and a Glider Pilot Licence needs ${pplHours('Total flight time')}. Glider time also counts toward a PPL(A) and CPL(A).`}
+>
+  <PageHero label="Power pilots" title="Already a power pilot?">
+    <p class="lead">With a PPL(A) you skip ground school and the written exam, and need {pplHours('Total flight time')}, not {scratchHours('Total flight time')}.</p>
+    <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="need-h">
+    <h2 id="need-h">What you need</h2>
+    <div class="table-scroll">
+      <table class="table">
+        <thead><tr><th scope="col">Requirement</th><th scope="col">From scratch</th><th scope="col">With PPL(A) credit</th></tr></thead>
+        <tbody>
+          {p.table.map((r) => (
+            <tr><th scope="row">{r.requirement}</th><td>{r.from_scratch}</td><td>{r.with_ppl === 'Waived' ? <strong>Waived</strong> : r.with_ppl}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+
+  <Section labelledby="learn-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="learn-h">What you will be learning</h2>
+        <p>Winch launches, energy management and soaring: staying up and going places without an engine.</p>
+      </div>
+      <div>
+        <h2 id="other-h">It works the other way too</h2>
+        <p>Up to {c.ppl_hours} hours of glider time counts toward a PPL(A), and up to {c.cpl_hours} hours toward the {c.cpl_total_requirement_hours}-hour total for a CPL(A).</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="cost-h">
+    <h2 id="cost-h">What it costs</h2>
+    <p class="lead">A {money(fees.winch_launch)} launch and {money(fees.glider_rental_per_minute)} a minute of glider time. Instruction is free. Membership is {money(fees.membership.regular.price)} a {fees.membership.regular.per}.</p>
+    <p><a class="more" href={href('/costs/')}>See all costs</a></p>
+  </Section>
+</Base>

@@ -1,0 +1,91 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Steps from '../../components/Steps.astro';
+import Button from '../../components/Button.astro';
+import Callout from '../../components/Callout.astro';
+import ScheduleMap from '../../components/ScheduleMap.astro';
+import { facts } from '../../lib/facts';
+
+const l = facts.links;
+---
+<Base
+  title="Members"
+  description={`The Flying Schedule, membership form and weather links for members of the ${facts.club.name}.`}
+>
+  <PageHero title="Members" drawing={false}>
+    <div class="actions"><Button href={l.flying_schedule} external>Open the Flying Schedule</Button></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="sched-h">
+    <h2 id="sched-h">The Flying Schedule, made easy</h2>
+    <p class="lead">Booking means typing your name into one cell of a shared Google Sheet. It takes about a minute.</p>
+    <ScheduleMap>Where you type. You only ever use one column (your day) and one block (your sign-up section).</ScheduleMap>
+    <Steps
+      items={[
+        { title: 'Open the schedule', text: 'On a computer, open the link in your browser. Sign in with any Google account.' },
+        { title: 'Find your day', text: 'Dates run across the top row. Scroll sideways until yours is on screen. Weekends are the main flying days.' },
+        { title: 'Find your block', text: 'For a lesson, look for the cell reading “Student/Pilots Sign-up Below”. For a guest’s first flight: “Intro Fam Flight Sign-up Below”.' },
+        { title: 'Type your name', text: 'Use the first empty cell underneath and press Enter. It saves by itself.' },
+      ]}
+    />
+    <div class="gap"></div>
+    <Callout lead="On a phone?">
+      <p>In a phone browser the sheet is usually view-only. Install the free Google Sheets app and open the link there.</p>
+    </Callout>
+  </Section>
+
+  <Section labelledby="morning-h">
+    <h2 id="morning-h">The morning you fly: three checks</h2>
+    <ul class="defs">
+      <li><strong>Status / Comments row:</strong> is flying on, delayed or cancelled? The day's arrival time is posted here too.</li>
+      <li><strong>Weather row:</strong> a quick look at wind and conditions. The forecast fills in about a week ahead.</li>
+      <li><strong>Instructors block:</strong> for lessons, an instructor's name under your date means instruction is on.</li>
+    </ul>
+    <p class="after">Always check the sheet before you leave home. Gliding depends on the weather, and last-minute changes are posted there.</p>
+  </Section>
+
+  <Section labelledby="maybe-h">
+    <h2 id="maybe-h">Sign up early, even as a maybe</h2>
+    <p>Write “(maybe)” after your name. It helps instructors plan the day. If your plans change, delete your name.</p>
+  </Section>
+
+  <Section labelledby="join-h">
+    <h2 id="join-h">Joining and renewing</h2>
+    <p>Fill in the membership form and e-transfer your dues to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
+    <div class="actions"><Button href={l.membership_form} variant="ghost" external>Membership form</Button></div>
+  </Section>
+
+  <Section labelledby="links-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="links-h">Weather</h2>
+        <ul class="ticks">
+          <li><a href={l.birch_hills_weather} rel="noopener">Birch Hills weather</a></li>
+          <li><a href={l.cypa_forecast} rel="noopener">CYPA forecast</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 id="learn-h">Learn at home</h2>
+        <ul class="ticks">
+          <li><a href={l.soar_manual_pdf} rel="noopener">SOAR manual (PDF)</a>, Soaring Association of Canada</li>
+          <li><a href={l.winch_launch_videos} rel="noopener">Safe winch launching videos</a>, British Gliding Association</li>
+          <li><a href={l.glider_flying_handbook} rel="noopener">Glider Flying Handbook</a>, FAA</li>
+        </ul>
+      </div>
+    </div>
+  </Section>
+</Base>
+<style>
+  .gap {
+    height: 24px;
+  }
+  .after {
+    margin-top: 16px;
+  }
+  .defs strong {
+    min-width: 0;
+    margin-right: 4px;
+  }
+</style>

@@ -1,4 +1,184 @@
 ---
 import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import Section from '../components/Section.astro';
+import Tiles from '../components/Tiles.astro';
+import Steps from '../components/Steps.astro';
+import PathCards from '../components/PathCards.astro';
+import Qa from '../components/Qa.astro';
+import BookButton from '../components/BookButton.astro';
+import NextFlyingDays from '../components/NextFlyingDays.astro';
+import GliderThermal from '../components/GliderThermal.astro';
+import { facts, df, fees, money, num, shortDuration, lessonBreakdown, listJoin, mapHref } from '../lib/facts';
+import { homeQuestions } from '../lib/faq';
+import { href } from '../lib/url';
+import { clubJsonLd } from '../lib/schema';
+
+const dt = facts.location.drive_times;
+const m = fees.membership;
+const y = facts.youth;
+const lesson = fees.typical_lesson_flight;
+const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total flight time')!.with_ppl;
 ---
-<Base title="Test" description="Test"><h1>Test</h1></Base>
+<Base
+  title="Glider flights and flying lessons near Prince Albert and Saskatoon"
+  description={`Fly a glider from ${facts.location.airfield}. A first flight is ${money(df.price)}, instruction is free, and no experience is needed. ${dt.prince_albert} from Prince Albert, ${dt.saskatoon} from Saskatoon.`}
+  jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
+>
+  <PageHero title="Come fly with us." big>
+    <p class="lead">No engine. No experience needed. A winch launch to about {num(df.launch_height_feet)} feet, and some of the quietest flying in Saskatchewan.</p>
+    <p class="price">Your first flight is <strong>{money(df.price)}.</strong></p>
+    <div class="actions hero-actions">
+      <BookButton />
+      <a class="more" href={href('/learn-to-fly/')}>or learn to fly</a>
+    </div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="facts-h">
+    <h2 id="facts-h" class="visually-hidden">Three facts</h2>
+    <Tiles
+      items={[
+        { figure: money(df.price), text: 'first flight, no membership needed' },
+        { figure: fees.instruction === 0 ? 'Free' : money(fees.instruction), text: 'instruction from club instructors' },
+        { figure: shortDuration(dt.prince_albert), text: `from Prince Albert, ${dt.saskatoon} from Saskatoon` },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="how-h">
+    <h2 id="how-h">How it works</h2>
+    <Steps
+      row
+      items={[
+        { title: 'Request a date', text: 'Tell us who is flying and which days suit you.' },
+        { title: 'We confirm', text: 'A club member replies with a date and what to expect.' },
+        { title: 'Come out and fly', text: `Meet the crew at ${facts.location.airfield}, get a safety briefing, and launch.` },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="paths-h">
+    <h2 id="paths-h">Choose your path</h2>
+    <PathCards
+      items={[
+        { title: 'Try a flight', text: `A Discovery Flight with a club pilot. ${money(df.price)}.`, href: '/discovery-flight/' },
+        { title: 'Learn to fly', text: `Free instruction. About ${money(lesson.cost)} a lesson flight.`, href: '/learn-to-fly/' },
+        {
+          title: 'Youth and cadets',
+          text: `${money(y.membership_price)} membership and ${money(y.bursary_total)} in bursaries. Solo at ${facts.training.solo_age}.`,
+          href: '/learn-to-fly/youth-and-cadets/',
+        },
+        {
+          title: 'Power pilots',
+          text: `A glider licence in ${pplHours.replace('hours', 'flight hours')}, with ground school and the exam waived.`,
+          href: '/learn-to-fly/power-pilots/',
+        },
+      ]}
+    />
+  </Section>
+
+  <NextFlyingDays />
+
+  <Section labelledby="why-h">
+    <div class="split">
+      <div>
+        <p class="label">Why gliding</p>
+        <h2 id="why-h">A sport you never finish</h2>
+        <p class="lead">Gliding is to powered flying what sailing is to motorboating. With an engine, the flying serves the trip. In a glider, the flying is the game.</p>
+        <p><a class="more" href={href('/why-gliding/')}>Why gliding</a></p>
+      </div>
+      <div class="split__art"><GliderThermal /></div>
+    </div>
+  </Section>
+
+  <Section labelledby="cost-h">
+    <h2 id="cost-h">What it costs</h2>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute lesson flight costs: {lessonBreakdown}. Instruction is free.</p>
+    <ul class="defs">
+      <li><strong>{money(df.price)}</strong> Discovery Flight, no membership needed</li>
+      <li><strong>{money(m.regular.price)}</strong> membership a {m.regular.per}; {money(m.junior.price)} junior, {money(m.youth_air_cadet.price)} youth and Air Cadet</li>
+      <li><strong>{money(fees.winch_launch)}</strong> a winch launch</li>
+      <li><strong>{money(fees.glider_rental_per_hour)}</strong> an hour of glider time, billed by the minute</li>
+    </ul>
+    <p class="actions"><a class="more" href={href('/costs/')}>See all costs</a></p>
+  </Section>
+
+  <Section labelledby="club-h">
+    <h2 id="club-h">The club</h2>
+    <p class="lead">A friendly non-profit club, founded in {facts.club.founded} and affiliated with the {listJoin(facts.club.affiliations)}. The longest cross-country flight out of {facts.club.short_name} is {num(facts.achievements.longest_cross_country_km)} km.</p>
+    <Tiles
+      items={[
+        { figure: `${num(facts.achievements.longest_cross_country_km)} km`, text: `the longest cross-country flight out of ${facts.club.short_name}` },
+        { figure: String(facts.club.founded), text: `founded, a ${facts.club.status.toLowerCase()}` },
+        { figure: String(facts.fleet.length), text: 'gliders: a two-seat trainer and two single-seaters' },
+      ]}
+    />
+    <p class="actions"><a class="more" href={href('/the-club/')}>The club and the fleet</a></p>
+  </Section>
+
+  <Section labelledby="q-h">
+    <h2 id="q-h">Questions</h2>
+    <Qa items={homeQuestions} />
+    <p class="actions"><a class="more" href={href('/faq/')}>More questions</a></p>
+  </Section>
+
+  <Section labelledby="find-h">
+    <h2 id="find-h">Find us</h2>
+    <p class="lead">{facts.location.airfield}, on {facts.location.highway}. {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon.</p>
+    <p class="actions">
+      <a class="more" href={href('/find-us/')}>Directions and flying hours</a>
+      <a href={mapHref} rel="noopener">Open in Google Maps</a>
+    </p>
+  </Section>
+
+  <section class="closing" aria-labelledby="close-h">
+    <div class="wrap">
+      <h2 id="close-h">See you at the field.</h2>
+      <BookButton />
+    </div>
+  </section>
+</Base>
+
+<style>
+  .price {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 6vw, 2.1rem);
+    font-weight: 600;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .price strong {
+    font-weight: 700;
+    color: var(--orange-dark);
+  }
+  .hero-actions {
+    margin-top: 18px;
+  }
+  .split {
+    display: grid;
+    gap: 24px;
+    align-items: center;
+  }
+  .split__art {
+    max-width: 320px;
+  }
+  @media (min-width: 760px) {
+    .split {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+  .closing {
+    background: var(--sky);
+    padding: var(--space) 0;
+  }
+  .closing h2 {
+    font-size: clamp(2.6rem, 10vw, 4.5rem);
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+  .defs strong {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--orange-dark);
+  }
+</style>

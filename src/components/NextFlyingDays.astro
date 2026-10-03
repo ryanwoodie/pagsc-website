@@ -1,0 +1,82 @@
+---
+// Next flying days, built from the Flying Schedule at deploy time
+// (scripts/fetch-schedule.mjs). Renders nothing when there is no data.
+import Section from './Section.astro';
+
+type Day = { date: string; status: string; instructor: boolean };
+const files = import.meta.glob<{ default: { updated: string | null; days: Day[] } }>('../data/flying-days.json', {
+  eager: true,
+});
+const data = Object.values(files)[0]?.default;
+const days = data?.days ?? [];
+
+const fmt = new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+const label = (iso: string) => fmt.format(new Date(iso + 'T12:00:00Z'));
+const updated = data?.updated
+  ? new Intl.DateTimeFormat('en-CA', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'America/Regina',
+    }).format(new Date(data.updated))
+  : null;
+---
+{days.length > 0 && (
+  <Section id="next-flying-days" labelledby="nfd-h">
+    <h2 id="nfd-h">Next flying days</h2>
+    <ul class="days">
+      {days.map((d) => (
+        <li class="day">
+          <time class="day__date" datetime={d.date}>{label(d.date)}</time>
+          <span class="day__status">{d.status || 'No update posted yet'}</span>
+          {d.instructor && <span class="day__tag">Instructor signed up</span>}
+        </li>
+      ))}
+    </ul>
+    {updated && <p class="days__note">From the club's Flying Schedule, {updated}. Flying depends on the weather.</p>}
+  </Section>
+)}
+<style>
+  .days {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+  }
+  .day {
+    display: grid;
+    gap: 2px;
+    padding: 14px 16px;
+    background: var(--sky);
+    border-top: 2px solid var(--ink);
+    max-width: none;
+  }
+  .day__date {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .day__tag {
+    justify-self: start;
+    margin-top: 4px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+  }
+  .days__note {
+    margin-top: 12px;
+    color: var(--grey);
+    font-size: 0.95rem;
+  }
+  @media (min-width: 640px) {
+    .days {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+</style>

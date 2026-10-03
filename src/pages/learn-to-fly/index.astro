@@ -1,0 +1,100 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Steps from '../../components/Steps.astro';
+import PathCards from '../../components/PathCards.astro';
+import Button from '../../components/Button.astro';
+import Tiles from '../../components/Tiles.astro';
+import { facts, fees, money, lessonBreakdown } from '../../lib/facts';
+import { pplHours, scratchHours } from '../../lib/faq';
+import { href } from '../../lib/url';
+
+const t = facts.training;
+const m = fees.membership;
+const y = facts.youth;
+const lesson = fees.typical_lesson_flight;
+const trainer = facts.fleet.find((g) => g.seats === 2)!;
+const ground = facts.links.ground_school;
+const steps = t.steps.map((s) => ({
+  title: s.title,
+  text: s.text.replace(new URL(ground).host, `<a href="${ground}" rel="noopener">${new URL(ground).host}</a>`),
+}));
+---
+<Base
+  title="Learn to fly gliders in Saskatchewan"
+  description={`Learn to fly at the ${facts.club.name}. Free instruction, about ${money(lesson.cost)} a lesson flight, solo at ${t.solo_age} and a Glider Pilot Licence at ${t.licence_age}.`}
+>
+  <PageHero label="Learn to fly" title="Learning to fly">
+    <p class="lead">Instruction is free. You pay for launches and glider time: about {money(lesson.cost)} for a typical lesson flight.</p>
+    <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="ages-h">
+    <h2 id="ages-h" class="visually-hidden">Ages</h2>
+    <Tiles
+      items={[
+        { figure: 'Any age', text: 'to start training, no experience needed' },
+        { figure: `Age ${t.solo_age}`, text: 'to fly solo' },
+        { figure: `Age ${t.licence_age}`, text: 'to hold a full Glider Pilot Licence' },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="cost-h">
+    <h2 id="cost-h">What it costs</h2>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute lesson flight costs: {lessonBreakdown}.</p>
+    <p>Membership is {money(m.regular.price)} a {m.regular.per}, {money(m.junior.price)} for juniors and {money(m.youth_air_cadet.price)} for youth and Air Cadets.</p>
+    <p><a class="more" href={href('/costs/')}>See all costs</a></p>
+  </Section>
+
+  <Section labelledby="path-h">
+    <h2 id="path-h">Your path to a Glider Pilot Licence</h2>
+    <Steps items={steps} />
+  </Section>
+
+  <Section labelledby="who-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="who-h">Who can learn</h2>
+        <ul class="ticks">
+          {t.who_can_learn.map((w) => <li>{w}</li>)}
+          <li>Our two-seat trainer is a {trainer.name.split(' ').slice(0, 2).join(' ')}.</li>
+        </ul>
+      </div>
+      <div>
+        <h2 id="reg-h">Come regularly if you can</h2>
+        <p>{t.come_regularly}</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="fast-h">
+    <h2 id="fast-h">Two fast tracks</h2>
+    <PathCards
+      cols={2}
+      items={[
+        { title: 'Youth and cadets', text: `${money(y.membership_price)} membership and ${money(y.bursary_total)} in bursaries toward ${y.bursary_covers.toLowerCase()}.`, href: '/learn-to-fly/youth-and-cadets/' },
+        { title: 'Power pilots', text: `With a PPL(A), ground school and the written exam are waived, and you need ${pplHours('Total flight time')}, not ${scratchHours('Total flight time')}.`, href: '/learn-to-fly/power-pilots/' },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="home-h">
+    <h2 id="home-h">Learn at home, free</h2>
+    <ul class="ticks">
+      <li><a href={facts.links.soar_manual_pdf} rel="noopener"><strong>SOAR manual</strong></a>: a free PDF from the Soaring Association of Canada</li>
+      <li><a href={facts.links.winch_launch_videos} rel="noopener"><strong>Safe winch launching videos</strong></a>: British Gliding Association</li>
+      <li><a href={facts.links.glider_flying_handbook} rel="noopener"><strong>Glider Flying Handbook</strong></a>: free from the FAA</li>
+    </ul>
+  </Section>
+
+  <Section labelledby="ready-h">
+    <h2 id="ready-h">Ready?</h2>
+    <p class="lead">Your first lesson is a Discovery Flight. Join when you are ready with the membership form.</p>
+    <div class="actions">
+      <Button href="/discovery-flight/#request">Book a first lesson</Button>
+      <Button href={facts.links.membership_form} variant="ghost" external>Membership form</Button>
+    </div>
+  </Section>
+</Base>

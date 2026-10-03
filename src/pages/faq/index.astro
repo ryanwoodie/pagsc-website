@@ -1,0 +1,59 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Qa from '../../components/Qa.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts } from '../../lib/facts';
+import { firstFlights, learning } from '../../lib/faq';
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [...firstFlights, ...learning].map((x) => ({
+    '@type': 'Question',
+    name: x.q,
+    acceptedAnswer: { '@type': 'Answer', text: x.a.replace(/<[^>]+>/g, '') },
+  })),
+};
+---
+<Base
+  title="Questions about gliding with PAGSC"
+  bareTitle
+  description={`Answers about first flights, safety, weather, age and weight limits, what to bring and learning to fly at the ${facts.club.name}.`}
+  jsonLd={faqLd}
+>
+  <PageHero title="Questions">
+    <ul class="jump">
+      <li><a href="#first-flights">First flights</a></li>
+      <li><a href="#learning-to-fly">Learning to fly</a></li>
+    </ul>
+    <div class="actions"><BookButton /></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="first-flights">
+    <h2 id="first-flights">First flights</h2>
+    <Qa items={firstFlights} />
+  </Section>
+
+  <Section labelledby="learning-to-fly">
+    <h2 id="learning-to-fly">Learning to fly</h2>
+    <Qa items={learning} />
+    <div class="actions"><BookButton /></div>
+  </Section>
+</Base>
+<style>
+  .jump {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 8px 20px;
+    flex-wrap: wrap;
+    font-weight: 600;
+  }
+  .jump a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+</style>

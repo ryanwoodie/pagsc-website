@@ -1,0 +1,59 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts, df, fees, money, num, lessonBreakdown } from '../../lib/facts';
+import { href } from '../../lib/url';
+
+const m = fees.membership;
+const y = facts.youth;
+const lesson = fees.typical_lesson_flight;
+const rows = [
+  { what: 'Discovery Flight (guest)', price: money(df.price), note: `${money(df.group_price_each)} each for a group of ${df.group_minimum} or more. About ${df.duration_minutes} minutes in the air. No membership needed.` },
+  { what: 'Membership, Regular', price: `${money(m.regular.price)} / ${m.regular.per}`, note: `For ${m.regular.who.charAt(0).toLowerCase()}${m.regular.who.slice(1)}.` },
+  { what: 'Membership, Junior', price: `${money(m.junior.price)} / ${m.junior.per}`, note: `${m.junior.who}.` },
+  { what: 'Membership, Youth / Air Cadet', price: `${money(m.youth_air_cadet.price)} / ${m.youth_air_cadet.per}`, note: `${m.youth_air_cadet.who}.` },
+  { what: 'Winch launch (members)', price: `${money(fees.winch_launch)} each`, note: `To about ${num(df.launch_height_feet)} feet.` },
+  { what: 'Glider rental (members)', price: `${money(fees.glider_rental_per_hour)} / hour`, note: `Billed by the minute, at ${money(fees.glider_rental_per_minute)}.` },
+  { what: 'Instruction', price: fees.instruction === 0 ? 'Free' : money(fees.instruction), note: 'Taught by club members who hold an instructor rating.' },
+];
+---
+<Base
+  title="What gliding costs"
+  description={`A first flight is ${money(df.price)}. Membership is ${money(m.regular.price)} a year, a winch launch is ${money(fees.winch_launch)}, glider time is ${money(fees.glider_rental_per_hour)} an hour and instruction is free.`}
+>
+  <PageHero label="Costs" title="What it costs">
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute lesson flight costs: {lessonBreakdown}. Instruction is free.</p>
+    <div class="actions"><BookButton /></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="prices-h">
+    <h2 id="prices-h" class="visually-hidden">Prices</h2>
+    <table class="table price-table">
+      <thead><tr><th scope="col">What</th><th scope="col" class="num-h">Price (CAD)</th><th scope="col">Good to know</th></tr></thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr><th scope="row">{r.what}</th><td class="num">{r.price}</td><td class="note">{r.note}</td></tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="notes">{fees.membership_notes.join(' ')} Pay by e-transfer to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
+  </Section>
+
+  <Section labelledby="youth-h">
+    <h2 id="youth-h">Youth and cadets</h2>
+    <p class="lead">A {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club, gives youth members {money(y.bursary_total)} toward {y.bursary_covers.toLowerCase()}.</p>
+    <p><a class="more" href={href('/learn-to-fly/youth-and-cadets/')}>Youth and cadets</a></p>
+    <div class="actions"><BookButton /></div>
+  </Section>
+</Base>
+<style>
+  .num-h {
+    text-align: right;
+  }
+  .notes {
+    margin-top: 20px;
+    color: var(--grey);
+  }
+</style>

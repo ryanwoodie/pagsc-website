@@ -1,0 +1,69 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Ladder from '../../components/Ladder.astro';
+import Tiles from '../../components/Tiles.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts, num } from '../../lib/facts';
+
+const a = facts.achievements;
+const rungs = [
+  { name: 'First solo', detail: `from age ${facts.training.solo_age}` },
+  { name: 'An hour aloft', detail: 'your first real soaring flight' },
+  { name: 'Cross-country', detail: 'leaving the home field behind' },
+  ...facts.badges,
+];
+---
+<Base
+  title="Why gliding? A sport you never finish"
+  description="Gliding is to powered flying what sailing is to motorboating. Every flight is a puzzle, there is always a next step, and you can do it for decades."
+>
+  <PageHero label="Why gliding?" title="A sport you never finish">
+    <p class="lead">Gliding is to powered flying what sailing is to motorboating. With an engine, the flying serves the trip. In a glider, the flying is the game.</p>
+    <div class="actions"><BookButton /></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="game-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="game-h">The game</h2>
+        <p>There is no throttle, so every flight is a puzzle: find rising air, climb in it, decide where to go next. The sky changes by the hour. Some days it gives you 10 minutes, some days 10 hours.</p>
+      </div>
+      <div>
+        <h2 id="race-h">And then there's racing</h2>
+        <p>Cross-country gliding is also a race: fly a set course around turnpoints, and the fastest average speed wins. Any flight can be scored online and ranked against pilots around the world.</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="rung-h">
+    <h2 id="rung-h">Always a next rung</h2>
+    <Ladder rungs={rungs} />
+  </Section>
+
+  <Section labelledby="fig-h">
+    <h2 id="fig-h" class="visually-hidden">Figures</h2>
+    <Tiles
+      items={[
+        { figure: `${num(a.longest_cross_country_km)} km`, text: `the longest cross-country flight out of ${facts.club.short_name}` },
+        { figure: `${a.long_flight_hours} hours`, text: `aloft on a single flight out of ${facts.club.short_name}` },
+        { figure: `${num(a.world_distance_record_km)} km`, text: 'the world distance record' },
+      ]}
+    />
+  </Section>
+
+  <Section labelledby="dec-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="dec-h">A sport for decades</h2>
+        <p>Gliding rewards judgment more than strength, so a 16-year-old and a 70-year-old fly the same sky. And nobody launches alone: it takes a crew, which is why it works as a club.</p>
+      </div>
+      <div>
+        <h2 id="better-h">It makes better pilots</h2>
+        <p>Gliding builds stick-and-rudder skill and energy management like nothing else. The captains of both the “Miracle on the Hudson” and the “Gimli Glider” were glider pilots.</p>
+      </div>
+    </div>
+    <div class="actions"><BookButton /></div>
+  </Section>
+</Base>

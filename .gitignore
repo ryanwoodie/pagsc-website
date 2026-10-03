@@ -7,3 +7,4 @@ dist/
 npm-debug.log*
 # Built from the live schedule at build time; never committed
 src/data/flying-days.json
+.claude/

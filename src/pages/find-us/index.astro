@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import MapEmbed from '../../components/MapEmbed.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts, df, lcfirst, listJoin, directionsHref, telHref, facebookHandle } from '../../lib/facts';
+import { guestHours } from '../../lib/faq';
+import { clubJsonLd } from '../../lib/schema';
+
+const dt = facts.location.drive_times;
+---
+<Base
+  title={`Find us at ${facts.location.airfield}`}
+  description={`The ${facts.club.name} flies from ${facts.location.airfield} on ${facts.location.highway}, ${dt.prince_albert} from Prince Albert and ${dt.saskatoon} from Saskatoon.`}
+  jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
+>
+  <PageHero label="Find us" title="Find us">
+    <p class="lead">We fly from <strong>{facts.location.airfield}</strong>, on {facts.location.highway}.</p>
+    <ul class="defs drive">
+      <li><strong>{dt.prince_albert}</strong> from Prince Albert</li>
+      <li><strong>{dt.saskatoon}</strong> from Saskatoon</li>
+    </ul>
+    <div class="actions"><BookButton /></div>
+  </PageHero>
+
+  <Section variant="plain" labelledby="map-h">
+    <h2 id="map-h" class="visually-hidden">Map</h2>
+    <MapEmbed />
+    <p class="actions">
+      <a class="more" href={directionsHref('Prince Albert')} rel="noopener">Directions from Prince Albert</a>
+      <a class="more" href={directionsHref('Saskatoon')} rel="noopener">Directions from Saskatoon</a>
+    </p>
+  </Section>
+
+  <Section labelledby="car-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="car-h">Carpooling</h2>
+        <p>Carpooling is often available from {listJoin(facts.location.carpool_from)}. Ask when you request your flight.</p>
+      </div>
+      <div>
+        <h2 id="when-h">When we fly</h2>
+        <p>{guestHours}. The main season runs {lcfirst(df.season)}.</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="day-h">
+    <h2 id="day-h">On the day</h2>
+    <p>Arrive at the time we give you when we confirm your date. Arrival times change with the season and conditions, so have a quick look at your confirmation that morning.</p>
+  </Section>
+
+  <Section labelledby="touch-h">
+    <h2 id="touch-h">Get in touch</h2>
+    <ul class="defs">
+      <li><strong>Email</strong> <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>
+      <li><strong>Phone</strong> <a href={telHref}>{facts.contact.phone}</a></li>
+      <li><strong>Facebook</strong> <a href={facts.contact.facebook} rel="noopener">{facebookHandle}</a></li>
+    </ul>
+    <div class="actions"><BookButton /></div>
+  </Section>
+</Base>
+<style>
+  .drive {
+    max-width: 24rem;
+    margin-bottom: 8px;
+  }
+  .drive strong {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    min-width: 5.5em;
+  }
+</style>

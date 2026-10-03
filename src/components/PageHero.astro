@@ -1,0 +1,69 @@
+---
+// Sky band at the top of every page: label, the page's one <h1>, a lead and the action.
+import GliderThermal from './GliderThermal.astro';
+interface Props { label?: string; title: string; big?: boolean; drawing?: boolean }
+const { label, title, big = false, drawing = true } = Astro.props;
+---
+<section class:list={['hero', big && 'hero--big', drawing && 'hero--drawing']}>
+  <div class="wrap hero__inner">
+    <div class="hero__text">
+      {label && <p class="label">{label}</p>}
+      <h1>{title}</h1>
+      <slot />
+    </div>
+    {drawing && <div class="hero__art"><GliderThermal /></div>}
+  </div>
+</section>
+<style>
+  .hero {
+    background: var(--sky);
+    padding: 28px 0 36px;
+    overflow: hidden;
+  }
+  .hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+  }
+  .hero__text {
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 {
+    margin-bottom: 12px;
+  }
+  .hero--big h1 {
+    font-size: clamp(3.4rem, 15vw, 6.75rem);
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .hero :global(.lead) {
+    margin-bottom: 12px;
+  }
+  .hero__art {
+    display: none;
+  }
+  .hero--big .hero__art {
+    display: block;
+    width: 70%;
+    max-width: 260px;
+    margin: 20px 0 -12px auto;
+  }
+  @media (min-width: 760px) {
+    .hero {
+      padding: 56px 0 64px;
+    }
+    .hero__inner {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 32px;
+    }
+    .hero__art,
+    .hero--big .hero__art {
+      display: block;
+      width: auto;
+      max-width: none;
+      margin: 0;
+    }
+  }
+</style>

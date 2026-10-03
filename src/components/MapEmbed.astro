@@ -1,0 +1,67 @@
+---
+// A map that loads only when the visitor asks for it (no third-party requests on page load).
+import { facts, mapHref, mapEmbedSrc } from '../lib/facts';
+---
+<div class="map" data-src={mapEmbedSrc} data-title={`Map of ${facts.location.airfield}`}>
+  <div class="map__panel">
+    <p class="map__name">{facts.location.airfield}</p>
+    <p>{facts.location.town} · {facts.location.highway}</p>
+    <div class="map__actions">
+      <button class="btn btn--ghost btn--small map__load" type="button" hidden>Show the map</button>
+      <a href={mapHref} rel="noopener">Open in Google Maps</a>
+    </div>
+  </div>
+</div>
+<script>
+  for (const map of document.querySelectorAll<HTMLElement>('.map[data-src]')) {
+    const btn = map.querySelector<HTMLButtonElement>('.map__load')!;
+    btn.hidden = false;
+    btn.addEventListener('click', () => {
+      const frame = document.createElement('iframe');
+      frame.src = map.dataset.src!;
+      frame.title = map.dataset.title!;
+      frame.loading = 'lazy';
+      frame.referrerPolicy = 'no-referrer-when-downgrade';
+      map.replaceChildren(frame);
+      frame.focus();
+    });
+  }
+</script>
+<style>
+  .map {
+    aspect-ratio: 4 / 3;
+    max-height: 460px;
+    width: 100%;
+    background: var(--sky);
+    border-top: 2px solid var(--ink);
+    display: grid;
+    place-items: center;
+    background-image: repeating-radial-gradient(circle at 70% 45%, transparent 0 46px, var(--sky-line) 46px 47.5px);
+  }
+  .map__panel {
+    background: var(--paper);
+    padding: 16px 20px;
+    margin: 16px;
+    border-top: 2px solid var(--ink);
+  }
+  .map__panel p {
+    margin: 0 0 4px;
+  }
+  .map__name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  .map__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 10px;
+  }
+  .map :global(iframe) {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+</style>

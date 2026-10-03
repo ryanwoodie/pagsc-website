@@ -605,8 +605,14 @@ table {
 }
 
 .defs strong {
-  display: inline-block;
-  min-width: 6.5em;
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .defs strong {
+    display: inline-block;
+    min-width: 6.5em;
+  }
 }
 
 /* ---------- Q&A ---------- */
