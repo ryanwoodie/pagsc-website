@@ -32,7 +32,14 @@ Sources: [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-
 - Change only the website records listed below. Leave every MX, SPF, DKIM and mail-related record exactly as it is.
 - Do not cancel the CanSpace hosting until it is confirmed whether pagsc.ca mailboxes are still used. If they are, either keep that hosting for mail or move the mailboxes first.
 
-## Cutover checklist (Ryan)
+## How it was done (3 October 2026)
+
+- DNS moved from CanSpace to Cloudflare (Free plan, the club's account). Nameservers at CanSpace: `dean.ns.cloudflare.com`, `laila.ns.cloudflare.com`. The domain registration stays at CanSpace.
+- Website records (DNS only, not proxied): see `docs/cloudflare-pagsc.ca.zone`. GitHub Pages custom domain `www.pagsc.ca`, HTTPS enforced; `pagsc.ca` redirects to it.
+- Mail: Cloudflare Email Routing, catch-all to the club Gmail. The CanSpace mailboxes and cPanel are no longer reachable by name.
+- Keep the CanSpace hosting until the WordPress backup is downloaded and nothing is missed; then it can be cancelled. Keep the domain registration.
+
+## Original cutover checklist (Ryan)
 
 1. Confirm the new site is complete at its `github.io` address.
 2. Take a full backup of the WordPress site and database from cPanel.

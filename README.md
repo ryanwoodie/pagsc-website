@@ -48,6 +48,8 @@ npm test           # schedule parser tests
 
 ## Status
 
+- **Live at https://www.pagsc.ca** since 3 October 2026. DNS is on Cloudflare (club account; records in `docs/cloudflare-pagsc.ca.zone`), mail to any @pagsc.ca address is forwarded to the club Gmail by Cloudflare Email Routing, and the site is served by GitHub Pages with HTTPS enforced.
+
 - Phases 0 and 1: done. Every page built, Lighthouse mobile 99 to 100 in all four categories.
 - Phase 2: endpoint deployed and wired. Welcome pack published for students, with an emailed-on-request form on Learn to fly.
 - Phase 3: "Next flying days", redirects, sitemap, robots, structured data and OG image done. Analytics waits on Q10. Check "Next flying days" against the live sheet after the first deploy.
