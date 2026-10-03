@@ -18,6 +18,7 @@ Decisions and assets needed from Ryan. Each notes what is assumed until it is an
 | Q12 | Fleet figures differ between published sources. Are the figures in `club-facts.yaml` the ones the club wants shown? And who may fly the Ka 6E and Phoebus C? | Figures as listed; no statement about who may fly which glider. | The club and the fleet |
 | Q13 | Is the Discovery Flight price on the Wave payment page $50, and does it offer the $40 group price? | $50, single flights only. | Phase 2 |
 | Q14 | Instructor names and photos for The club page. | Section omitted. | The club and the fleet |
+| Q15 | Short lines written during the build where no copy was supplied: the 404 page ("Page not found. This address is not on the site."), the form's failure message ("Your request did not go through. Email us … or call … and we will book you in."), and the "Next flying days" labels ("No update posted yet", "Instructor signed up", "From the club's Flying Schedule, <time>. Flying depends on the weather."). Approve or replace. | As written. | Launch |
 
 ## Shot list (Q5)
 
