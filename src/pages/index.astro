@@ -9,6 +9,10 @@ import Qa from '../components/Qa.astro';
 import BookButton from '../components/BookButton.astro';
 import NextFlyingDays from '../components/NextFlyingDays.astro';
 import GliderThermal from '../components/GliderThermal.astro';
+import HeroVideo from '../components/HeroVideo.astro';
+import Photo from '../components/Photo.astro';
+import guestPhoto from '../assets/photos/guest-front-seat.jpg';
+import wingPhoto from '../assets/photos/running-the-wing.webp';
 import { facts, df, fees, money, num, shortDuration, lessonBreakdown, listJoin, mapHref } from '../lib/facts';
 import { homeQuestions } from '../lib/faq';
 import { href } from '../lib/url';
@@ -32,6 +36,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
       <BookButton />
       <a class="more" href={href('/learn-to-fly/')}>or learn to fly</a>
     </div>
+    <HeroVideo slot="media" />
   </PageHero>
 
   <Section variant="plain" labelledby="facts-h">
@@ -113,6 +118,10 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
         { figure: String(facts.fleet.length), text: 'gliders: a two-seat trainer and two single-seaters' },
       ]}
     />
+    <div class="grid grid--2 photos">
+      <Photo src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" />
+      <Photo src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" />
+    </div>
     <p class="actions"><a class="more" href={href('/the-club/')}>The club and the fleet</a></p>
   </Section>
 
@@ -166,6 +175,9 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
     .split {
       grid-template-columns: 1.4fr 1fr;
     }
+  }
+  .photos {
+    margin-top: 24px;
   }
   .closing {
     background: var(--sky);

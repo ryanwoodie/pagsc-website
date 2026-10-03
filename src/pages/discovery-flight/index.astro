@@ -7,6 +7,8 @@ import Callout from '../../components/Callout.astro';
 import Button from '../../components/Button.astro';
 import Qa from '../../components/Qa.astro';
 import RequestForm from '../../components/RequestForm.astro';
+import Photo from '../../components/Photo.astro';
+import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
 import { facts, df, money, num, lcfirst } from '../../lib/facts';
 import { beforeFirstFlight } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
@@ -22,6 +24,7 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
   <PageHero label="Discovery Flight" title="Your first flight in a glider">
     <p class="lead">A winch launch to about {num(df.launch_height_feet)} feet in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
     <div class="actions"><Button href="#request">Request a date</Button></div>
+    <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 
   <Section variant="plain" labelledby="what-h">

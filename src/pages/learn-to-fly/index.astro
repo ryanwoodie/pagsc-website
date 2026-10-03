@@ -6,6 +6,8 @@ import Steps from '../../components/Steps.astro';
 import PathCards from '../../components/PathCards.astro';
 import Button from '../../components/Button.astro';
 import Tiles from '../../components/Tiles.astro';
+import Photo from '../../components/Photo.astro';
+import studentPhoto from '../../assets/photos/student-at-glider.jpg';
 import { facts, fees, money, lessonBreakdown } from '../../lib/facts';
 import { pplHours, scratchHours } from '../../lib/faq';
 import { href } from '../../lib/url';
@@ -28,6 +30,7 @@ const steps = t.steps.map((s) => ({
   <PageHero label="Learn to fly" title="Learning to fly">
     <p class="lead">Instruction is free. You pay for launches and glider time: about {money(lesson.cost)} for a typical lesson flight.</p>
     <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+    <Photo slot="media" src={studentPhoto} alt="A student leaning into the cockpit of a club glider on the grass at Birch Hills Airport" crop="4 / 3" position="60% center" eager />
   </PageHero>
 
   <Section variant="plain" labelledby="ages-h">

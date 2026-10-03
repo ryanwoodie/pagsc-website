@@ -5,6 +5,8 @@ import Section from '../../components/Section.astro';
 import GliderOutline from '../../components/GliderOutline.astro';
 import Callout from '../../components/Callout.astro';
 import BookButton from '../../components/BookButton.astro';
+import Photo from '../../components/Photo.astro';
+import wingPhoto from '../../assets/photos/running-the-wing.webp';
 import { facts, num, listJoin } from '../../lib/facts';
 
 const outlines = ['k7', 'ka6e', 'phoebus'] as const;
@@ -20,6 +22,7 @@ const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g
   <PageHero title="The club">
     <p class="lead">A friendly non-profit club, founded in {facts.club.founded}, flying from {facts.location.airfield}. We are affiliated with the {listJoin(facts.club.affiliations)}.</p>
     <div class="actions"><BookButton /></div>
+    <Photo slot="media" src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" eager />
   </PageHero>
 
   <Section variant="plain" labelledby="team-h">

@@ -11,7 +11,9 @@ const { label, title, big = false, drawing = true } = Astro.props;
       <h1>{title}</h1>
       <slot />
     </div>
-    {drawing && <div class="hero__art"><GliderThermal /></div>}
+    {Astro.slots.has('media')
+      ? <div class="hero__media"><slot name="media" /></div>
+      : drawing && <div class="hero__art"><GliderThermal /></div>}
   </div>
 </section>
 <style>
@@ -50,7 +52,13 @@ const { label, title, big = false, drawing = true } = Astro.props;
     max-width: 260px;
     margin: 20px 0 -12px auto;
   }
+  .hero__media {
+    margin-top: 24px;
+  }
   @media (min-width: 760px) {
+    .hero__media {
+      margin-top: 0;
+    }
     .hero {
       padding: 56px 0 64px;
     }

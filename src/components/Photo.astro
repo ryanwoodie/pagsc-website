@@ -1,0 +1,38 @@
+---
+// A real club photograph, served as AVIF/WebP with a JPEG fallback.
+import { Picture } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+interface Props {
+  src: ImageMetadata;
+  alt: string;
+  sizes?: string;
+  eager?: boolean;
+  /** CSS aspect-ratio to crop to, e.g. "4 / 3" */
+  crop?: string;
+  position?: string;
+  class?: string;
+}
+const { src, alt, sizes = '(min-width: 1120px) 560px, (min-width: 760px) 50vw, 100vw', eager = false, crop, position = 'center', class: cls } = Astro.props;
+const widths = [400, 640, 960, 1280].filter((w) => w <= src.width);
+if (!widths.includes(src.width) && src.width < 1280) widths.push(src.width);
+---
+<Picture
+  src={src}
+  alt={alt}
+  widths={widths}
+  sizes={sizes}
+  formats={['avif', 'webp']}
+  fallbackFormat="jpg"
+  loading={eager ? 'eager' : 'lazy'}
+  fetchpriority={eager ? 'high' : undefined}
+  class:list={['photo', cls]}
+  style={`${crop ? `aspect-ratio:${crop};` : ''}object-position:${position}`}
+/>
+<style>
+  .photo {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    background: var(--sky);
+  }
+</style>

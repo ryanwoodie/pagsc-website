@@ -1,0 +1,75 @@
+---
+// Ten muted seconds of a winch launch at Birch Hills. The poster frame shows first;
+// the clip plays only when the visitor has not asked for reduced motion, and can be paused.
+import { getImage } from 'astro:assets';
+import poster from '../assets/photos/winch-launch-poster.jpg';
+import { href } from '../lib/url';
+const still = await getImage({ src: poster, width: 960, format: 'webp' });
+---
+<figure class="hero-video">
+  <video
+    muted
+    loop
+    playsinline
+    preload="none"
+    poster={still.src}
+    width="960"
+    height="540"
+    aria-label="A club glider takes off on a winch launch from a grass field under a cloudy prairie sky"
+  >
+    <source src={href('/video/winch-launch.webm')} type="video/webm" />
+    <source src={href('/video/winch-launch.mp4')} type="video/mp4" />
+  </video>
+  <button class="hero-video__toggle" type="button" hidden aria-pressed="false">Pause</button>
+</figure>
+<script>
+  for (const fig of document.querySelectorAll<HTMLElement>('.hero-video')) {
+    const video = fig.querySelector('video')!;
+    const btn = fig.querySelector<HTMLButtonElement>('.hero-video__toggle')!;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sync = () => {
+      btn.textContent = video.paused ? 'Play' : 'Pause';
+      btn.setAttribute('aria-pressed', String(video.paused));
+    };
+    btn.addEventListener('click', () => (video.paused ? video.play() : video.pause()));
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    btn.hidden = false;
+    sync();
+    if (!reduce) {
+      video.preload = 'auto';
+      video.play().catch(sync);
+    }
+  }
+</script>
+<style>
+  .hero-video {
+    position: relative;
+    margin: 0;
+  }
+  .hero-video video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: var(--ink);
+  }
+  .hero-video__toggle {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    min-height: 44px;
+    min-width: 64px;
+    padding: 0 12px;
+    border: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+</style>
