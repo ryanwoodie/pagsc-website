@@ -119,7 +119,8 @@ Built at deploy time, not in the browser.
 
 - A scheduled GitHub Actions run (every few hours in season) fetches the public schedule as CSV and rebuilds the site.
 - Read only: the date row, the Status / Comments row, and whether the instructors block has any entry under a date.
-- Publish only: date, status text, and "instructor signed up" yes or no. Never publish names from the sheet.
+- The Status / Comments cell is free text that often names members, so it is reduced to a category (on, delayed, cancelled) and never published as written.
+- Publish only: date, status category, and "instructor signed up" yes or no. Never publish names from the sheet.
 - If the fetch or the parse fails, build without the section. A failed fetch must never fail the deploy.
 
 The sheet's layout is described in `reference/current-site-audit.md`.

@@ -1,6 +1,7 @@
 // Parses the public Flying Schedule CSV into the few fields the site may publish:
-// date, the Status / Comments text, and whether any instructor has signed up.
-// Names in the sheet are never read into the output.
+// date, a status category, and whether any instructor has signed up.
+// The Status / Comments cell is free text and often names members, so it is
+// reduced to a category and never copied. No name from the sheet reaches the output.
 // Sheet layout: reference/current-site-audit.md ("The Flying Schedule sheet").
 
 /** Minimal RFC 4180 CSV parser: quoted fields, doubled quotes, CRLF or LF. */
@@ -50,6 +51,19 @@ export function parseSheetDate(text) {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Reduce the free-text Status / Comments cell to one of a few fixed values.
+ * @returns {'on' | 'delayed' | 'cancelled' | 'unknown' | ''}
+ */
+export function classifyStatus(text) {
+  const t = (text ?? '').toLowerCase();
+  if (!t.trim()) return '';
+  if (/\b(cancel+ed|cancel+ing|cancel|scrubbed|no fly(ing)?|not flying|grounded|day is off|is off|off today)\b/.test(t)) return 'cancelled';
+  if (/\b(delay(ed)?|postpon\w*|later start|on hold|tbd|wait(ing)? (and|&) see)\b/.test(t)) return 'delayed';
+  if (/\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed)\b/.test(t)) return 'on';
+  return 'unknown';
+}
+
 const SIGNUP_LABEL = /sign-?\s*up\s+below/i;
 const INSTRUCTOR_LABEL = /instructors?\s+sign-?\s*up\s+below/i;
 
@@ -69,7 +83,7 @@ export function extractDays(rows, today, limit = 4) {
     const date = parseSheetDate(cell(0, c));
     if (!date || date < today) continue;
 
-    const status = statusRow >= 0 ? cell(statusRow, c).replace(/\s+/g, ' ').slice(0, 160) : '';
+    const status = statusRow >= 0 ? classifyStatus(cell(statusRow, c)) : '';
 
     let instructor = false;
     const labelRow = rows.findIndex((_, r) => INSTRUCTOR_LABEL.test(cell(r, c)));

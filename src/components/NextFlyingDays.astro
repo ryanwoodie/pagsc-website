@@ -3,7 +3,14 @@
 // (scripts/fetch-schedule.mjs). Renders nothing when there is no data.
 import Section from './Section.astro';
 
-type Day = { date: string; status: string; instructor: boolean };
+type Day = { date: string; status: 'on' | 'delayed' | 'cancelled' | 'unknown' | ''; instructor: boolean };
+const statusText: Record<Day['status'], string> = {
+  on: 'Flying is on',
+  delayed: 'Delayed',
+  cancelled: 'Cancelled',
+  unknown: 'Update posted: ask the club',
+  '': 'No update posted yet',
+};
 const files = import.meta.glob<{ default: { updated: string | null; days: Day[] } }>('../data/flying-days.json', {
   eager: true,
 });
@@ -29,12 +36,12 @@ const updated = data?.updated
       {days.map((d) => (
         <li class="day">
           <time class="day__date" datetime={d.date}>{label(d.date)}</time>
-          <span class="day__status">{d.status || 'No update posted yet'}</span>
+          <span class:list={['day__status', d.status && `day__status--${d.status}`]}>{statusText[d.status] ?? statusText['']}</span>
           {d.instructor && <span class="day__tag">Instructor signed up</span>}
         </li>
       ))}
     </ul>
-    {updated && <p class="days__note">From the club's Flying Schedule, {updated}. Flying depends on the weather.</p>}
+    {updated && <p class="days__note">From the club's Flying Schedule, {updated.replace(/\.$/, '')}. Flying depends on the weather.</p>}
   </Section>
 )}
 <style>
@@ -58,6 +65,12 @@ const updated = data?.updated
     font-size: 1.6rem;
     font-weight: 700;
     line-height: 1.1;
+  }
+  .day__status {
+    font-weight: 600;
+  }
+  .day__status--cancelled {
+    color: var(--orange-dark);
   }
   .day__tag {
     justify-self: start;
