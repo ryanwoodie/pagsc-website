@@ -3,6 +3,8 @@ import Base from '../../../layouts/Base.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
+import Photo from '../../../components/Photo.astro';
+import youthPhoto from '../../../assets/photos/youth-student-and-instructor.jpg';
 import { facts, fees, money, listJoin } from '../../../lib/facts';
 import { href } from '../../../lib/url';
 
@@ -18,6 +20,7 @@ const ya = fees.membership.youth_air_cadet;
     <p class="lead"><span class="big-figure">{money(y.bursary_total)}</span> toward {y.bursary_covers.toLowerCase()}: a {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club.</p>
     <p>With the {money(y.membership_price)} youth membership, a glider licence can cost very little. Ask us and we'll help you apply.</p>
     <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+    <Photo slot="media" src={youthPhoto} alt="A young student sits in the front seat of the two-seat glider while a club member stands beside the cockpit" crop="4 / 3" position="center 60%" eager />
   </PageHero>
 
   <Section variant="plain" labelledby="parents-h">

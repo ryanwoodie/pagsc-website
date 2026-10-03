@@ -5,6 +5,8 @@ import Section from '../../components/Section.astro';
 import Ladder from '../../components/Ladder.astro';
 import Tiles from '../../components/Tiles.astro';
 import BookButton from '../../components/BookButton.astro';
+import Photo from '../../components/Photo.astro';
+import flightPhoto from '../../assets/photos/glider-in-flight.jpg';
 import { facts, num } from '../../lib/facts';
 
 const a = facts.achievements;
@@ -22,6 +24,7 @@ const rungs = [
   <PageHero label="Why gliding?" title="A sport you never finish">
     <p class="lead">Gliding is to powered flying what sailing is to motorboating. With an engine, the flying serves the trip. In a glider, the flying is the game.</p>
     <div class="actions"><BookButton /></div>
+    <Photo slot="media" src={flightPhoto} alt="A club glider flies low over the field against towering white cumulus clouds" crop="4 / 3" position="65% center" eager />
   </PageHero>
 
   <Section variant="plain" labelledby="game-h">

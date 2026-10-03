@@ -3,12 +3,12 @@
 // (scripts/fetch-schedule.mjs). Renders nothing when there is no data.
 import Section from './Section.astro';
 
-type Day = { date: string; status: 'on' | 'delayed' | 'cancelled' | 'unknown' | ''; instructor: boolean };
+type Day = { date: string; status: 'on' | 'delayed' | 'cancelled' | 'unknown' | ''; note?: string; instructor: boolean };
 const statusText: Record<Day['status'], string> = {
   on: 'Flying is on',
   delayed: 'Delayed',
   cancelled: 'Cancelled',
-  unknown: 'Update posted: ask the club',
+  unknown: 'Update posted',
   '': 'No update posted yet',
 };
 const files = import.meta.glob<{ default: { updated: string | null; days: Day[] } }>('../data/flying-days.json', {
@@ -37,6 +37,7 @@ const updated = data?.updated
         <li class="day">
           <time class="day__date" datetime={d.date}>{label(d.date)}</time>
           <span class:list={['day__status', d.status && `day__status--${d.status}`]}>{statusText[d.status] ?? statusText['']}</span>
+          {d.note && <span class="day__note">“{d.note}”</span>}
           {d.instructor && <span class="day__tag">Instructor signed up</span>}
         </li>
       ))}
@@ -68,6 +69,11 @@ const updated = data?.updated
   }
   .day__status {
     font-weight: 600;
+  }
+  .day__note {
+    color: var(--grey);
+    font-size: 0.95rem;
+    line-height: 1.35;
   }
   .day__status--cancelled {
     color: var(--orange-dark);

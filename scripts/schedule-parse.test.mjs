@@ -30,12 +30,13 @@ test('parses sheet dates', () => {
 test('extracts upcoming weekend days, status and instructor flag only', () => {
   const days = extractDays(parseCsv(csv), '2026-10-03');
   assert.deepEqual(days, [
-    { date: '2026-10-03', status: 'on', instructor: true },
-    { date: '2026-10-04', status: 'cancelled', instructor: false },
-    { date: '2026-10-10', status: '', instructor: false },
+    { date: '2026-10-03', status: 'on', note: 'Day is a go. Member E and Member F arriving at 10:15am', instructor: true },
+    { date: '2026-10-04', status: 'cancelled', note: 'Cancelled: wind', instructor: false },
+    { date: '2026-10-10', status: '', note: '', instructor: false },
   ]);
   const json = JSON.stringify(days);
-  for (const name of ['Guest A', 'Member B', 'Member C', 'Instructor D', 'Member E', 'Member F', '10:15']) {
+  // Sign-up names never appear; the status text is published as written.
+  for (const name of ['Guest A', 'Member B', 'Member C', 'Instructor D']) {
     assert.ok(!json.includes(name), name);
   }
 });

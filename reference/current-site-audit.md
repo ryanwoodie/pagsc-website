@@ -54,4 +54,4 @@ Public Google Sheet, first tab. One column per day, running left to right from t
 
 Row positions below row 4 are not fixed; find blocks by their label text, not by row number.
 
-For "Next flying days", read only row 1, row 3, and whether any cell under the instructors label is filled for that date. Names in the sheet are members' and guests' and must never be published or stored in this repository.
+For "Next flying days", read only row 1, row 3, and whether any cell under the instructors label is filled for that date. Names in the sign-up blocks are members' and guests' and must never be published or stored in this repository. The Status / Comments text may be shown as written (Ryan, 3 October 2026), but is not committed here.

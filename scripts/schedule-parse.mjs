@@ -1,7 +1,8 @@
-// Parses the public Flying Schedule CSV into the few fields the site may publish:
-// date, a status category, and whether any instructor has signed up.
-// The Status / Comments cell is free text and often names members, so it is
-// reduced to a category and never copied. No name from the sheet reaches the output.
+// Parses the public Flying Schedule CSV into the few fields the site publishes:
+// date, the Status / Comments text with a category for it, and whether any
+// instructor has signed up. Sign-up names are never read into the output.
+// (Showing the status text as written was Ryan's decision on 2026-10-03: the
+// sheet is public. It is still never committed to this repository.)
 // Sheet layout: reference/current-site-audit.md ("The Flying Schedule sheet").
 
 /** Minimal RFC 4180 CSV parser: quoted fields, doubled quotes, CRLF or LF. */
@@ -83,7 +84,8 @@ export function extractDays(rows, today, limit = 4) {
     const date = parseSheetDate(cell(0, c));
     if (!date || date < today) continue;
 
-    const status = statusRow >= 0 ? classifyStatus(cell(statusRow, c)) : '';
+    const note = statusRow >= 0 ? cell(statusRow, c).replace(/\s+/g, ' ').slice(0, 160) : '';
+    const status = classifyStatus(note);
 
     let instructor = false;
     const labelRow = rows.findIndex((_, r) => INSTRUCTOR_LABEL.test(cell(r, c)));
@@ -100,7 +102,7 @@ export function extractDays(rows, today, limit = 4) {
 
     const weekday = new Date(date + 'T12:00:00Z').getUTCDay();
     const weekend = weekday === 0 || weekday === 6;
-    if (weekend || status) days.push({ date, status, instructor });
+    if (weekend || status) days.push({ date, status, note, instructor });
   }
   days.sort((a, b) => a.date.localeCompare(b.date));
   return days.slice(0, limit);

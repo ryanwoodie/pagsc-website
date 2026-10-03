@@ -9,6 +9,7 @@ import Qa from '../../components/Qa.astro';
 import RequestForm from '../../components/RequestForm.astro';
 import Photo from '../../components/Photo.astro';
 import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
+import cockpitPhoto from '../../assets/photos/cockpit-view.jpg';
 import { facts, df, money, num, lcfirst } from '../../lib/facts';
 import { beforeFirstFlight } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
@@ -32,6 +33,7 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
       <div>
         <h2 id="what-h">What happens</h2>
         <p class="lead">The winch pulls the glider into the air in seconds. At about {num(df.launch_height_feet)} feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
+        <Photo class="cockpit" src={cockpitPhoto} alt="View from the front seat in flight: a student in a headset looks out over green prairie fields and the airfield below" crop="4 / 5" position="center 40%" sizes="(min-width: 760px) 45vw, 100vw" />
       </div>
       <div>
         <h2 id="glance-h">At a glance</h2>
@@ -100,6 +102,10 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
     font-weight: 700;
     color: var(--orange-dark);
     white-space: nowrap;
+  }
+  :global(.cockpit) {
+    margin-top: 8px;
+    max-width: 420px;
   }
   .day-list {
     padding-left: 1.3em;
