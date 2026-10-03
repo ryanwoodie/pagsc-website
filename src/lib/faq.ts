@@ -1,5 +1,5 @@
 // Questions and answers from content/pages/faq.md, with every figure bound to club-facts.yaml.
-import { facts, df, fees, money, lcfirst, lessonBreakdown, listJoin, launchHeight } from './facts';
+import { facts, df, fees, money, lcfirst, lessonBreakdown, listJoin, launchHeight, soloLine } from './facts';
 
 const t = facts.training;
 const groundSchool = t.steps[2]!;
@@ -72,6 +72,11 @@ export const learning: QA[] = [
     id: 'lesson-cost',
     q: 'What does a lesson cost?',
     a: `About ${money(fees.typical_lesson_flight.cost)} for a typical ${fees.typical_lesson_flight.minutes}-minute instructional flight: ${lessonBreakdown}. Instruction is free.`,
+  },
+  {
+    id: 'flights-to-solo',
+    q: 'How long does it take to go solo?',
+    a: `${soloLine} The licence itself needs ${row('Solo flights').from_scratch} solo flights.`,
   },
   {
     id: 'medical',

@@ -24,6 +24,8 @@ Membership is $150 a year, $75 for juniors and $15 for youth and Air Cadets.
 
 ## Your path to a Glider Pilot Licence
 
+Most students go solo after around 40 instructional flights. With previous aviation experience or a pilot licence, it can be as few as 10 to 20.
+
 ### 1. Flight lessons
 Dual lessons in the air with an instructor, at your own pace. Book each one on the schedule.
 
@@ -37,7 +39,11 @@ Most students use a Category 4 medical, a self-declaration with no doctor's visi
 Once your instructor is satisfied you are ready.
 
 ### 5. Licence, from age 16
-Solo practice, then a flight test. You need at least 6 hours of flight time, including 1 hour dual and 2 hours solo.
+Solo practice, then a flight test. You need at least 6 hours of flight time, including 1 hour dual, 2 hours solo and 20 solo flights.
+
+### What the licence requires
+
+The requirements table from scratch and with PPL(A) credit (same as Power pilots).
 
 ## Who can learn
 

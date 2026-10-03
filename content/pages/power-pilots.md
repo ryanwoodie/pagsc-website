@@ -20,11 +20,14 @@ With a PPL(A) you skip ground school and the written exam, and need 3 flight hou
 | Total flight time | 6 hours | 3 hours |
 | Dual instruction | 1 hour | 1 hour |
 | Solo flight time | 2 hours | 2 hours |
+| Solo flights | 20 | 20 |
 | Skill assessment | Flight demo and recommendation | Flight demo and recommendation |
 
 ## What you will be learning
 
 Winch launches, energy management and soaring: staying up and going places without an engine.
+
+Most students go solo after around 40 instructional flights. With previous aviation experience or a pilot licence, it can be as few as 10 to 20.
 
 ## It works the other way too
 

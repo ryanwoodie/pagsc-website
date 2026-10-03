@@ -1,0 +1,15 @@
+---
+// Glider Pilot Licence requirements, from scratch and with PPL(A) credit (club-facts.yaml).
+import { facts } from '../lib/facts';
+const rows = facts.power_pilots.table;
+---
+<div class="table-scroll">
+  <table class="table">
+    <thead><tr><th scope="col">Requirement</th><th scope="col">From scratch</th><th scope="col">With PPL(A) credit</th></tr></thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr><th scope="row">{r.requirement}</th><td>{r.from_scratch}</td><td>{r.with_ppl === 'Waived' ? <strong>Waived</strong> : r.with_ppl}</td></tr>
+      ))}
+    </tbody>
+  </table>
+</div>

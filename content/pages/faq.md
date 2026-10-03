@@ -43,6 +43,9 @@ There is no minimum age to start training. You can fly solo at 14 and hold a ful
 ### What does a lesson cost?
 About $10 for a typical 10-minute instructional flight: a $5 launch plus $5 of glider time. Instruction is free.
 
+### How long does it take to go solo?
+Most students go solo after around 40 instructional flights. With previous aviation experience or a pilot licence, it can be as few as 10 to 20. The licence itself needs 20 solo flights.
+
 ### Do I need a medical?
 Most students use a Category 4 medical, a self-declaration with no doctor's visit. Do it early in training. A Category 1 or 3 medical also counts.
 

@@ -35,4 +35,6 @@ Air Cadets who earn their Glider Pilot Licence here can also do a Soaring Pilot 
 
 The same five steps as every student: flight lessons, medical, ground school and the GLIDE exam, first solo, licence.
 
+Most students go solo after around 40 instructional flights. With previous aviation experience or a pilot licence, it can be as few as 10 to 20.
+
 [See the path to a licence]

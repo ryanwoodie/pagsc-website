@@ -3,12 +3,12 @@ import Base from '../../../layouts/Base.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
-import { facts, fees, money } from '../../../lib/facts';
+import RequirementsTable from '../../../components/RequirementsTable.astro';
+import { facts, fees, money, soloLine } from '../../../lib/facts';
 import { pplHours, scratchHours } from '../../../lib/faq';
 import { href } from '../../../lib/url';
 
-const p = facts.power_pilots;
-const c = p.credit_back;
+const c = facts.power_pilots.credit_back;
 ---
 <Base
   title="Glider licence for power pilots"
@@ -21,16 +21,7 @@ const c = p.credit_back;
 
   <Section variant="plain" labelledby="need-h">
     <h2 id="need-h">What you need</h2>
-    <div class="table-scroll">
-      <table class="table">
-        <thead><tr><th scope="col">Requirement</th><th scope="col">From scratch</th><th scope="col">With PPL(A) credit</th></tr></thead>
-        <tbody>
-          {p.table.map((r) => (
-            <tr><th scope="row">{r.requirement}</th><td>{r.from_scratch}</td><td>{r.with_ppl === 'Waived' ? <strong>Waived</strong> : r.with_ppl}</td></tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <RequirementsTable />
   </Section>
 
   <Section labelledby="learn-h">
@@ -38,6 +29,7 @@ const c = p.credit_back;
       <div>
         <h2 id="learn-h">What you will be learning</h2>
         <p>Winch launches, energy management and soaring: staying up and going places without an engine.</p>
+        <p>{soloLine}</p>
       </div>
       <div>
         <h2 id="other-h">It works the other way too</h2>

@@ -78,6 +78,8 @@ const schema = z
       start_age: z.union([z.literal('none'), z.number()]),
       solo_age: z.number().int(),
       licence_age: z.number().int(),
+      flights_to_solo: z.string(),
+      flights_to_solo_experienced: z.string(),
       who_can_learn: z.array(z.string()),
       steps: z.array(z.strictObject({ title: z.string(), text: z.string() })).length(5),
       come_regularly: z.string(),
@@ -180,6 +182,9 @@ export const lessonBreakdown = `a ${money(fees.winch_launch)} launch plus ${mone
 export function shortDuration(s: string): string {
   return s.replace(/\bminutes?\b/, 'min');
 }
+
+/** "Most students go solo after around 40 instructional flights; …" */
+export const soloLine = `Most students go solo after ${facts.training.flights_to_solo} instructional flights. With previous aviation experience or a pilot licence, it can be as few as ${facts.training.flights_to_solo_experienced}.`;
 
 /** "1,500 to 2,000 feet" */
 export const launchHeight = `${num(df.launch_height_feet_min)} to ${num(df.launch_height_feet)} feet`;

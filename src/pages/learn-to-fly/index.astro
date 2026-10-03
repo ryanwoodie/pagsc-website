@@ -8,8 +8,9 @@ import Button from '../../components/Button.astro';
 import Tiles from '../../components/Tiles.astro';
 import Photo from '../../components/Photo.astro';
 import PackForm from '../../components/PackForm.astro';
+import RequirementsTable from '../../components/RequirementsTable.astro';
 import studentPhoto from '../../assets/photos/student-on-runway.jpg';
-import { facts, fees, money, lessonBreakdown } from '../../lib/facts';
+import { facts, fees, money, lessonBreakdown, soloLine } from '../../lib/facts';
 import { pplHours, scratchHours } from '../../lib/faq';
 import { href } from '../../lib/url';
 
@@ -54,7 +55,11 @@ const steps = t.steps.map((s) => ({
 
   <Section labelledby="path-h">
     <h2 id="path-h">Your path to a Glider Pilot Licence</h2>
+    <p class="lead">{soloLine}</p>
     <Steps items={steps} />
+    <h3 id="req-h" class="req-h">What the licence requires</h3>
+    <RequirementsTable />
+    <p class="small-note">A private pilot licence (aeroplane) waives ground school and the written exam, and cuts the flight time you need. <a href={href('/learn-to-fly/power-pilots/')}>Power pilots</a></p>
   </Section>
 
   <Section labelledby="who-h">
@@ -108,3 +113,8 @@ const steps = t.steps.map((s) => ({
     </div>
   </Section>
 </Base>
+<style>
+  .req-h {
+    margin-top: 32px;
+  }
+</style>

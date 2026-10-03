@@ -5,7 +5,7 @@ import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
 import Photo from '../../../components/Photo.astro';
 import youthPhoto from '../../../assets/photos/youth-student-and-instructor.jpg';
-import { facts, fees, money, listJoin } from '../../../lib/facts';
+import { facts, fees, money, listJoin, soloLine } from '../../../lib/facts';
 import { href } from '../../../lib/url';
 
 const y = facts.youth;
@@ -53,6 +53,7 @@ const ya = fees.membership.youth_air_cadet;
   <Section labelledby="path-h">
     <h2 id="path-h">The path</h2>
     <p>The same five steps as every student: {listJoin(t.steps.map((s) => s.title.replace(/[:,].*$/, '').toLowerCase()).map((s) => s.replace('glide', 'GLIDE')))}.</p>
+    <p>{soloLine}</p>
     <p><a class="more" href={href('/learn-to-fly/#path-h')}>See the path to a licence</a></p>
   </Section>
 </Base>
