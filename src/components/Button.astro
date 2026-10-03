@@ -1,0 +1,16 @@
+---
+import { href as h } from '../lib/url';
+interface Props {
+  href: string;
+  variant?: 'primary' | 'ghost';
+  small?: boolean;
+  external?: boolean;
+  class?: string;
+}
+const { href, variant = 'primary', small = false, external = false, class: cls } = Astro.props;
+---
+<a
+  href={h(href)}
+  class:list={['btn', variant === 'ghost' && 'btn--ghost', small && 'btn--small', cls]}
+  rel={external ? 'noopener' : undefined}
+><slot /></a>

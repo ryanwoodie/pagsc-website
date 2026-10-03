@@ -1,0 +1,229 @@
+---
+import { facts } from '../lib/facts';
+import { href } from '../lib/url';
+import GliderMark from './GliderMark.astro';
+import BookButton from './BookButton.astro';
+
+const nav = [
+  { label: 'Fly with us', path: '/discovery-flight/' },
+  { label: 'Learn to fly', path: '/learn-to-fly/' },
+  { label: 'Why gliding', path: '/why-gliding/' },
+  { label: 'Costs', path: '/costs/' },
+  { label: 'Find us', path: '/find-us/' },
+];
+const here = Astro.url.pathname;
+const isCurrent = (path: string) => here === href(path) || (path !== '/' && here.startsWith(href(path)));
+---
+<header class="site-header">
+  <div class="wrap site-header__bar">
+    <a class="brand" href={href('/')}>
+      <GliderMark />
+      <span class="brand__name">
+        <span class="brand__short">{facts.club.short_name}</span>
+        <span class="brand__long">{facts.club.name}</span>
+      </span>
+    </a>
+
+    <nav class="nav-wide" aria-label="Main">
+      <ul>
+        {nav.map((n) => (
+          <li><a href={href(n.path)} aria-current={isCurrent(n.path) ? 'page' : undefined}>{n.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="site-header__actions">
+      <BookButton small class="book-short" label="Book a flight" />
+      <BookButton small class="book-long" />
+      <details class="nav-menu">
+        <summary>
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 5h18M2 11h18M2 17h18" /></svg>
+          <span>Menu</span>
+        </summary>
+        <nav aria-label="Main (menu)">
+          <ul>
+            {nav.map((n) => (
+              <li><a href={href(n.path)} aria-current={isCurrent(n.path) ? 'page' : undefined}>{n.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+  }
+  .site-header__bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--header-h);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink);
+    text-decoration: none;
+    margin-right: auto;
+    min-height: 44px;
+  }
+  .brand svg {
+    width: 42px;
+    height: auto;
+  }
+  .brand__short {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .brand__long {
+    display: none;
+  }
+  .site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .site-header__actions :global(.book-long) {
+    display: none;
+  }
+
+  .nav-wide {
+    display: none;
+  }
+  .nav-wide ul,
+  .nav-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .nav-wide a,
+  .nav-menu a {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-wide a[aria-current='page'],
+  .nav-menu a[aria-current='page'] {
+    color: var(--orange-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.3em;
+  }
+  .nav-wide a:hover,
+  .nav-menu a:hover {
+    color: var(--orange-dark);
+  }
+
+  .nav-menu summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 8px;
+    border: 2px solid var(--ink);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .nav-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .nav-menu summary span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .nav-menu[open] summary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .nav-menu nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--paper);
+    border-bottom: 2px solid var(--ink);
+    padding: 8px var(--gutter) 16px;
+  }
+  .nav-menu li a {
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  @media (min-width: 420px) {
+    .nav-menu summary span {
+      position: static;
+      width: auto;
+      height: auto;
+      clip: auto;
+    }
+  }
+  @media (min-width: 560px) {
+    .site-header__actions :global(.book-short) {
+      display: none;
+    }
+    .site-header__actions :global(.book-long) {
+      display: inline-flex;
+    }
+  }
+  @media (min-width: 1040px) {
+    :root {
+      --header-h: 72px;
+    }
+    .nav-menu {
+      display: none;
+    }
+    .nav-wide {
+      display: block;
+    }
+    .nav-wide ul {
+      display: flex;
+      gap: 22px;
+    }
+    .nav-wide a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+    }
+    .site-header__bar {
+      gap: 28px;
+    }
+  }
+  @media (min-width: 1240px) {
+    .brand__long {
+      display: block;
+      font-size: 0.8rem;
+      line-height: 1.1;
+      color: var(--grey);
+      max-width: 13em;
+    }
+    .brand__name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  }
+</style>

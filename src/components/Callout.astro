@@ -1,0 +1,8 @@
+---
+interface Props { lead?: string; tone?: 'orange' | 'sky' }
+const { lead, tone = 'orange' } = Astro.props;
+---
+<div class:list={['callout', tone === 'sky' && 'callout--sky']}>
+  {lead && <span class="callout__lead">{lead}</span>}
+  <slot />
+</div>

@@ -1,0 +1,43 @@
+---
+// Planform drawings from page 8 of the welcome pack, all at one scale.
+interface Props { type: 'k7' | 'ka6e' | 'phoebus' }
+const { type } = Astro.props;
+---
+<svg class="outline" viewBox="-90 -4 180 88" width="224" height="110" aria-hidden="true" focusable="false">
+  <g fill="var(--ink)">
+    {type === 'k7' && (
+      <>
+        <path d="M0 0 C2.6 2 3.4 9 3.4 16 L3.4 30 L1.2 76 L0 81.5 L-1.2 76 L-3.4 30 L-3.4 16 C-3.4 9 -2.6 2 0 0 Z" />
+        <polygon points="3,24 80,17 80,23.5 3,39" />
+        <polygon points="-3,24 -80,17 -80,23.5 -3,39" />
+        <polygon points="0.8,69 16,71 16,75.5 0.8,77" />
+        <polygon points="-0.8,69 -16,71 -16,75.5 -0.8,77" />
+      </>
+    )}
+    {type === 'ka6e' && (
+      <>
+        <path d="M0 0 C2.2 2 2.9 8 2.9 14 L2.9 26 L1 61 L0 66.6 L-1 61 L-2.9 26 L-2.9 14 C-2.9 8 -2.2 2 0 0 Z" />
+        <polygon points="2.6,20 75,22.5 75,27 2.6,31.5" />
+        <polygon points="-2.6,20 -75,22.5 -75,27 -2.6,31.5" />
+        <polygon points="0.7,56 13.5,57.5 13.5,61 0.7,62.5" />
+        <polygon points="-0.7,56 -13.5,57.5 -13.5,61 -0.7,62.5" />
+      </>
+    )}
+    {type === 'phoebus' && (
+      <>
+        <path d="M0 0 C2.3 2 3 8 3 15 L3 28 L0.9 64 L0 69.8 L-0.9 64 L-3 28 L-3 15 C-3 8 -2.3 2 0 0 Z" />
+        <polygon points="2.7,22 85,25 85,28.8 2.7,32.5" />
+        <polygon points="-2.7,22 -85,25 -85,28.8 -2.7,32.5" />
+        <polygon points="0,61.5 15,63 15,66 0,67" />
+        <polygon points="0,61.5 -15,63 -15,66 0,67" />
+      </>
+    )}
+  </g>
+</svg>
+<style>
+  .outline {
+    width: 100%;
+    max-width: 224px;
+    height: auto;
+  }
+</style>

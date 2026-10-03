@@ -1,0 +1,12 @@
+---
+interface Props {
+  id?: string;
+  variant?: 'ruled' | 'plain' | 'sky';
+  labelledby?: string;
+  class?: string;
+}
+const { id, variant = 'ruled', labelledby, class: cls } = Astro.props;
+---
+<section id={id} class:list={['section', variant !== 'ruled' && `section--${variant}`, cls]} aria-labelledby={labelledby}>
+  <div class="wrap"><slot /></div>
+</section>

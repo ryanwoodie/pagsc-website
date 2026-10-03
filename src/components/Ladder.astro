@@ -1,0 +1,89 @@
+---
+// "Always a next rung": six steps rising left to right (welcome pack page 5).
+// On a phone it becomes a vertical list in the same order.
+interface Props { rungs: { name: string; detail: string }[] }
+const { rungs } = Astro.props;
+---
+<ol class="ladder">
+  {rungs.map((r, i) => (
+    <li class="ladder__rung" style={`--i:${i}`}>
+      <span class="ladder__n" aria-hidden="true">{i + 1}</span>
+      <span class="ladder__text">
+        <strong>{r.name}</strong>
+        <span>{r.detail}</span>
+      </span>
+      <span class="ladder__step" aria-hidden="true"></span>
+    </li>
+  ))}
+</ol>
+<style>
+  .ladder {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .ladder__rung {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--sky);
+    border-top: 3px solid var(--ink);
+    /* each rung steps further right, so the list still reads as a climb */
+    margin-left: calc(var(--i) * 4%);
+    max-width: none;
+  }
+  .ladder__n {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--orange);
+  }
+  .ladder__text strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .ladder__text span {
+    display: block;
+    color: var(--grey);
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+  .ladder__step {
+    display: none;
+  }
+
+  @media (min-width: 760px) {
+    .ladder {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      align-items: end;
+      gap: 8px;
+    }
+    .ladder__rung {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: 0;
+    }
+    .ladder__n {
+      font-size: 1.6rem;
+    }
+    .ladder__step {
+      display: block;
+      height: calc(28px + var(--i) * 26px);
+      background: var(--sky);
+      border-top: 3px solid var(--ink);
+    }
+  }
+</style>

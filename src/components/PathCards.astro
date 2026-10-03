@@ -1,0 +1,16 @@
+---
+import { href as h } from '../lib/url';
+interface Props { items: { title: string; text: string; href: string }[]; cols?: 2 | 4 }
+const { items, cols = 4 } = Astro.props;
+---
+<ul class:list={['cards grid', `grid--${cols}`]}>
+  {items.map((c) => (
+    <li class="card">
+      <h3><a href={h(c.href)}>{c.title}</a></h3>
+      <p>{c.text}</p>
+      <svg class="card__arrow" viewBox="0 0 28 28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square">
+        <path d="M3 14h20M15 6l8 8-8 8" />
+      </svg>
+    </li>
+  ))}
+</ul>

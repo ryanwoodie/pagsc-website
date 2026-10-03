@@ -1,0 +1,9 @@
+---
+// The site's one primary action. On the Discovery Flight page it jumps to the form.
+import Button from './Button.astro';
+interface Props { label?: string; small?: boolean; class?: string }
+const { label = 'Book a Discovery Flight', small, class: cls } = Astro.props;
+const onFlightPage = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '') === '/discovery-flight/';
+const target = onFlightPage ? '#request' : '/discovery-flight/';
+---
+<Button href={target} small={small} class={cls}>{label}</Button>

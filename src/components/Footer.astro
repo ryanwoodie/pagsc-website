@@ -1,0 +1,118 @@
+---
+import { facts, telHref, facebookHandle, listJoin } from '../lib/facts';
+import { href } from '../lib/url';
+import BookButton from './BookButton.astro';
+
+const year = new Date().getFullYear();
+const more = [
+  { label: 'Discovery Flight', path: '/discovery-flight/' },
+  { label: 'Learn to fly', path: '/learn-to-fly/' },
+  { label: 'Youth and cadets', path: '/learn-to-fly/youth-and-cadets/' },
+  { label: 'Power pilots', path: '/learn-to-fly/power-pilots/' },
+  { label: 'Why gliding', path: '/why-gliding/' },
+  { label: 'Costs', path: '/costs/' },
+  { label: 'The club and the fleet', path: '/the-club/' },
+  { label: 'Questions', path: '/faq/' },
+  { label: 'Find us', path: '/find-us/' },
+  { label: 'Members', path: '/members/' },
+];
+---
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="site-footer__cta">
+      <p class="site-footer__line">{facts.club.name}</p>
+      <BookButton />
+    </div>
+    <div class="site-footer__cols">
+      <div>
+        <p class="label">Get in touch</p>
+        <ul class="plain">
+          <li><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>
+          <li><a href={telHref}>{facts.contact.phone}</a></li>
+          <li><a href={facts.contact.facebook} rel="noopener">Facebook: {facebookHandle}</a></li>
+        </ul>
+        <p>{facts.location.airfield}, {facts.location.town}</p>
+      </div>
+      <nav aria-label="Site">
+        <p class="label">Pages</p>
+        <ul class="plain cols">
+          {more.map((m) => <li><a href={href(m.path)}>{m.label}</a></li>)}
+        </ul>
+      </nav>
+    </div>
+    <p class="site-footer__small">
+      {facts.club.name}. {facts.club.status}, founded {facts.club.founded}. Affiliated with {listJoin(facts.club.affiliations)}. © {year}
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 48px 0 32px;
+  }
+  .site-footer a {
+    color: var(--paper);
+  }
+  .site-footer a:hover {
+    color: var(--sky);
+  }
+  .site-footer :global(.btn) {
+    color: var(--paper);
+  }
+  .site-footer .label {
+    color: var(--sky-line);
+  }
+  .site-footer__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 24px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--grey);
+  }
+  .site-footer__line {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    font-weight: 700;
+    line-height: 1.05;
+    max-width: 16em;
+  }
+  .site-footer__cols {
+    display: grid;
+    gap: 32px;
+    padding: 32px 0;
+  }
+  .plain {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .plain li a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .cols {
+    columns: 2;
+    column-gap: 24px;
+  }
+  .site-footer__small {
+    margin: 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--grey);
+    font-size: 0.9rem;
+    color: #c9d6e0;
+  }
+  @media (min-width: 760px) {
+    .site-footer__cols {
+      grid-template-columns: 1fr 1.4fr;
+    }
+    .cols {
+      columns: 3;
+    }
+  }
+</style>

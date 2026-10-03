@@ -1,0 +1,42 @@
+---
+// The welcome pack's cover drawing: a glider circling in a thermal.
+// Stands in for the hero photograph until real ones are supplied (Q5).
+interface Props { class?: string }
+const { class: cls } = Astro.props;
+---
+<svg class:list={['thermal', cls]} viewBox="0 0 360 300" width="360" height="300" aria-hidden="true" focusable="false">
+  <g fill="none" stroke="var(--sky-line)" stroke-width="1.5" stroke-dasharray="3 7">
+    <circle cx="200" cy="150" r="56" />
+    <circle cx="200" cy="150" r="98" />
+    <circle cx="200" cy="150" r="140" />
+  </g>
+  <g class="thermal__orbit">
+    <g transform="translate(212 146) rotate(62)" fill="var(--ink)">
+      <path d="M0 -70 C6 -66 7 -52 7 -40 L3 60 L0 72 L-3 60 L-7 -40 C-7 -52 -6 -66 0 -70 Z" />
+      <polygon points="5,-36 150,-28 152,-25 150,-22 5,-16" />
+      <polygon points="-5,-36 -150,-28 -152,-25 -150,-22 -5,-16" />
+      <polygon points="2,58 34,62 34,66 2,68" />
+      <polygon points="-2,58 -34,62 -34,66 -2,68" />
+    </g>
+  </g>
+</svg>
+<style>
+  .thermal {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .thermal__orbit {
+    transform-origin: 200px 150px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .thermal__orbit {
+      animation: drift 90s linear infinite;
+    }
+  }
+  @keyframes drift {
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+</style>

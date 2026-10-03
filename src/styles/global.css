@@ -1,0 +1,647 @@
+/* PAGSC design tokens and base styles. See docs/03-design.md. */
+
+:root {
+  --ink: #0e2233;
+  --sky: #e1eef7;
+  --sky-line: #8fb9d8;
+  --blue: #1f5f8f;
+  --orange: #c2460e;
+  --orange-dark: #a93c0b;
+  --orange-tint: #fcebe1;
+  --grey: #3b4c5a;
+  --rule: #a9bbc8;
+  --paper: #ffffff;
+  --cell: #f2f6f9;
+  --cell-hi: #f7d9c6;
+
+  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', sans-serif;
+  --font-body: 'Barlow', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --wrap: 1120px;
+  --gutter: 20px;
+  --header-h: 56px;
+  --space: clamp(40px, 7vw, 72px);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 16px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 960px) {
+  body {
+    font-size: 18px;
+  }
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: var(--blue);
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.05;
+  margin: 0 0 0.4em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 9vw, 3.75rem);
+  line-height: 1.02;
+}
+
+h2 {
+  font-size: clamp(1.9rem, 6vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.4rem, 4.5vw, 1.65rem);
+  line-height: 1.15;
+}
+
+p,
+ul,
+ol {
+  margin: 0 0 1em;
+}
+
+p,
+li {
+  max-width: 68ch;
+}
+
+strong {
+  font-weight: 600;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: 100;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+/* ---------- Layout ---------- */
+
+.wrap {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+.section {
+  padding-bottom: var(--space);
+}
+
+.section > .wrap {
+  border-top: 2px solid var(--ink);
+  padding-top: var(--space);
+}
+
+.section--plain > .wrap {
+  border-top: 0;
+}
+
+.section--sky {
+  background: var(--sky);
+  padding-top: var(--space);
+}
+
+.section--sky > .wrap {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.lead {
+  font-size: 1.15em;
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 34em;
+}
+
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 640px) {
+  .grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px;
+  }
+  .grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stack > * + * {
+  margin-top: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-top: 24px;
+}
+
+.more {
+  font-weight: 600;
+}
+
+/* ---------- Small-caps label ---------- */
+
+.label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange-dark);
+  margin: 0 0 6px;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 22px;
+  border: 2px solid var(--orange);
+  border-radius: 0;
+  background: var(--orange);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--orange-dark);
+  border-color: var(--orange-dark);
+  color: var(--paper);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.btn--ghost:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.btn--small {
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 1.05rem;
+}
+
+/* ---------- Fact tiles ---------- */
+
+.tiles {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+@media (min-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+.tile {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 14px 18px 16px;
+}
+
+.tile__figure {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.tile__text {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+/* ---------- Numbered steps ---------- */
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 16px 0;
+}
+
+.step + .step {
+  border-top: 1px solid var(--rule);
+}
+
+.step__n {
+  font-family: var(--font-display);
+  font-size: 3.75rem;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--orange);
+}
+
+.step h3 {
+  margin: 4px 0 4px;
+}
+
+.step p {
+  margin: 0;
+}
+
+@media (min-width: 900px) {
+  .steps--row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 32px;
+  }
+  .steps--row .step + .step {
+    border-top: 0;
+  }
+}
+
+/* ---------- Path cards ---------- */
+
+.cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 18px 20px 20px;
+  border-top: 2px solid var(--ink);
+  background: var(--sky);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+}
+
+.card h3 a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.card h3 a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.card p {
+  margin: 0 0 12px;
+}
+
+.card__arrow {
+  margin-top: auto;
+  width: 28px;
+  height: 28px;
+  color: var(--orange);
+}
+
+.card:hover {
+  background: var(--orange-tint);
+}
+
+.card:has(a:focus-visible) {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+}
+
+.card a:focus-visible {
+  outline: none;
+}
+
+/* ---------- Price table and data tables ---------- */
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table {
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  font-size: 0.97em;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 12px 12px 0;
+}
+
+.table thead th {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--grey);
+  border-bottom: 1px solid var(--ink);
+}
+
+.table tbody tr + tr > * {
+  border-top: 1px solid var(--rule);
+}
+
+.table tbody th {
+  font-weight: 600;
+}
+
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.table td:last-child,
+.table th:last-child {
+  padding-right: 0;
+}
+
+/* Price table on phones: each row stacks, notes run full width */
+@media (max-width: 639px) {
+  .price-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .price-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+    padding: 12px 0;
+  }
+  .price-table tbody tr + tr {
+    border-top: 1px solid var(--rule);
+  }
+  .price-table tbody tr + tr > * {
+    border-top: 0;
+  }
+  .price-table th,
+  .price-table td {
+    padding: 0;
+  }
+  .price-table .note {
+    grid-column: 1 / -1;
+    color: var(--grey);
+    font-size: 0.95em;
+  }
+}
+
+/* ---------- Callout ---------- */
+
+.callout {
+  background: var(--orange-tint);
+  padding: 16px 20px;
+}
+
+.callout--sky {
+  background: var(--sky);
+}
+
+.callout__lead {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--orange-dark);
+  margin-bottom: 4px;
+}
+
+.callout--sky .callout__lead {
+  color: var(--ink);
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Big price line ---------- */
+
+.big-figure {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--orange);
+  margin-right: 0.15em;
+}
+
+/* ---------- Lists ---------- */
+
+.ticks {
+  list-style: none;
+  padding: 0;
+}
+
+.ticks li {
+  position: relative;
+  padding-left: 22px;
+  margin-bottom: 8px;
+}
+
+.ticks li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 9px;
+  height: 9px;
+  background: var(--orange);
+}
+
+.defs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.defs li {
+  padding: 10px 0;
+  max-width: none;
+}
+
+.defs li + li {
+  border-top: 1px solid var(--rule);
+}
+
+.defs strong {
+  display: inline-block;
+  min-width: 6.5em;
+}
+
+/* ---------- Q&A ---------- */
+
+.qa h3 {
+  font-size: 1.35rem;
+  margin: 0 0 4px;
+}
+
+.qa > div {
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.qa > div:first-child {
+  border-top: 2px solid var(--ink);
+}
+
+.qa > div:last-child {
+  border-bottom: 2px solid var(--ink);
+}
+
+.qa p {
+  margin: 0;
+}
+
+/* ---------- NEEDED marker (content still owed; see docs/06-open-questions.md) ---------- */
+
+.needed {
+  display: inline-block;
+  background: #fff3a8;
+  color: #4a3b00;
+  border: 2px dashed #8a6d00;
+  padding: 2px 8px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+}

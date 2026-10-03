@@ -1,0 +1,7 @@
+---
+// Marks content or a setting still owed by Ryan (docs/06-open-questions.md).
+// Deliberately visible, and caught by `grep -r NEEDED dist/` before cutover.
+interface Props { what: string }
+const { what } = Astro.props;
+---
+<span class="needed">[NEEDED: {what}]</span>

@@ -1,0 +1,19 @@
+---
+interface Props {
+  items: { title: string; text: string }[];
+  row?: boolean;
+  headingLevel?: 'h3' | 'h4';
+}
+const { items, row = false, headingLevel: H = 'h3' } = Astro.props;
+---
+<ol class:list={['steps', row && 'steps--row']}>
+  {items.map((s, i) => (
+    <li class="step">
+      <span class="step__n" aria-hidden="true">{i + 1}</span>
+      <div>
+        <H><span class="visually-hidden">{i + 1}. </span>{s.title}</H>
+        <p set:html={s.text} />
+      </div>
+    </li>
+  ))}
+</ol>

@@ -1,0 +1,153 @@
+---
+// The drawn map of the Flying Schedule sheet (welcome pack page 2).
+// Example dates only; it shows where to type, not the real schedule.
+---
+<figure class="sheet-map">
+  <div class="sheet-scroll">
+    <div class="sheet" role="img" aria-label="Drawing of the Flying Schedule sheet. Dates run across the top. Under your day, the rows are: weather forecast, status and comments, the intro flight sign-up block, the student and pilot sign-up block, and the instructors block. You type your name in the first empty cell of your block.">
+      <div class="c head"></div>
+      <div class="c date">Fri</div>
+      <div class="c date day">Sat · your day</div>
+      <div class="c date">Sun</div>
+
+      <div class="c head">Weather forecast</div>
+      <div class="c muted">forecast</div>
+      <div class="c hi">clouds, temperature, wind</div>
+      <div class="c muted">forecast</div>
+
+      <div class="c head">Status / Comments</div>
+      <div class="c"></div>
+      <div class="c hi">flying on, delayed or off, and the arrival time</div>
+      <div class="c"></div>
+
+      <div class="c head blk">Introductory Familiarization Flights</div>
+      <div class="c blk muted">Intro Fam Flight Sign-up Below</div>
+      <div class="c blk-hi">Intro Fam Flight Sign-up Below</div>
+      <div class="c blk muted">Intro Fam Flight Sign-up Below</div>
+
+      <div class="c head"></div>
+      <div class="c"></div>
+      <div class="c hi pad"><span class="type">Guest name + phone</span></div>
+      <div class="c"></div>
+
+      <div class="c head blk"><span>Students / Pilots</span><small>please sign up in advance</small></div>
+      <div class="c blk muted">Student/Pilots Sign-up Below</div>
+      <div class="c blk-hi">Student/Pilots Sign-up Below</div>
+      <div class="c blk muted">Student/Pilots Sign-up Below</div>
+
+      <div class="c head"></div>
+      <div class="c"></div>
+      <div class="c hi muted">another member</div>
+      <div class="c muted">another member</div>
+
+      <div class="c head"></div>
+      <div class="c"></div>
+      <div class="c hi pad"><span class="type">Your name</span></div>
+      <div class="c"></div>
+
+      <div class="c head blk"><span>Instructors</span><small>a name here = lessons are on</small></div>
+      <div class="c blk muted">Instructors Sign-up Below</div>
+      <div class="c blk-hi">Instructors Sign-up Below</div>
+      <div class="c blk muted">Instructors Sign-up Below</div>
+
+      <div class="c head"></div>
+      <div class="c"></div>
+      <div class="c hi muted">an instructor</div>
+      <div class="c muted">an instructor</div>
+    </div>
+  </div>
+  <figcaption><span class="key" aria-hidden="true"></span><slot /></figcaption>
+</figure>
+<style>
+  .sheet-map {
+    margin: 24px 0;
+  }
+  .sheet-scroll {
+    overflow-x: auto;
+  }
+  .sheet {
+    min-width: 560px;
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid #6f8798;
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+  .c {
+    background: var(--paper);
+    min-height: 34px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .head {
+    background: var(--cell);
+    justify-content: flex-start;
+    text-align: left;
+    font-weight: 600;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .head small {
+    font-weight: 400;
+    color: var(--grey);
+    font-size: 0.95em;
+  }
+  .date {
+    background: var(--cell);
+    color: var(--grey);
+  }
+  .day {
+    background: var(--orange);
+    color: var(--paper);
+    font-weight: 600;
+  }
+  .hi {
+    background: var(--orange-tint);
+  }
+  .blk {
+    background: var(--sky);
+  }
+  .blk-hi {
+    background: var(--cell-hi);
+    font-weight: 600;
+  }
+  .muted {
+    color: var(--grey);
+  }
+  .pad {
+    padding: 3px 6px;
+  }
+  .type {
+    flex: 1;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper);
+    border: 2px solid var(--orange);
+    font-weight: 600;
+    color: var(--ink);
+  }
+  figcaption {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    color: var(--grey);
+    font-size: 0.95rem;
+  }
+  .key {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    border: 2px solid var(--orange);
+    background: var(--paper);
+  }
+</style>

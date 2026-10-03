@@ -1,0 +1,13 @@
+---
+// Questions and answers. Each question is a heading with its own anchor.
+interface Props { items: { id: string; q: string; a: string }[]; level?: 'h3' | 'h4' }
+const { items, level: H = 'h3' } = Astro.props;
+---
+<div class="qa">
+  {items.map((it) => (
+    <div>
+      <H id={it.id}>{it.q}</H>
+      <p set:html={it.a} />
+    </div>
+  ))}
+</div>
