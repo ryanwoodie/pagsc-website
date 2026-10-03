@@ -21,7 +21,7 @@ Carpooling is often available from Saskatoon, Martensville and Warman. Ask when 
 
 ## When we fly
 
-Weekends and holidays, about 1 to 5 pm for guest flights, weather permitting. The main season runs spring through fall, with occasional winter flying.
+Weekends and holidays, about 11 am to 5 pm for guest flights, weather permitting. Some weekdays too, often on request. The main season runs spring through fall, with occasional winter flying.
 
 ## On the day
 

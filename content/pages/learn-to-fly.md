@@ -1,12 +1,12 @@
 ---
 title: Learn to fly gliders in Saskatchewan
-description: Learn to fly at the Prince Albert Gliding and Soaring Club. Free instruction, about $10 a lesson flight, solo at 14 and a Glider Pilot Licence at 16.
+description: Learn to fly at the Prince Albert Gliding and Soaring Club. Free instruction, about $10 a instructional flight, solo at 14 and a Glider Pilot Licence at 16.
 primary_action: Book a first lesson
 ---
 
 # Learning to fly
 
-Instruction is free. You pay for launches and glider time: about $10 for a typical lesson flight.
+Instruction is free. You pay for launches and glider time: about $10 for a typical instructional flight.
 
 - **Any age** to start training, no experience needed
 - **Age 14** to fly solo
@@ -16,7 +16,7 @@ Instruction is free. You pay for launches and glider time: about $10 for a typic
 
 ## What it costs
 
-**$10** is about what a typical 10-minute lesson flight costs: a $5 launch plus $5 of glider time.
+**$10** is about what a typical 10-minute instructional flight costs: a $5 launch plus $5 of glider time.
 
 Membership is $150 a year, $75 for juniors and $15 for youth and Air Cadets.
 
@@ -48,7 +48,7 @@ Solo practice, then a flight test. You need at least 6 hours of flight time, inc
 
 ## Come regularly if you can
 
-Skills fade between visits. Flying most weekends over a stretch of the season gets you solo sooner and costs less in total.
+Skills fade between visits. Flying as many weekends (and even weekdays) as you can over a stretch of the season gets you solo sooner and costs less in total.
 
 ## Two fast tracks
 

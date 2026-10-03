@@ -51,7 +51,8 @@ Each gets its own page with its own hook and the same button.
 - Lead with what the visitor can do, then what it costs, then the detail.
 - Distances as drive times: 25 minutes from Prince Albert, 1.5 hours from Saskatoon.
 - Club achievements are "out of PAGSC", never "by our members".
-- Lessons in the air are "flight lessons". Ground school is separate and self-directed, or taken with pilottraining.ca.
+- A single lesson in the air is an "instructional flight" (not a "lesson flight"); the course of them is "flight lessons". Ground school is separate and self-directed, or taken with pilottraining.ca.
+- Do not overpromise flight details: launches reach "about 1,500 to 2,000 feet", flights last "5 to 30 minutes", and weekday flying is "some weekdays, often on request".
 - Compare gliding with powered flying the way sailing compares with motorboating. Never run powered flying down; the site also recruits power pilots.
 - The idea to carry: gliding is a sport you never finish. Do not use the word "evergreen".
 

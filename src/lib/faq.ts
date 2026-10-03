@@ -1,11 +1,14 @@
 // Questions and answers from content/pages/faq.md, with every figure bound to club-facts.yaml.
-import { facts, df, fees, money, num, lcfirst, lessonBreakdown, listJoin } from './facts';
+import { facts, df, fees, money, lcfirst, lessonBreakdown, listJoin, launchHeight } from './facts';
 
 const t = facts.training;
 const groundSchool = t.steps[2]!;
 
-/** "Weekends and holidays, about 1 to 5 pm for guest flights, weather permitting" */
+/** "Weekends and holidays, about 11 am to 5 pm for guest flights, weather permitting" */
 export const guestHours = df.when.replace(/(\bpm\b)/, '$1 for guest flights');
+
+/** "Some weekdays too, often on request" as a sentence */
+export const weekdaysLine = `${df.weekdays}.`;
 
 export type QA = { id: string; q: string; a: string };
 
@@ -30,7 +33,7 @@ export const firstFlights: QA[] = [
   {
     id: 'how-long',
     q: 'How long is the flight?',
-    a: `About ${df.duration_minutes} minutes, depending on the day's conditions. The winch launch takes you to about ${num(df.launch_height_feet)} feet.`,
+    a: `About ${df.duration_minutes} minutes, depending on the day's conditions. The winch launch takes you to about ${launchHeight}.`,
   },
   {
     id: 'weight',
@@ -45,17 +48,17 @@ export const firstFlights: QA[] = [
   {
     id: 'bring',
     q: 'What should I bring?',
-    a: 'A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and a way to pay by e-transfer.',
+    a: `A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and a way to pay (${fees.guest_payment.toLowerCase()}).`,
   },
   {
     id: 'gift',
     q: 'Can I give a flight as a gift?',
-    a: 'Yes. Buy a Discovery Flight online and we will arrange the date with the person flying.',
+    a: 'Yes. Buy a Discovery Flight online, then email us or use the request form to arrange the date for the person flying.',
   },
   {
     id: 'when',
     q: 'When do you fly?',
-    a: `${guestHours}. The main season runs ${lcfirst(df.season)}.`,
+    a: `${guestHours}. ${weekdaysLine} The main season runs ${lcfirst(df.season)}.`,
   },
 ];
 
@@ -68,7 +71,7 @@ export const learning: QA[] = [
   {
     id: 'lesson-cost',
     q: 'What does a lesson cost?',
-    a: `About ${money(fees.typical_lesson_flight.cost)} for a typical ${fees.typical_lesson_flight.minutes}-minute lesson flight: ${lessonBreakdown}. Instruction is free.`,
+    a: `About ${money(fees.typical_lesson_flight.cost)} for a typical ${fees.typical_lesson_flight.minutes}-minute instructional flight: ${lessonBreakdown}. Instruction is free.`,
   },
   {
     id: 'medical',

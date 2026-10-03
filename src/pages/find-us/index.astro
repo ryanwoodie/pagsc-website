@@ -4,8 +4,8 @@ import PageHero from '../../components/PageHero.astro';
 import Section from '../../components/Section.astro';
 import MapEmbed from '../../components/MapEmbed.astro';
 import BookButton from '../../components/BookButton.astro';
-import { facts, df, lcfirst, listJoin, directionsHref, telHref, facebookHandle } from '../../lib/facts';
-import { guestHours } from '../../lib/faq';
+import { facts, df, lcfirst, listJoin, directionsHref, telHref, facebookHandle, instagramHandle } from '../../lib/facts';
+import { guestHours, weekdaysLine } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
 
 const dt = facts.location.drive_times;
@@ -41,7 +41,7 @@ const dt = facts.location.drive_times;
       </div>
       <div>
         <h2 id="when-h">When we fly</h2>
-        <p>{guestHours}. The main season runs {lcfirst(df.season)}.</p>
+        <p>{guestHours}. {weekdaysLine} The main season runs {lcfirst(df.season)}.</p>
       </div>
     </div>
   </Section>
@@ -57,6 +57,7 @@ const dt = facts.location.drive_times;
       <li><strong>Email</strong> <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>
       <li><strong>Phone</strong> <a href={telHref}>{facts.contact.phone}</a></li>
       <li><strong>Facebook</strong> <a href={facts.contact.facebook} rel="noopener">{facebookHandle}</a></li>
+      <li><strong>Instagram</strong> <a href={facts.contact.instagram} rel="noopener">@{instagramHandle}</a></li>
     </ul>
     <div class="actions"><BookButton /></div>
   </Section>

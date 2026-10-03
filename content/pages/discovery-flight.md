@@ -6,18 +6,18 @@ primary_action: Request a date
 
 # Your first flight in a glider
 
-A winch launch to about 2,000 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
+A winch launch to about 1,500 to 2,000 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
 
 [Request a date]
 
 ## What happens
 
-The winch pulls the glider into the air in seconds. At about 2,000 feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for 8 to 30 minutes.
+The winch pulls the glider into the air in seconds. At about 1,500 to 2,000 feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for 5 to 30 minutes.
 
 ## At a glance
 
 - **Price:** $50, or $40 each for a group of 4 or more
-- **When:** weekends and holidays, about 1 to 5 pm, weather permitting
+- **When:** weekends and holidays, about 11 am to 5 pm, weather permitting
 - **Where:** Birch Hills Airport, 25 minutes from Prince Albert and 1.5 hours from Saskatoon
 - **Who can fly:** maximum weight 230 lbs. No experience and no membership needed.
 - **Season:** spring through fall, with occasional winter flying
@@ -40,15 +40,14 @@ Check the day is on before you leave home, then meet us at the field.
 - Hat, sunscreen, sunglasses
 - Water, lunch or snacks
 - Layers; it is cooler at altitude
-- A way to pay by e-transfer
+- A way to pay (e-transfer or cash)
 - A phone or camera, if you like
 
 **How the day runs**
 
 1. Meet the crew and get a safety briefing.
-2. Help get the glider out. Pitching in is part of the fun, and it keeps costs low.
-3. Fly: a winch launch to about 2,000 feet, with a club pilot beside you the whole time.
-4. Stay, watch, learn, and fly again if time allows.
+2. Fly: a winch launch to about 1,500 to 2,000 feet, with a club pilot beside you the whole time.
+3. Stay, watch, learn, and fly again if time allows.
 
 ## Weather
 
@@ -70,7 +69,7 @@ Button: Send request
 
 A club member will reply to confirm a date and an arrival time.
 
-**Paying.** Pay online now, or by e-transfer on the day.
+**Paying.** Pay online now, or by e-transfer or cash on the day.
 
 [Pay for a Discovery Flight]
 

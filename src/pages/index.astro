@@ -13,7 +13,7 @@ import HeroVideo from '../components/HeroVideo.astro';
 import Photo from '../components/Photo.astro';
 import youthPhoto from '../assets/photos/youth-student-and-instructor.jpg';
 import wingPhoto from '../assets/photos/running-the-wing.webp';
-import { facts, df, fees, money, num, shortDuration, lessonBreakdown, listJoin, mapHref } from '../lib/facts';
+import { facts, df, fees, money, num, shortDuration, lessonBreakdown, listJoin, mapHref, launchHeight } from '../lib/facts';
 import { homeQuestions } from '../lib/faq';
 import { href } from '../lib/url';
 import { clubJsonLd } from '../lib/schema';
@@ -30,7 +30,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
   jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
 >
   <PageHero title="Come fly with us." big>
-    <p class="lead">No engine. No experience needed. A winch launch to about {num(df.launch_height_feet)} feet, and some of the quietest flying in Saskatchewan.</p>
+    <p class="lead">No engine. No experience needed. A winch launch to about {launchHeight}, and some of the quietest flying in Saskatchewan.</p>
     <p class="price">Your first flight is <strong>{money(df.price)}.</strong></p>
     <div class="actions hero-actions">
       <BookButton />
@@ -67,7 +67,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
     <PathCards
       items={[
         { title: 'Try a flight', text: `A Discovery Flight with a club pilot. ${money(df.price)}.`, href: '/discovery-flight/' },
-        { title: 'Learn to fly', text: `Free instruction. About ${money(lesson.cost)} a lesson flight.`, href: '/learn-to-fly/' },
+        { title: 'Learn to fly', text: `Free instruction. About ${money(lesson.cost)} a instructional flight.`, href: '/learn-to-fly/' },
         {
           title: 'Youth and cadets',
           text: `${money(y.membership_price)} membership and ${money(y.bursary_total)} in bursaries. Solo at ${facts.training.solo_age}.`,
@@ -98,7 +98,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
 
   <Section labelledby="cost-h">
     <h2 id="cost-h">What it costs</h2>
-    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute lesson flight costs: {lessonBreakdown}. Instruction is free.</p>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs: {lessonBreakdown}. Instruction is free.</p>
     <ul class="defs">
       <li><strong>{money(df.price)}</strong> Discovery Flight, no membership needed</li>
       <li><strong>{money(m.regular.price)}</strong> membership a {m.regular.per}; {money(m.junior.price)} junior, {money(m.youth_air_cadet.price)} youth and Air Cadet</li>

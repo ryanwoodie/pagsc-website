@@ -15,7 +15,7 @@ export function clubJsonLd(site: URL, base: string) {
     telephone: '+1-' + facts.contact.phone.replace(/[()]/g, '').replace(' ', '-'),
     foundingDate: String(facts.club.founded),
     sport: 'Gliding',
-    sameAs: [facts.contact.facebook],
+    sameAs: [facts.contact.facebook, facts.contact.instagram],
     memberOf: facts.club.affiliations.map((name) => ({ '@type': 'SportsOrganization', name })),
     address: {
       '@type': 'PostalAddress',

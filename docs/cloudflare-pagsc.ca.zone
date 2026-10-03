@@ -1,0 +1,19 @@
+; pagsc.ca website records for Cloudflare (BIND format).
+; Import: Cloudflare > pagsc.ca > DNS > Records > Import and Export > Import DNS records.
+; Leave "Proxy imported DNS records" UNCHECKED: GitHub Pages needs these as DNS only.
+; Mail records (MX, SPF) are not here: Email Routing adds its own.
+$ORIGIN pagsc.ca.
+$TTL 3600
+
+; GitHub Pages, apex
+@	IN	A	185.199.108.153
+@	IN	A	185.199.109.153
+@	IN	A	185.199.110.153
+@	IN	A	185.199.111.153
+@	IN	AAAA	2606:50c0:8000::153
+@	IN	AAAA	2606:50c0:8001::153
+@	IN	AAAA	2606:50c0:8002::153
+@	IN	AAAA	2606:50c0:8003::153
+
+; GitHub Pages, www (the canonical address)
+www	IN	CNAME	ryanwoodie.github.io.

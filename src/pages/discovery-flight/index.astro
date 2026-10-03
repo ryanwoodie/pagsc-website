@@ -10,12 +10,13 @@ import RequestForm from '../../components/RequestForm.astro';
 import Photo from '../../components/Photo.astro';
 import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
 import cockpitPhoto from '../../assets/photos/cockpit-view.jpg';
-import { facts, df, money, num, lcfirst } from '../../lib/facts';
+import { facts, df, money, lcfirst, launchHeight } from '../../lib/facts';
 import { beforeFirstFlight } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
 
 const dt = facts.location.drive_times;
 const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date with the person flying.';
+const weekdays = lcfirst(df.weekdays);
 ---
 <Base
   title={`Discovery Flight in a glider, ${money(df.price)}`}
@@ -23,7 +24,7 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
   jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
 >
   <PageHero label="Discovery Flight" title="Your first flight in a glider">
-    <p class="lead">A winch launch to about {num(df.launch_height_feet)} feet in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
+    <p class="lead">A winch launch to about {launchHeight} in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
     <div class="actions"><Button href="#request">Request a date</Button></div>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
@@ -32,14 +33,14 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
     <div class="grid grid--2">
       <div>
         <h2 id="what-h">What happens</h2>
-        <p class="lead">The winch pulls the glider into the air in seconds. At about {num(df.launch_height_feet)} feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
+        <p class="lead">The winch pulls the glider into the air in seconds. At about {launchHeight} your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
         <Photo class="cockpit" src={cockpitPhoto} alt="View from the front seat in flight: a student in a headset looks out over green prairie fields and the airfield below" crop="4 / 5" position="center 40%" sizes="(min-width: 760px) 45vw, 100vw" />
       </div>
       <div>
         <h2 id="glance-h">At a glance</h2>
         <ul class="defs">
           <li><strong>Price</strong> {money(df.price)}, or {money(df.group_price_each)} each for a group of {df.group_minimum} or more</li>
-          <li><strong>When</strong> {lcfirst(df.when)}</li>
+          <li><strong>When</strong> <span>{lcfirst(df.when)}; {weekdays}</span></li>
           <li><strong>Where</strong> {facts.location.airfield}, {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon</li>
           <li><strong>Who can fly</strong> maximum weight {df.max_weight_lbs} lbs. No experience and no membership needed.</li>
           <li><strong>Season</strong> {lcfirst(df.season)}</li>
@@ -85,7 +86,7 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
   <Section labelledby="gift-h">
     <h2 id="gift-h">Give a flight as a gift</h2>
     <p class="lead">A Discovery Flight makes a good present for anyone who has looked up and wondered.</p>
-    <p>{giftAnswer} Email <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> to arrange the date.</p>
+    <p>{giftAnswer} Email <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> to arrange the date, or use the <a href="#request">request form</a> above.</p>
     <div class="actions"><Button href={facts.links.discovery_flight_payment} variant="ghost" external>Buy a gift flight</Button></div>
   </Section>
 
@@ -113,7 +114,9 @@ const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date w
   .day-list li {
     margin-bottom: 8px;
   }
-  .defs strong {
-    min-width: 7.5em;
+  @media (min-width: 480px) {
+    .defs li {
+      grid-template-columns: 8em minmax(0, 1fr);
+    }
   }
 </style>

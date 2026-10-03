@@ -6,11 +6,11 @@ primary_action: Book a Discovery Flight
 
 # What it costs
 
-**$10** is about what a typical 10-minute lesson flight costs: a $5 launch plus $5 of glider time. Instruction is free.
+**$10** is about what a typical 10-minute instructional flight costs: a $5 launch plus $5 of glider time. Instruction is free.
 
 | What | Price (CAD) | Good to know |
 | --- | --- | --- |
-| Discovery Flight (guest) | $50 | $40 each for a group of 4 or more. About 8 to 30 minutes in the air. No membership needed. |
+| Discovery Flight (guest) | $50 | $40 each for a group of 4 or more. About 5 to 30 minutes in the air. No membership needed. |
 | Membership, Regular | $150 / year | For anyone not covered by the two categories below. |
 | Membership, Junior | $75 / year | Under 21, or a full-time student under 25. |
 | Membership, Youth / Air Cadet | $15 / year | Under 19. |

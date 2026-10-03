@@ -30,6 +30,7 @@ const schema = z
       email: z.email(),
       phone: z.string().regex(/^\(\d{3}\) \d{3}-\d{4}$/),
       facebook: url,
+      instagram: url,
       whatsapp_group: z.null(),
     }),
     links: z.strictObject({
@@ -40,6 +41,7 @@ const schema = z
       ground_school: url,
       winch_launch_videos: url,
       glider_flying_handbook: url,
+      sac_youth_bursary: url,
       birch_hills_weather: url,
       cypa_forecast: url,
     }),
@@ -49,11 +51,13 @@ const schema = z
       group_minimum: z.number().int().positive(),
       duration_minutes: z.string(),
       launch: z.string(),
+      launch_height_feet_min: z.number().int().positive(),
       launch_height_feet: z.number().int().positive(),
       max_weight_lbs: z.number().int().positive(),
       membership_required: z.boolean(),
       experience_required: z.boolean(),
       when: z.string(),
+      weekdays: z.string(),
       season: z.string(),
       weather_cancellation: z.string(),
       bring: z.array(z.string()).min(1),
@@ -68,6 +72,7 @@ const schema = z
       instruction: price,
       typical_lesson_flight: z.strictObject({ minutes: z.number().positive(), cost: price, breakdown: z.string() }),
       payment: z.string(),
+      guest_payment: z.string(),
     }),
     training: z.strictObject({
       start_age: z.union([z.literal('none'), z.number()]),
@@ -83,6 +88,8 @@ const schema = z
       bursary_club_match: price,
       bursary_total: price,
       bursary_covers: z.string(),
+      bursary_who: z.string(),
+      bursaries_per_club: z.number().int().positive(),
       cadets: z.string(),
     }),
     power_pilots: z.strictObject({
@@ -159,7 +166,7 @@ export function lcfirst(s: string): string {
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
 
-/** "8 to 30" from facts, kept as written */
+/** Discovery Flight facts */
 export const df = facts.discovery_flight;
 export const fees = facts.fees;
 
@@ -174,11 +181,17 @@ export function shortDuration(s: string): string {
   return s.replace(/\bminutes?\b/, 'min');
 }
 
+/** "1,500 to 2,000 feet" */
+export const launchHeight = `${num(df.launch_height_feet_min)} to ${num(df.launch_height_feet)} feet`;
+
 /** tel: link for the club phone */
 export const telHref = 'tel:+1' + facts.contact.phone.replace(/\D/g, '');
 
 /** Facebook page handle for display, e.g. PAGSC.Saskatchewan */
 export const facebookHandle = new URL(facts.contact.facebook).pathname.replace(/\//g, '');
+
+/** Instagram handle for display, e.g. pa.gliding */
+export const instagramHandle = new URL(facts.contact.instagram).pathname.replace(/\//g, '');
 
 /** "A, B and C" */
 export function listJoin(items: string[]): string {

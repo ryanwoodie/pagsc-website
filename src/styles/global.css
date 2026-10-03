@@ -608,11 +608,21 @@ table {
   display: block;
 }
 
-@media (min-width: 640px) {
-  .defs strong {
-    display: inline-block;
-    min-width: 6.5em;
+@media (min-width: 480px) {
+  .defs li {
+    display: grid;
+    grid-template-columns: 7.5em minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
   }
+  .defs strong {
+    min-width: 0;
+  }
+}
+
+.small-note {
+  font-size: 0.95rem;
+  color: var(--grey);
 }
 
 /* ---------- Q&A ---------- */

@@ -1,5 +1,5 @@
 ---
-import { facts, telHref, facebookHandle, listJoin } from '../lib/facts';
+import { facts, telHref, facebookHandle, instagramHandle, listJoin } from '../lib/facts';
 import { href } from '../lib/url';
 import BookButton from './BookButton.astro';
 
@@ -30,6 +30,7 @@ const more = [
           <li><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></li>
           <li><a href={telHref}>{facts.contact.phone}</a></li>
           <li><a href={facts.contact.facebook} rel="noopener">Facebook: {facebookHandle}</a></li>
+          <li><a href={facts.contact.instagram} rel="noopener">Instagram: @{instagramHandle}</a></li>
         </ul>
         <p>{facts.location.airfield}, {facts.location.town}</p>
       </div>

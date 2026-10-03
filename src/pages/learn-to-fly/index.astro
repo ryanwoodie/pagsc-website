@@ -26,10 +26,10 @@ const steps = t.steps.map((s) => ({
 ---
 <Base
   title="Learn to fly gliders in Saskatchewan"
-  description={`Learn to fly at the ${facts.club.name}. Free instruction, about ${money(lesson.cost)} a lesson flight, solo at ${t.solo_age} and a Glider Pilot Licence at ${t.licence_age}.`}
+  description={`Learn to fly at the ${facts.club.name}. Free instruction, about ${money(lesson.cost)} a instructional flight, solo at ${t.solo_age} and a Glider Pilot Licence at ${t.licence_age}.`}
 >
   <PageHero label="Learn to fly" title="Learning to fly">
-    <p class="lead">Instruction is free. You pay for launches and glider time: about {money(lesson.cost)} for a typical lesson flight.</p>
+    <p class="lead">Instruction is free. You pay for launches and glider time: about {money(lesson.cost)} for a typical instructional flight.</p>
     <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
     <Photo slot="media" src={studentPhoto} alt="A smiling student stands beside the club's two-seat glider on the runway under a sky full of cumulus clouds" crop="4 / 3" position="center 55%" eager />
   </PageHero>
@@ -47,7 +47,7 @@ const steps = t.steps.map((s) => ({
 
   <Section labelledby="cost-h">
     <h2 id="cost-h">What it costs</h2>
-    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute lesson flight costs: {lessonBreakdown}.</p>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs: {lessonBreakdown}.</p>
     <p>Membership is {money(m.regular.price)} a {m.regular.per}, {money(m.junior.price)} for juniors and {money(m.youth_air_cadet.price)} for youth and Air Cadets.</p>
     <p><a class="more" href={href('/costs/')}>See all costs</a></p>
   </Section>
