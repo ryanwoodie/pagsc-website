@@ -11,7 +11,7 @@ import NextFlyingDays from '../components/NextFlyingDays.astro';
 import GliderThermal from '../components/GliderThermal.astro';
 import HeroVideo from '../components/HeroVideo.astro';
 import Photo from '../components/Photo.astro';
-import guestPhoto from '../assets/photos/guest-front-seat.jpg';
+import youthPhoto from '../assets/photos/youth-student-and-instructor.jpg';
 import wingPhoto from '../assets/photos/running-the-wing.webp';
 import { facts, df, fees, money, num, shortDuration, lessonBreakdown, listJoin, mapHref } from '../lib/facts';
 import { homeQuestions } from '../lib/faq';
@@ -119,7 +119,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
       ]}
     />
     <div class="grid grid--2 photos">
-      <Photo src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" />
+      <Photo src={youthPhoto} alt="A young student sits in the front seat of the two-seat glider while a club member stands beside the cockpit" crop="4 / 3" position="center 60%" />
       <Photo src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" />
     </div>
     <p class="actions"><a class="more" href={href('/the-club/')}>The club and the fleet</a></p>
