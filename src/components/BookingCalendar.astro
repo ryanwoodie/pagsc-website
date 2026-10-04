@@ -71,7 +71,8 @@ const config = {
     const fallback = root.querySelector<HTMLElement>('.booking__fallback')!;
     if (!cfg.endpoint) continue;
 
-    const state = { days: [] as Day[], people: 1, date: '', start: '' };
+    const wanted = new URLSearchParams(location.search).get('date') || '';
+    const state = { days: [] as Day[], people: 1, date: wanted, start: '' };
 
     async function load() {
       fallback.hidden = true;

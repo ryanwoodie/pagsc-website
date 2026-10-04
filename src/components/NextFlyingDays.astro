@@ -2,6 +2,8 @@
 // Next flying days, built from the Flying Schedule at deploy time
 // (scripts/fetch-schedule.mjs). Renders nothing when there is no data.
 import Section from './Section.astro';
+import { FORM_ENDPOINT } from '../config';
+import { href } from '../lib/url';
 
 type Day = { date: string; status: 'on' | 'delayed' | 'cancelled' | 'unknown' | ''; note?: string; instructor: boolean };
 const statusText: Record<Day['status'], string> = {
@@ -39,13 +41,65 @@ const updated = data?.updated
           <span class:list={['day__status', d.status && `day__status--${d.status}`]}>{statusText[d.status] ?? statusText['']}</span>
           {d.note && <span class="day__note">“{d.note}”</span>}
           {d.instructor && <span class="day__tag">Instructor signed up</span>}
+          <span class="day__book" data-date={d.date}>
+            <span class="day__spots"></span>
+            <a href={href(`/discovery-flight/?date=${d.date}#request`)}>Book a spot</a>
+          </span>
         </li>
       ))}
     </ul>
+    <script is:inline type="application/json" id="nfd-endpoint" set:html={JSON.stringify(FORM_ENDPOINT)} />
     {updated && <p class="days__note">From the club's Flying Schedule, {updated.replace(/\.$/, '')}. Flying depends on the weather.</p>}
   </Section>
 )}
+<script>
+  // Live spot counts from the booking script; the links work without them.
+  const books = [...document.querySelectorAll<HTMLElement>('.day__book')];
+  const endpoint = JSON.parse(document.getElementById('nfd-endpoint')?.textContent || '""');
+  if (books.length && endpoint) {
+    fetch(`${endpoint}?action=availability`, { signal: AbortSignal.timeout(15000) })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.ok) return;
+        const byDate = new Map<string, { status: string; remaining: number; kind: string }>(
+          data.days.map((d: { date: string; status: string; remaining: number; kind: string }) => [d.date, d]),
+        );
+        for (const b of books) {
+          const day = byDate.get(b.dataset.date!);
+          const spots = b.querySelector<HTMLElement>('.day__spots')!;
+          const link = b.querySelector('a')!;
+          if (!day) { b.remove(); continue; } // today or past: no longer bookable online
+          if (day.status === 'cancelled') { spots.textContent = 'Not flying'; link.remove(); continue; }
+          if (day.remaining === 0) { spots.textContent = 'Guest spots full'; link.remove(); continue; }
+          spots.textContent = day.kind === 'weekday' ? 'On request' : `${day.remaining} spot${day.remaining === 1 ? '' : 's'} left`;
+        }
+      })
+      .catch(() => {});
+  }
+</script>
+
 <style>
+  .day__book {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    margin-top: auto;
+    padding-top: 10px;
+  }
+  .day__spots {
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+  .day__spots:empty {
+    display: none;
+  }
+  .day__book a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 600;
+  }
   .days {
     list-style: none;
     padding: 0;
@@ -54,7 +108,8 @@ const updated = data?.updated
     gap: 12px;
   }
   .day {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 2px;
     padding: 14px 16px;
     background: var(--sky);
@@ -79,7 +134,7 @@ const updated = data?.updated
     color: var(--orange-dark);
   }
   .day__tag {
-    justify-self: start;
+    align-self: flex-start;
     margin-top: 4px;
     font-family: var(--font-display);
     font-weight: 700;
