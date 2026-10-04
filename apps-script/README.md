@@ -42,8 +42,8 @@ URL stays the same.
 ## The booking calendar (Booking.gs)
 
 The Discovery Flight page shows a calendar of the next 4 weeks from the Flying Schedule. Guests pick
-a day, a start time (11:00 to 4:00, half an hour per person, up to 4 people) and book. Weekends are
-pencilled in straight away; weekdays are requests a member confirms. Up to 6 guest half-hours a day.
+a day, a start time (11:00 to 4:30, half an hour per person, up to 4 people, finishing by 5:00) and book. Weekends are
+pencilled in straight away; weekdays are requests a member confirms. Up to 12 guest half-hours a day, less 2 for each student signed up on the Flying Schedule that day.
 
 To set it up (once):
 
@@ -85,7 +85,7 @@ Guest emails are HTML in the site's style, with times like "3:30 pm" and a "Chan
 Run. Approve the permission to run on a schedule. It runs `runReminders` every hour. To preview every
 email, run `sendSampleEmails`: it sends 5 samples to the club address and books nothing.
 
-The slot settings (11:00, 16:00, 30 minutes, cap 6, groups of 4, 28 days) are at the top of
+The slot settings (11:00 to 16:30 starts, 30 minutes, 2 spots per student, groups of 4, 28 days) are at the top of
 `Booking.gs` and in `content/club-facts.yaml` under `booking`. Change both together; `npm test` checks
 they match.
 

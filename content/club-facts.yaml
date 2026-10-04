@@ -71,9 +71,8 @@ discovery_flight:
 
 booking:   # the online calendar; keep in step with BOOKING in apps-script/Booking.gs
   first_start: "11:00"
-  last_start: "16:00"
+  last_start: "16:30"   # every booking finishes by 5 pm
   minutes_per_person: 30
-  guest_spots_per_day: 6
   max_group: 4
   days_ahead: 28
 

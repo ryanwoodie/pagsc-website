@@ -23,11 +23,11 @@ const grid = [
   ['', '', 'Instructor D', '', '', ''],
 ];
 
-test('slot times run 11:00 to 16:00 every half hour', () => {
+test('slot times run 11:00 to 16:30 every half hour', () => {
   const t = slotTimes();
   assert.equal(t[0], '11:00');
-  assert.equal(t.at(-1), '16:00');
-  assert.equal(t.length, 11);
+  assert.equal(t.at(-1), '16:30');
+  assert.equal(t.length, 12);
 });
 
 test('reads dates, status and intro rows', () => {
@@ -45,7 +45,7 @@ test('availability: window, weekend/weekday, cancelled, cap and taken slots', ()
   const sat = a[0];
   assert.equal(sat.kind, 'weekend');
   assert.equal(sat.status, 'on');
-  assert.equal(sat.remaining, 1); // 6 - 5
+  assert.equal(sat.remaining, 7); // 12 slots - 5 booked
   assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['11:30', '12:00', '15:00', '15:30', '16:00']);
   assert.equal(a[1].status, 'cancelled');
   assert.equal(a[2].kind, 'weekday');
@@ -58,13 +58,13 @@ test('canBook rules', () => {
   const [sat, sun, tue] = computeAvailability(days, [{ date: '2026-10-10', start: '11:30', people: 2 }], {}, '2026-10-09');
   assert.equal(canBook(sat, '11:00', 1), '');
   assert.match(canBook(sat, '11:00', 2), /just taken/);
-  assert.match(canBook(sat, '15:30', 3), /too late/);
-  assert.equal(canBook(sat, '15:00', 3), '');
+  assert.match(canBook(sat, '16:00', 3), /too late/); // would end at 17:30
+  assert.equal(canBook(sat, '15:30', 3), '');           // ends at 17:00
   assert.match(canBook(sat, '13:00', 5), /1 to 4/);
   assert.match(canBook(sun, '11:00', 1), /not running/);
   assert.match(canBook(tue, '11:00', 4), /^$/);
   assert.match(canBook({ ...tue, remaining: 1 }, '11:00', 2), /only 1 guest spot left/);
-  assert.equal(timeRange('15:00', 3), '15:00 to 16:30');
+  assert.equal(timeRange('15:30', 3), '15:30 to 17:00');
 });
 
 test('club-facts.yaml booking settings match Booking.gs', () => {
@@ -73,7 +73,6 @@ test('club-facts.yaml booking settings match Booking.gs', () => {
   assert.equal(facts.first_start, B.FIRST);
   assert.equal(facts.last_start, B.LAST);
   assert.equal(facts.minutes_per_person, B.STEP);
-  assert.equal(facts.guest_spots_per_day, B.CAP);
   assert.equal(facts.max_group, B.MAX_GROUP);
   assert.equal(facts.days_ahead, B.DAYS_AHEAD);
 });
@@ -131,7 +130,7 @@ test('each student on the schedule takes 2 guest spots', () => {
   const days = scheduleDays(grid);
   assert.equal(days.find((d) => d.date === '2026-10-11').students, 1);
   const sun = computeAvailability(days, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11');
-  assert.equal(sun.remaining, 4);
+  assert.equal(sun.remaining, 10); // 12 - 2
   const busy = scheduleDays([grid[0], grid[1], grid[2], grid[3], ['', '', '', 'Student/Pilots Sign-up Below', '', ''], ['', '', '', 'A', '', ''], ['', '', '', 'B', '', ''], ['', '', '', 'C', '', ''], ['', '', '', 'D', '', '']]);
-  assert.equal(computeAvailability(busy, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 0);
+  assert.equal(computeAvailability(busy, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 4); // 12 - 4 x 2
 });

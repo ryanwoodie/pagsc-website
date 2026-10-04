@@ -58,7 +58,7 @@ The main conversion page. Top to bottom:
 
 ### Booking calendar
 
-The "Book your date" section is a calendar (`BookingCalendar.astro`) fed by the Apps Script (`apps-script/Booking.gs`), which reads the Flying Schedule. Guests choose the number of people (1 to 4), a day in the next 4 weeks and a start time from 11:00 to 4:00, half an hour per person, at most 6 guest half-hours a day. Weekends are pencilled in; weekdays (dashed, greyed) are requests a member confirms; cancelled days show "Not flying". Every step says flying depends on weather and volunteers. Fields: name, email, phone, Discovery Flight or first lesson, how they are paying, weight confirmation, message. If the calendar cannot load, the plain form below shows instead.
+The "Book your date" section is a calendar (`BookingCalendar.astro`) fed by the Apps Script (`apps-script/Booking.gs`), which reads the Flying Schedule. Guests choose the number of people (1 to 4), a day in the next 4 weeks and a start time from 11:00 to 4:30, half an hour per person, finishing by 5:00. Each day offers 12 guest half-hours, less 2 for each student on the Flying Schedule. Weekends are pencilled in; weekdays (dashed, greyed) are requests a member confirms; cancelled days show "Not flying". Every step says flying depends on weather and volunteers. Fields: name, email, phone, Discovery Flight or first lesson, how they are paying, weight confirmation, message. If the calendar cannot load, the plain form below shows instead.
 
 ### Request form (fallback)
 

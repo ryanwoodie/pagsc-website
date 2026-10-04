@@ -19,9 +19,9 @@
 
 var BOOKING = {
   FIRST: '11:00',        // first start time
-  LAST: '16:00',         // last start time
+  LAST: '16:30',         // last start time; every booking must finish by 17:00
   STEP: 30,              // minutes per person
-  CAP: 6,                // guest half-hours per day
+  // Guest spots per day: every half-hour slot (12), less STUDENT_COST per student on the schedule.
   STUDENT_COST: 2,       // guest spots each student signed up on the schedule takes away
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
@@ -162,7 +162,7 @@ function computeAvailability(days, bookings, caps, today) {
       for (var k = 0; k < b.people; k++) if (i + k >= 0 && i + k < times.length) taken[i + k] = true;
       used += b.people;
     });
-    var cap = (caps && caps[d.date] != null ? Number(caps[d.date]) : BOOKING.CAP) - BOOKING.STUDENT_COST * (d.students || 0);
+    var cap = (caps && caps[d.date] != null ? Number(caps[d.date]) : times.length) - BOOKING.STUDENT_COST * (d.students || 0);
     var status = classifyStatus(d.statusText);
     out.push({
       date: d.date,
