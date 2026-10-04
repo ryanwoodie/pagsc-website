@@ -22,6 +22,37 @@ about it is secret except the sheet ID, which is kept in Script Properties, not 
 When you change `Code.gs` later, use **Deploy > Manage deployments > Edit > New version** so the
 URL stays the same.
 
+## The booking calendar (Booking.gs)
+
+The Discovery Flight page shows a calendar of the next 4 weeks from the Flying Schedule. Guests pick
+a day, a start time (11:00 to 4:00, half an hour per person, up to 4 people) and book. Weekends are
+pencilled in straight away; weekdays are requests a member confirms. Up to 6 guest half-hours a day.
+
+To set it up (once):
+
+1. In the Apps Script editor, add a second file: **+ (Add a file) > Script**, name it `Booking`, and
+   paste `Booking.gs` into it. Replace `Code.gs` with the new version too.
+2. **Project Settings > Script Properties**, add `SCHEDULE_ID`: `18n3c3T0eJh9exZWXCKhG1IhYb_GXY45IwfDZP-xshwc`
+   (the Flying Schedule). The club account needs edit access to that sheet.
+3. **Project Settings > Time zone**: America/Regina.
+4. **Deploy > Manage deployments > Edit > New version > Deploy.** Google asks to approve the new
+   permissions (reading and editing the Flying Schedule); approve them as the club account.
+
+What it does with the sheets:
+
+- Bookings go to a **Bookings** tab in the requests sheet (name, email, phone, interest, payment).
+  Set a row's Status to `Cancelled` to free the slot.
+- Each booking is also written into that day's **Intro Fam Flight** block on the Flying Schedule as
+  first name and time only, e.g. `Jane 11:30 (2) web` or `Request: Sam 13:00 web` for a weekday.
+- To change one day's guest limit, add a **Guest caps** tab with `Date` (yyyy-mm-dd) and `Cap` columns.
+- A day whose Status / Comments cell says it is cancelled is shown as "Not flying" and can't be booked.
+- Guests get a confirmation email with a cancel link; cancelling frees the slot, clears the schedule
+  cell and emails the club.
+
+The slot settings (11:00, 16:00, 30 minutes, cap 6, groups of 4, 28 days) are at the top of
+`Booking.gs` and in `content/club-facts.yaml` under `booking`. Change both together; `npm test` checks
+they match.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

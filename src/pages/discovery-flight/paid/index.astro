@@ -4,7 +4,7 @@ import Base from '../../../layouts/Base.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
-import RequestForm from '../../../components/RequestForm.astro';
+import BookingCalendar from '../../../components/BookingCalendar.astro';
 import { facts } from '../../../lib/facts';
 ---
 <Base
@@ -13,11 +13,11 @@ import { facts } from '../../../lib/facts';
   noindex
 >
   <PageHero title="Thanks. Your flight is paid.">
-    <p class="lead">Now choose your date. Tell us which days suit you and a club member will confirm a date and an arrival time. If it's a gift, pass this page on to the person flying.</p>
+    <p class="lead">Now pick a day and a time. If it's a gift, pass this page on to the person flying.</p>
     <div class="actions"><Button href="#request">Book your date</Button></div>
   </PageHero>
   <Section id="request" variant="plain" labelledby="req-h">
     <h2 id="req-h">Book your date</h2>
-    <RequestForm paid />
+    <BookingCalendar paid />
   </Section>
 </Base>

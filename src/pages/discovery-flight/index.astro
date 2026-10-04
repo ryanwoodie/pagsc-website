@@ -4,10 +4,9 @@ import PageHero from '../../components/PageHero.astro';
 import Section from '../../components/Section.astro';
 import Steps from '../../components/Steps.astro';
 import Callout from '../../components/Callout.astro';
-import Button from '../../components/Button.astro';
 import BookButton from '../../components/BookButton.astro';
 import Qa from '../../components/Qa.astro';
-import RequestForm from '../../components/RequestForm.astro';
+import BookingCalendar from '../../components/BookingCalendar.astro';
 import Photo from '../../components/Photo.astro';
 import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
 import cockpitPhoto from '../../assets/photos/cockpit-view.jpg';
@@ -84,8 +83,8 @@ const weekdays = lcfirst(df.weekdays);
 
   <Section id="request" labelledby="req-h">
     <h2 id="req-h">Book your date</h2>
-    <p>Bought a flight, been given one, or want to check dates before you buy? Tell us which days suit you.</p>
-    <RequestForm />
+    <p>Bought a flight, been given one, or want to check dates before you buy? Pick a day and a time.</p>
+    <BookingCalendar />
   </Section>
 
   <Section labelledby="gift-h">

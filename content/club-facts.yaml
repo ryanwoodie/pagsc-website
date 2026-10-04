@@ -67,6 +67,14 @@ discovery_flight:
     - "Fly: a winch launch to about 1,500 to 2,000 feet, with a club pilot beside you the whole time."
     - Stay, watch, learn, and fly again if time allows.
 
+booking:   # the online calendar; keep in step with BOOKING in apps-script/Booking.gs
+  first_start: "11:00"
+  last_start: "16:00"
+  minutes_per_person: 30
+  guest_spots_per_day: 6
+  max_group: 4
+  days_ahead: 28
+
 fees:
   membership:
     regular: { price: 150, per: year, who: Anyone not covered by the two categories below }

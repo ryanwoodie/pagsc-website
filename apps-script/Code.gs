@@ -5,12 +5,14 @@
  *   form=flight  Discovery Flight requests: added to the "Guest requests" tab and emailed to the club.
  *   form=pack    Welcome pack requests from prospective students: the visitor is emailed a link
  *                to the pack, and the request is added to the "Student leads" tab and emailed to the club.
+ *   form=booking Discovery Flight bookings from the calendar (see Booking.gs, which also has doGet).
  *
  * Settings live in Project Settings > Script Properties, not in this file:
  *   SHEET_ID     the spreadsheet that holds the "Guest requests" tab
  *   CLUB_EMAIL   where request emails go
  *   SITE_ORIGINS comma-separated origins allowed as the return page, e.g.
  *                https://www.pagsc.ca,https://<account>.github.io
+ *   SCHEDULE_ID  the Flying Schedule spreadsheet (Booking.gs)
  *
  * Deploy notes: apps-script/README.md
  */
@@ -26,7 +28,9 @@ function doPost(e) {
   var next = safeNext(p.next);
 
   // Honeypot: people never see this field; bots fill it. Drop silently.
-  if (p.website) return redirect(next);
+  if (p.website) return p.form === 'booking' ? json({ ok: true, kind: 'Held' }) : redirect(next);
+
+  if (p.form === 'booking') return bookingPost(p);
 
   if (p.form === 'pack') return packRequest(p, next);
 
@@ -125,10 +129,6 @@ function packRequest(p, next) {
   });
 
   return redirect(next);
-}
-
-function doGet() {
-  return HtmlService.createHtmlOutput('PAGSC flight requests endpoint.');
 }
 
 function validate(r) {

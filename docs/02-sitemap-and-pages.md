@@ -56,7 +56,11 @@ The main conversion page. Top to bottom:
 8. Give a flight as a gift: the payment link and how the recipient books (Q3).
 9. Questions most asked before a first flight.
 
-### Request form
+### Booking calendar
+
+The "Book your date" section is a calendar (`BookingCalendar.astro`) fed by the Apps Script (`apps-script/Booking.gs`), which reads the Flying Schedule. Guests choose the number of people (1 to 4), a day in the next 4 weeks and a start time from 11:00 to 4:00, half an hour per person, at most 6 guest half-hours a day. Weekends are pencilled in; weekdays (dashed, greyed) are requests a member confirms; cancelled days show "Not flying". Every step says flying depends on weather and volunteers. Fields: name, email, phone, Discovery Flight or first lesson, how they are paying, weight confirmation, message. If the calendar cannot load, the plain form below shows instead.
+
+### Request form (fallback)
 
 Fields: name · email · phone · number of flyers · preferred dates (free text, with a hint that weekends are the main flying days) · a checkbox confirming each flyer is under the weight limit · optional message. One hidden honeypot field.
 

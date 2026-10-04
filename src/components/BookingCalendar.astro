@@ -1,0 +1,462 @@
+---
+// Discovery Flight booking calendar. Reads open days and free half-hour slots from the
+// Apps Script (apps-script/Booking.gs), which reads the Flying Schedule. Weekends are held
+// right away; weekdays are requests. Without JavaScript, or if the calendar cannot load,
+// the plain booking form shows instead.
+import { FORM_ENDPOINT } from '../config';
+import { facts, df, telHref } from '../lib/facts';
+import RequestForm from './RequestForm.astro';
+
+interface Props { paid?: boolean }
+const { paid = false } = Astro.props;
+const bk = facts.booking;
+const config = {
+  endpoint: FORM_ENDPOINT,
+  maxGroup: bk.max_group,
+  minutes: bk.minutes_per_person,
+  maxWeight: df.max_weight_lbs,
+  guestPayment: facts.fees.guest_payment.toLowerCase(),
+  email: facts.contact.email,
+  phone: facts.contact.phone,
+  tel: telHref,
+  paid,
+};
+---
+<div class="booking" data-config={JSON.stringify(config)}>
+  <div class="booking__notice">
+    <p><strong>Flying depends on the weather and on volunteers.</strong> A booking holds a spot for you, not a guaranteed time. If the day changes we'll email you, and you can rebook at no charge.</p>
+  </div>
+
+  <p class="booking__loading" hidden>Loading the flying calendar…</p>
+  <div class="booking__app" hidden></div>
+
+  <div class="booking__fallback">
+    <RequestForm paid={paid} />
+  </div>
+</div>
+
+<script>
+  type Slot = { time: string; free: boolean };
+  type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; statusText: string; remaining: number; slots: Slot[] };
+  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean };
+
+  const fmtDay = new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const fmtLong = new Intl.DateTimeFormat('en-CA', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const asDate = (iso: string) => new Date(iso + 'T12:00:00Z');
+  const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3));
+  const fromMin = (n: number) => `${String(Math.floor(n / 60)).padStart(2, '0')}:${String(n % 60).padStart(2, '0')}`;
+  const clock = (t: string) => {
+    const m = toMin(t), h = Math.floor(m / 60), mm = m % 60;
+    return `${((h + 11) % 12) + 1}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${h < 12 ? 'am' : 'pm'}`;
+  };
+
+  function el<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string)[]) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    for (const k of kids) n.append(k);
+    return n;
+  }
+
+  function canBook(day: Day, start: string, people: number): boolean {
+    if (day.status === 'cancelled' || people > day.remaining) return false;
+    const i = day.slots.findIndex((s) => s.time === start);
+    if (i < 0 || i + people > day.slots.length) return false;
+    return day.slots.slice(i, i + people).every((s) => s.free);
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>('.booking')) {
+    const cfg: Config = JSON.parse(root.dataset.config!);
+    const app = root.querySelector<HTMLElement>('.booking__app')!;
+    const loading = root.querySelector<HTMLElement>('.booking__loading')!;
+    const fallback = root.querySelector<HTMLElement>('.booking__fallback')!;
+    if (!cfg.endpoint) continue;
+
+    const state = { days: [] as Day[], people: 1, date: '', start: '' };
+
+    async function load() {
+      fallback.hidden = true;
+      loading.hidden = false;
+      try {
+        const res = await fetch(`${cfg.endpoint}?action=availability`, { signal: AbortSignal.timeout(15000) });
+        const data = await res.json();
+        if (!data.ok || !Array.isArray(data.days) || !data.days.length) throw new Error('no days');
+        state.days = data.days;
+        if (!state.days.some((d) => d.date === state.date)) { state.date = ''; state.start = ''; }
+        loading.hidden = true;
+        app.hidden = false;
+        render();
+      } catch {
+        loading.hidden = true;
+        app.hidden = true;
+        fallback.hidden = false;
+      }
+    }
+
+    function render(message = '') {
+      const day = state.days.find((d) => d.date === state.date);
+      if (day && state.start && !canBook(day, state.start, state.people)) state.start = '';
+      app.replaceChildren();
+
+      // 1. People
+      const people = el('fieldset', { class: 'bk-step' }, el('legend', {}, '1. How many people are flying?'));
+      const row = el('div', { class: 'bk-choices' });
+      for (let n = 1; n <= cfg.maxGroup; n++) {
+        const b = el('button', { type: 'button', class: 'bk-chip', 'aria-pressed': String(state.people === n) }, String(n));
+        b.addEventListener('click', () => { state.people = n; render(); });
+        row.append(b);
+      }
+      people.append(row, el('p', { class: 'bk-hint' }, `Each person takes ${cfg.minutes} minutes. More than ${cfg.maxGroup}? Book a few at a time, or email us.`));
+      app.append(people);
+
+      // 2. Day
+      const dayStep = el('fieldset', { class: 'bk-step' }, el('legend', {}, '2. Pick a day'));
+      const legend = el('ul', { class: 'bk-legend' },
+        el('li', {}, el('span', { class: 'bk-key bk-key--weekend' }), 'Weekends: we pencil you in'),
+        el('li', {}, el('span', { class: 'bk-key bk-key--weekday' }), 'Weekdays: a request we confirm by email'));
+      const grid = el('div', { class: 'bk-days' });
+      for (const d of state.days) {
+        const cancelled = d.status === 'cancelled';
+        const fits = d.slots.some((s) => canBook(d, s.time, state.people));
+        const note = cancelled ? 'Not flying' : !fits ? (d.remaining ? 'No room for ' + state.people : 'Full') : d.kind === 'weekend' ? `${d.remaining} spot${d.remaining === 1 ? '' : 's'} left` : 'On request';
+        const b = el('button', {
+          type: 'button',
+          class: `bk-day bk-day--${d.kind}${cancelled ? ' bk-day--off' : ''}`,
+          'aria-pressed': String(state.date === d.date),
+        }, el('span', { class: 'bk-day__date' }, fmtDay.format(asDate(d.date))), el('span', { class: 'bk-day__note' }, note));
+        if (cancelled || !fits) b.setAttribute('disabled', '');
+        b.addEventListener('click', () => { state.date = d.date; state.start = ''; render(); });
+        grid.append(b);
+      }
+      dayStep.append(legend, grid);
+      app.append(dayStep);
+
+      if (!day) return;
+
+      // 3. Time
+      const timeStep = el('fieldset', { class: 'bk-step' }, el('legend', {}, `3. Pick a start time on ${fmtLong.format(asDate(day.date))}`));
+      if (day.statusText) timeStep.append(el('p', { class: 'bk-status' }, 'From the club: ', el('q', {}, day.statusText)));
+      if (day.kind === 'weekday') timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekday flying happens when volunteers are free. Choose a time and a club member will email you to confirm or suggest another day.'));
+      const times = el('div', { class: 'bk-times' });
+      for (const s of day.slots) {
+        const ok = canBook(day, s.time, state.people);
+        const end = fromMin(toMin(s.time) + state.people * cfg.minutes);
+        const b = el('button', { type: 'button', class: 'bk-time', 'aria-pressed': String(state.start === s.time), 'aria-label': `${clock(s.time)} to ${clock(end)}` }, clock(s.time));
+        if (!ok) b.setAttribute('disabled', '');
+        b.addEventListener('click', () => { state.start = s.time; render(); app.querySelector<HTMLInputElement>('#bk-name')?.focus(); });
+        times.append(b);
+      }
+      timeStep.append(times);
+      app.append(timeStep);
+
+      if (!state.start) return;
+
+      // 4. Details
+      const end = fromMin(toMin(state.start) + state.people * cfg.minutes);
+      const held = day.kind === 'weekend';
+      const form = el('form', { class: 'bk-step bk-form', novalidate: '' });
+      form.append(
+        el('h3', {}, '4. Your details'),
+        el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}, ${state.people} ${state.people === 1 ? 'person' : 'people'}. ${held ? 'We pencil you in for this spot.' : 'This is a request; we confirm by email.'}`),
+        el('div', { class: 'hp', 'aria-hidden': 'true' }, el('label', { for: 'bk-website' }, 'Leave this empty'), el('input', { id: 'bk-website', name: 'website', type: 'text', tabindex: '-1', autocomplete: 'off' })),
+        field('bk-name', 'Name', el('input', { id: 'bk-name', name: 'name', type: 'text', autocomplete: 'name', required: '' })),
+        field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
+        field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' })),
+        radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
+        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : ''),
+        el('div', { class: 'field field--check' }, el('input', { id: 'bk-weight', name: 'weight_ok', type: 'checkbox', value: 'yes', required: '' }), el('label', { for: 'bk-weight' }, `Everyone flying weighs ${cfg.maxWeight} lbs or less.`)),
+        field('bk-message', 'Message (optional)', el('textarea', { id: 'bk-message', name: 'message', rows: '3' })),
+      );
+      const err = el('div', { class: 'bk-error', role: 'alert', tabindex: '-1' });
+      if (message) err.textContent = message; else err.hidden = true;
+      const submit = el('button', { class: 'btn', type: 'submit' }, held ? 'Pencil me in' : 'Send my request');
+      form.append(err, submit);
+      form.addEventListener('submit', (e) => send(e, form, err, submit, day, end));
+      app.append(form);
+    }
+
+    function field(id: string, label: string, input: HTMLElement) {
+      return el('div', { class: 'field' }, el('label', { for: id }, label), input);
+    }
+
+    function radios(name: string, legend: string, options: [string, string][], checked: string) {
+      const fs = el('fieldset', { class: 'field field--choice' }, el('legend', {}, legend));
+      options.forEach(([value, text], i) => {
+        const input = el('input', { type: 'radio', name, value, ...(i === 0 ? { required: '' } : {}) });
+        if (value === checked) (input as HTMLInputElement).checked = true;
+        fs.append(el('label', {}, input, ' ', text));
+      });
+      return fs;
+    }
+
+    async function send(e: Event, form: HTMLFormElement, err: HTMLElement, submit: HTMLButtonElement, day: Day, end: string) {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
+      body.set('form', 'booking');
+      body.set('format', 'json');
+      body.set('date', day.date);
+      body.set('start', state.start);
+      body.set('people', String(state.people));
+      submit.disabled = true;
+      err.hidden = true;
+      try {
+        const res = await fetch(cfg.endpoint, { method: 'POST', body, signal: AbortSignal.timeout(30000) });
+        const data = await res.json();
+        if (!data.ok) {
+          if (data.refresh) { await load(); render(data.error); }
+          else { err.textContent = data.error || 'Something went wrong.'; err.hidden = false; submit.disabled = false; err.focus(); }
+          return;
+        }
+        done(data.kind === 'Held', day, end);
+      } catch {
+        err.replaceChildren('That did not go through. Email us at ', el('a', { href: `mailto:${cfg.email}` }, cfg.email), ' or call ', el('a', { href: cfg.tel }, cfg.phone), ' and we will book you in.');
+        err.hidden = false;
+        submit.disabled = false;
+        err.focus();
+      }
+    }
+
+    function done(held: boolean, day: Day, end: string) {
+      const when = `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}`;
+      const box = el('div', { class: 'bk-done', tabindex: '-1' },
+        el('h3', {}, held ? "You're pencilled in." : 'Your request is in.'),
+        el('p', { class: 'bk-summary' }, `${when}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
+        el('p', {}, held
+          ? "We've emailed you the details and a link to cancel or rebook. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
+          : "Weekday flying depends on who is free. A club member will email you to confirm, or to suggest another day."));
+      app.replaceChildren(box);
+      box.focus();
+    }
+
+    load();
+  }
+</script>
+
+<style>
+  .booking {
+    max-width: 44rem;
+  }
+  .booking__notice {
+    background: var(--orange-tint);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+  .booking__notice p {
+    margin: 0;
+  }
+  .booking__loading {
+    color: var(--grey);
+  }
+  .booking :global(.bk-step) {
+    border: 0;
+    margin: 0 0 24px;
+    padding: 0;
+    min-width: 0;
+  }
+  .booking :global(.bk-step legend),
+  .booking :global(.bk-form h3) {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin: 0 0 10px;
+    padding: 0;
+  }
+  .booking :global(.bk-choices),
+  .booking :global(.bk-times) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .booking :global(.bk-days) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+    gap: 8px;
+  }
+  .booking :global(button.bk-chip),
+  .booking :global(button.bk-time),
+  .booking :global(button.bk-day) {
+    min-height: 48px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .booking :global(button.bk-chip) {
+    min-width: 52px;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+  }
+  .booking :global(button.bk-time) {
+    min-width: 84px;
+    padding: 0 10px;
+  }
+  .booking :global(button.bk-day) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  .booking :global(.bk-day__date) {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1.1;
+  }
+  .booking :global(.bk-day__note) {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--grey);
+  }
+  /* Weekdays: possible but less likely, so quieter and dashed */
+  .booking :global(button.bk-day--weekday) {
+    border-style: dashed;
+    border-color: var(--grey);
+    background: var(--cell);
+    color: var(--grey);
+  }
+  .booking :global(button[aria-pressed='true']) {
+    background: var(--ink);
+    border-color: var(--ink);
+    border-style: solid;
+    color: var(--paper);
+  }
+  .booking :global(button[aria-pressed='true'] .bk-day__note) {
+    color: var(--sky);
+  }
+  .booking :global(button:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .booking :global(button.bk-day:disabled .bk-day__note) {
+    text-decoration: none;
+  }
+  .booking :global(button:not(:disabled):hover) {
+    border-color: var(--orange);
+  }
+  .booking :global(.bk-legend) {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+  .booking :global(.bk-legend li) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .booking :global(.bk-key) {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--ink);
+    vertical-align: middle;
+  }
+  .booking :global(.bk-key) {
+    flex: none;
+  }
+  .booking :global(.bk-key--weekday) {
+    border-style: dashed;
+    border-color: var(--grey);
+    background: var(--cell);
+  }
+  .booking :global(.bk-hint),
+  .booking :global(.bk-status) {
+    font-size: 0.9rem;
+    color: var(--grey);
+    margin: 8px 0 0;
+  }
+  .booking :global(.bk-status) {
+    margin: 0 0 10px;
+  }
+  .booking :global(.bk-weekday) {
+    background: var(--cell);
+    border-left: 0;
+    padding: 10px 14px;
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+  }
+  .booking :global(.bk-summary) {
+    font-weight: 600;
+  }
+  .booking :global(.bk-form) {
+    display: grid;
+    gap: 16px;
+  }
+  .booking :global(.bk-form .field) {
+    display: grid;
+    gap: 6px;
+  }
+  .booking :global(.bk-form .field > label) {
+    font-weight: 600;
+  }
+  .booking :global(.bk-form input[type='text']),
+  .booking :global(.bk-form input[type='email']),
+  .booking :global(.bk-form input[type='tel']),
+  .booking :global(.bk-form textarea) {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    font: inherit;
+  }
+  .booking :global(.field--choice) {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+  .booking :global(.field--choice legend) {
+    font-weight: 600;
+    margin-bottom: 6px;
+    padding: 0;
+  }
+  .booking :global(.field--choice label) {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+  }
+  .booking :global(.field--choice input),
+  .booking :global(.field--check input) {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    accent-color: var(--orange);
+  }
+  .booking :global(.field--check) {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+  }
+  .booking :global(.bk-form .btn) {
+    justify-self: start;
+    min-width: 12rem;
+  }
+  .booking :global(.bk-error) {
+    background: var(--orange-tint);
+    padding: 12px 16px;
+    font-weight: 600;
+  }
+  .booking :global(.bk-done) {
+    background: var(--sky);
+    padding: 20px;
+  }
+  .booking :global(.bk-done h3) {
+    font-size: 1.8rem;
+  }
+  .booking :global(.hp) {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+</style>

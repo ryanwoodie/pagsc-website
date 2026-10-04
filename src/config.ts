@@ -6,5 +6,5 @@
  * While empty, the form falls back to opening an email to the club, and the
  * page shows a [NEEDED] marker so the site is not launched this way.
  */
-export const FORM_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA/exec';
+export const FORM_ENDPOINT: string = import.meta.env.PUBLIC_FORM_ENDPOINT || 'https://script.google.com/macros/s/AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA/exec';
 

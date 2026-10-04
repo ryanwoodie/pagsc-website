@@ -63,6 +63,14 @@ const schema = z
       bring: z.array(z.string()).min(1),
       day: z.array(z.string()).min(1),
     }),
+    booking: z.strictObject({
+      first_start: z.string().regex(/^\d{2}:\d{2}$/),
+      last_start: z.string().regex(/^\d{2}:\d{2}$/),
+      minutes_per_person: z.number().int().positive(),
+      guest_spots_per_day: z.number().int().positive(),
+      max_group: z.number().int().positive(),
+      days_ahead: z.number().int().positive(),
+    }),
     fees: z.strictObject({
       membership: z.strictObject({ regular: membership, junior: membership, youth_air_cadet: membership }),
       membership_notes: z.array(z.string()),
