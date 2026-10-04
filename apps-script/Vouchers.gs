@@ -150,7 +150,7 @@ function certificateHtml(vouchers, links) {
       '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:' + EMAIL.SKY + '"><tr><td style="padding:34px 28px 28px">' +
       small('Flight certificate') +
       '<div style="font-family:' + F + ';font-size:52px;line-height:1;font-weight:bold;color:' + EMAIL.INK + '">Discovery Flight</div>' +
-      '<div style="font-family:' + F + ';font-size:18px;line-height:1.4;color:' + EMAIL.INK + ';margin-top:12px">A flight in a two-seat glider with a club pilot, from Birch Hills Airport near Prince Albert.</div>' +
+      '<div style="font-family:' + F + ';font-size:18px;line-height:1.4;color:' + EMAIL.INK + ';margin-top:12px">A winch launch to about 1,500 feet in a two-seat glider, with a club pilot beside you the whole time. At Birch Hills Airport, 25 minutes from Prince Albert.</div>' +
       '<div style="font-family:' + F + ';font-size:16px;color:' + EMAIL.GREY + ';margin-top:10px">Value ' + dollars(v.value) + ' &middot; Never expires</div>' +
       '</td></tr></table>' +
       '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:26px"><tr>' +
