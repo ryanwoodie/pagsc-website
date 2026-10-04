@@ -85,4 +85,11 @@ No abandoned-form nudges, no retargeting, no newsletter at launch.
 
 One number matters: Discovery Flight requests. Then, by hand at season's end: requests, flights flown, new members.
 
-Use a privacy-light analytics tool with no cookie banner (choice in `06-open-questions.md`, Q10). Track page views and one event, `flight_request_submitted`, with the page it came from.
+Analytics is GoatCounter (https://pagsc.goatcounter.com): cookie-free, no banner. Besides page views it counts these events (`src/scripts/track.ts`):
+
+- `buy/single`, `buy/group`: clicks on a Wave checkout link, titled with the page and button. Completed purchases are in Wave.
+- `booking/weekend|weekday/discovery|first-lesson`: bookings made in the calendar. The Bookings tab is the record.
+- `booking/form/flight`: bookings through the plain fallback form.
+- `welcome-pack/request`: welcome pack requests.
+
+At season's end, compare: buy clicks, Wave purchases, bookings, flights flown, first-lesson interest and new members.

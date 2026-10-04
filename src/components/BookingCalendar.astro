@@ -36,6 +36,7 @@ const config = {
 </div>
 
 <script>
+  import { track } from '../scripts/track';
   type Slot = { time: string; free: boolean };
   type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; statusText: string; remaining: number; slots: Slot[] };
   type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean };
@@ -208,6 +209,7 @@ const config = {
           else { err.textContent = data.error || 'Something went wrong.'; err.hidden = false; submit.disabled = false; err.focus(); }
           return;
         }
+        track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         done(data.kind === 'Held', day, end);
       } catch {
         err.replaceChildren('That did not go through. Email us at ', el('a', { href: `mailto:${cfg.email}` }, cfg.email), ' or call ', el('a', { href: cfg.tel }, cfg.phone), ' and we will book you in.');

@@ -32,6 +32,7 @@ npm test           # schedule parser tests
 
 - Change a price, contact or figure in `content/club-facts.yaml` only. The build fails if a key is missing or misspelled, or if figures that depend on each other disagree.
 - `src/config.ts` holds the form endpoint.
+- Analytics: GoatCounter at https://pagsc.goatcounter.com (club account). Events are listed in `docs/01-strategy.md` under Measuring.
 - The welcome pack is `public/welcome-pack.pdf` (served at `/welcome-pack.pdf`). Replace the file to update it.
 - `SKIP_SCHEDULE=1 npm run build` builds without fetching the Flying Schedule.
 - `npm run og` regenerates `public/og.png` from `scripts/og/og.html` (needs Google Chrome).

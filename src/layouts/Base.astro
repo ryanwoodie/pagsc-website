@@ -54,6 +54,9 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
     <meta name="twitter:card" content="summary_large_image" />
 
     {ld.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
+
+    <!-- GoatCounter: cookie-free page views, plus a few events (see src/scripts/track.ts) -->
+    <script is:inline data-goatcounter="https://pagsc.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -62,5 +65,9 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
       <slot />
     </main>
     <Footer />
+    <script>
+      import { trackBuyClicks } from '../scripts/track';
+      trackBuyClicks();
+    </script>
   </body>
 </html>

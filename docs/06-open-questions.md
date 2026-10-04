@@ -13,7 +13,7 @@ Decisions and assets needed from Ryan. Each notes what is assumed until it is an
 | Q7 | The 7-hour figure: keep it, replace it with the club's longest duration, or drop it? | Shown as "aloft on a single flight out of PAGSC". | Why gliding |
 | Q8 | Two or three short quotes from guests or students, with permission and first names. | No quotes shown. | Home proof section |
 | Q9 | GitHub account or organisation for the repository, and is a public repository acceptable? | Public repository under Ryan's account. | Phase 0 deploy |
-| Q10 | Analytics: which tool? Options with no cookie banner include Cloudflare Web Analytics and GoatCounter. | None until chosen. | Phase 3 |
+| Q10 | Analytics: which tool? Options with no cookie banner include Cloudflare Web Analytics and GoatCounter. | Answered 4 October 2026: GoatCounter (pagsc.goatcounter.com), cookie-free, with events. | Done |
 | Q11 | Where is DNS for pagsc.ca managed, and are any pagsc.ca mailboxes still in use? | DNS at CanSpace; mail in use, so mail records are left alone. | Phase 4 |
 | Q12 | Fleet figures differ between published sources. Are the figures in `club-facts.yaml` the ones the club wants shown? And who may fly the Ka 6E and Phoebus C? | Figures as listed; no statement about who may fly which glider. | The club and the fleet |
 | Q13 | Is the Discovery Flight price on the Wave payment page $50, and does it offer the $40 group price? | Answered 4 October 2026: a separate Wave checkout for the group rate ($40 each, 4 or more), linked from Discovery Flight, Costs and the request-received page. | Done |
