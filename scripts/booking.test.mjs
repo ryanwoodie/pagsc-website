@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -33,7 +33,7 @@ test('slot times run 11:00 to 16:30 every half hour', () => {
 test('reads dates, status and intro rows', () => {
   const d = scheduleDays(grid);
   assert.equal(d.length, 5);
-  assert.deepEqual({ ...d[1] }, { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go', students: 0, weather: 'Sunny', instructor: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(d[1])), { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go', students: 0, manual: [{ start: '', people: 1 }], weather: 'Sunny', instructor: true });
   assert.equal(d[2].instructor, false);
 });
 
@@ -45,7 +45,7 @@ test('availability: window, weekend/weekday, cancelled, cap and taken slots', ()
   const sat = a[0];
   assert.equal(sat.kind, 'weekend');
   assert.equal(sat.status, 'on');
-  assert.equal(sat.remaining, 7); // 12 slots - 5 booked
+  assert.equal(sat.remaining, 6); // 12 slots - 5 booked - 1 typed into the schedule (Guest A, no time)
   assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['11:30', '12:00', '15:00', '15:30', '16:00']);
   assert.equal(a[1].status, 'cancelled');
   assert.equal(a[2].kind, 'weekday');
@@ -133,4 +133,25 @@ test('each student on the schedule takes 2 guest spots', () => {
   assert.equal(sun.remaining, 10); // 12 - 2
   const busy = scheduleDays([grid[0], grid[1], grid[2], grid[3], ['', '', '', 'Student/Pilots Sign-up Below', '', ''], ['', '', '', 'A', '', ''], ['', '', '', 'B', '', ''], ['', '', '', 'C', '', ''], ['', '', '', 'D', '', '']]);
   assert.equal(computeAvailability(busy, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 4); // 12 - 4 x 2
+});
+
+test('guests typed into the schedule by hand', () => {
+  const e = (t) => JSON.parse(JSON.stringify(manualEntry(t)));
+  assert.equal(manualEntry('Jane 11:30 (2) web'), null);
+  assert.equal(manualEntry('Request: Sam 13:00 web'), null);
+  assert.equal(manualEntry(''), null);
+  assert.deepEqual(e('Jane 1:30 (2)'), { start: '13:30', people: 2 });
+  assert.deepEqual(e('Bob 11:00'), { start: '11:00', people: 1 });
+  assert.deepEqual(e('Kim 2pm +1'), { start: '14:00', people: 2 });
+  assert.deepEqual(e('Lee 3:15 PM x3'), { start: '15:00', people: 3 });
+  assert.deepEqual(e('Pat 14:30'), { start: '14:30', people: 1 });
+  assert.deepEqual(e('Alex'), { start: '', people: 1 });
+  assert.deepEqual(e('Sam (2)'), { start: '', people: 2 });
+  assert.deepEqual(e('Max 9am'), { start: '', people: 1 }); // before the first slot
+  const g = grid.map((r) => [...r]);
+  g[4][2] = 'Jane 1:30 (2)';
+  const sat = computeAvailability(scheduleDays(g), [], {}, '2026-10-09')[0];
+  assert.equal(sat.remaining, 10);
+  assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['13:30', '14:00']);
+  assert.ok(!JSON.stringify(sat).includes('Jane'));
 });

@@ -14,6 +14,11 @@
  * Weekend bookings are pencilled in right away; weekday bookings are requests a member confirms.
  * Neither is a guarantee: flying depends on weather and volunteers.
  *
+ * Guests the club types straight into a day's intro-flight block count too: "Jane 1:30 (2)" takes the
+ * 1:30 and 2:00 slots; a name with no time takes one spot that day without a set time ("+1" or "(2)"
+ * for more people). Entries ending in "web" were written by this script and are counted from the
+ * Bookings tab instead.
+ *
  * Optional Script Property: SCHEDULE_ID (defaults to the Flying Schedule below).
  * Optional tab "Guest caps" in the requests sheet: Date (yyyy-mm-dd) | Cap, to change one day's cap.
  */
@@ -89,6 +94,33 @@ function addDays(iso, n) {
 }
 
 /**
+ * A guest typed into the intro-flight block by hand: {start: 'HH:MM' or '', people}, or null for
+ * a booking this script wrote (ends in "web"). Times without am/pm are read as flying hours:
+ * 11 and 12 as morning and noon, 1 to 10 as afternoon. Off-slot times round down to the half hour.
+ */
+function manualEntry(text) {
+  var t = String(text || '').trim();
+  if (!t || /\bweb\s*$/i.test(t)) return null;
+  var people = 1, m;
+  if ((m = /\((\d{1,2})\)/.exec(t))) people = Number(m[1]);
+  else if ((m = /\bx\s*(\d{1,2})\b/i.exec(t))) people = Number(m[1]);
+  else if ((m = /\+\s*(\d{1,2})\b/.exec(t))) people = Number(m[1]) + 1;
+  people = Math.max(1, Math.min(people, 12));
+  var start = '';
+  var tm = /\b(\d{1,2})(?::(\d{2})\s*([ap])?\.?m?\.?|\s*([ap])\.?m\.?)(?![\w])/i.exec(t.replace(/\(\d{1,2}\)/g, ''));
+  if (tm) {
+    var h = Number(tm[1]), min = Number(tm[2] || 0), ap = (tm[3] || tm[4] || '').toLowerCase();
+    if (ap === 'p' && h < 12) h += 12;
+    else if (ap === 'a' && h === 12) h = 0;
+    else if (!ap && h >= 1 && h <= 10) h += 12;
+    var n = h * 60 + min;
+    n -= (n - toMinutes(BOOKING.FIRST)) % BOOKING.STEP;
+    if (min < 60 && n >= toMinutes(BOOKING.FIRST) && n <= toMinutes(BOOKING.LAST)) start = fromMinutes(n);
+  }
+  return { start: start, people: people };
+}
+
+/**
  * Pull the dates, status text and intro-block row for each column of the schedule grid.
  * @param {string[][]} grid display values of the schedule's first tab
  */
@@ -108,6 +140,15 @@ function scheduleDays(grid) {
     var introRow = -1;
     for (var r2 = 1; r2 < grid.length; r2++) {
       if (/intro\s*fam\s*flight\s*sign-?\s*up/i.test(String(grid[r2][c] || ''))) { introRow = r2; break; }
+    }
+    var manual = [];
+    if (introRow >= 0) {
+      for (var r7 = introRow + 1; r7 < grid.length; r7++) {
+        var cell = String(grid[r7][c] || '');
+        if (/sign-?\s*up\s+below/i.test(cell)) break;
+        var entry = manualEntry(cell);
+        if (entry) manual.push(entry);
+      }
     }
     var students = 0;
     for (var r5 = 1; r5 < grid.length; r5++) {
@@ -135,6 +176,7 @@ function scheduleDays(grid) {
       introRow: introRow,
       statusText: statusRow >= 0 ? String(grid[statusRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 160) : '',
       students: students,
+      manual: manual,
       weather: weatherRow >= 0 && weatherRow !== statusRow ? String(grid[weatherRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 200) : '',
       instructor: instructor
     });
@@ -157,7 +199,7 @@ function computeAvailability(days, bookings, caps, today) {
     if (d.date < first || d.date > last) return;
     var wd = weekdayOf(d.date);
     var taken = {}, used = 0;
-    bookings.forEach(function (b) {
+    bookings.concat((d.manual || []).map(function (e) { return { date: d.date, start: e.start, people: e.people }; })).forEach(function (b) {
       if (b.date !== d.date) return;
       var i = times.indexOf(b.start);
       for (var k = 0; k < b.people; k++) if (i + k >= 0 && i + k < times.length) taken[i + k] = true;

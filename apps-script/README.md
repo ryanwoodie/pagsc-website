@@ -61,6 +61,11 @@ What it does with the sheets:
   Set a row's Status to `Cancelled` to free the slot.
 - Each booking is also written into that day's **Intro Fam Flight** block on the Flying Schedule as
   first name and time only, e.g. `Jane 11:30 (2) web` or `Request: Sam 13:00 web` for a weekday.
+- Guests added by hand in a day's Intro Fam Flight block count too. Write a first name and a start time,
+  with the number of people if more than one: `Jane 1:30 (2)` takes 1:30 and 2:00 off the website.
+  Times without am/pm are read as flying hours (1:30 is 1:30 pm). A name with no time takes one spot
+  that day without blocking a time; `(2)` or `+1` for more people. Leave the word `web` on the
+  script's own entries: those are counted from the Bookings tab, and removing it counts them twice.
 - To change one day's guest limit, add a **Guest caps** tab with `Date` (yyyy-mm-dd) and `Cap` columns.
 - A day whose Status / Comments cell says it is cancelled is shown as "Not flying" and can't be booked.
 - Guests get a confirmation email with a cancel link; cancelling frees the slot, clears the schedule
