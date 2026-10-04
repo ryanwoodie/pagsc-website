@@ -29,7 +29,8 @@ for await (const file of htmlFiles(DIST)) {
   const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
   for (const [, url] of html.matchAll(/(?:href|src)="([^"]+)"/g)) {
     if (/^(https?:|mailto:|tel:|data:)/.test(url)) continue;
-    const [path, hash] = url.split('#');
+    const [withQuery, hash] = url.split('#');
+    const path = withQuery.split('?')[0];
     if (!path) {
       if (hash && !ids.has(hash)) broken.push(`${file.replace(DIST, '')}: #${hash}`);
       continue;
