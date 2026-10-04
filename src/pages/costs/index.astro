@@ -24,7 +24,7 @@ const rows = [
   description={`A first flight is ${money(df.price)}. Membership is ${money(m.regular.price)} a year, a winch launch is ${money(fees.winch_launch)}, glider time is ${money(fees.glider_rental_per_hour)} an hour and instruction is free.`}
 >
   <PageHero label="Costs" title="What it costs">
-    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs: {lessonBreakdown}. Instruction is free.</p>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs members: {lessonBreakdown}. Instruction is free.</p>
     <div class="actions"><BookButton /></div>
   </PageHero>
 

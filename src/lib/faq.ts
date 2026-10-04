@@ -71,7 +71,7 @@ export const learning: QA[] = [
   {
     id: 'lesson-cost',
     q: 'What does a lesson cost?',
-    a: `About ${money(fees.typical_lesson_flight.cost)} for a typical ${fees.typical_lesson_flight.minutes}-minute instructional flight: ${lessonBreakdown}. Instruction is free.`,
+    a: `About ${money(fees.typical_lesson_flight.cost)} for a typical ${fees.typical_lesson_flight.minutes}-minute instructional flight for members: ${lessonBreakdown}. Instruction is free.`,
   },
   {
     id: 'flights-to-solo',

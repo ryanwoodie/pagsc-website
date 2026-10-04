@@ -6,7 +6,7 @@ primary_action: Book a Discovery Flight
 
 # What it costs
 
-**$10** is about what a typical 10-minute instructional flight costs: a $5 launch plus $5 of glider time. Instruction is free.
+**$10** is about what a typical 10-minute instructional flight costs members: a $5 launch plus $5 of glider time. Instruction is free.
 
 | What | Price (CAD) | Good to know |
 | --- | --- | --- |

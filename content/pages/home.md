@@ -39,7 +39,7 @@ Meet the crew at Birch Hills Airport, get a safety briefing, and launch.
 A Discovery Flight with a club pilot. $50.
 
 ### Learn to fly
-Free instruction. About $10 a instructional flight.
+Free instruction. About $10 an instructional flight for members.
 
 ### Youth and cadets
 $15 membership and $1,000 in bursaries. Solo at 14.
@@ -59,7 +59,7 @@ Gliding is to powered flying what sailing is to motorboating. With an engine, th
 
 ## What it costs
 
-**$10** is about what a typical 10-minute instructional flight costs: a $5 launch plus $5 of glider time. Instruction is free.
+**$10** is about what a typical 10-minute instructional flight costs members: a $5 launch plus $5 of glider time. Instruction is free.
 
 [See all costs]
 

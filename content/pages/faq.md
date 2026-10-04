@@ -41,7 +41,7 @@ Weekends and holidays, about 11 am to 5 pm for guest flights, weather permitting
 There is no minimum age to start training. You can fly solo at 14 and hold a full Glider Pilot Licence at 16. Students need to reach the controls comfortably (roughly 5 ft tall) and be ready to learn (typically 12 and up).
 
 ### What does a lesson cost?
-About $10 for a typical 10-minute instructional flight: a $5 launch plus $5 of glider time. Instruction is free.
+About $10 for a typical 10-minute instructional flight for members: a $5 launch plus $5 of glider time. Instruction is free.
 
 ### How long does it take to go solo?
 Most students go solo after around 40 instructional flights. With previous aviation experience or a pilot licence, it can be as few as 10 to 20. The licence itself needs 20 solo flights.
