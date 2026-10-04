@@ -8,13 +8,11 @@ primary_action: Book a Discovery Flight
 
 # Come fly with us.
 
-No engine. No experience needed. A winch launch to about 1,500 to 2,000 feet, and some of the quietest flying in Saskatchewan.
+No engine. No experience needed. A winch launch to about 1,500 feet, and some of the quietest flying in Saskatchewan.
 
 **Your first flight is $50.**
 
-[Buy a Discovery Flight] · or learn to fly
-
-For you or as a gift. After you buy, choose your date with us.
+[Book a Discovery Flight] · or learn to fly
 
 ## Three facts
 
@@ -27,8 +25,8 @@ For you or as a gift. After you buy, choose your date with us.
 ### 1. Buy your flight
 $50 online, for yourself or as a gift.
 
-### 2. Book your date
-Tell us which days suit you and a club member confirms.
+### 2. Book your flying day
+Pick a day and time on our booking calendar.
 
 ### 3. Come out and fly
 Meet the crew at Birch Hills Airport, get a safety briefing, and launch.

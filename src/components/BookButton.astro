@@ -1,8 +1,12 @@
 ---
-// The site's one primary action: buy a Discovery Flight. Goes straight to the Wave checkout.
+// The site's one primary action. Everywhere except the Discovery Flight page it goes to that page,
+// where the price, limits and booking are explained; on that page it buys (Wave checkout) directly.
 import Button from './Button.astro';
 import { facts, money } from '../lib/facts';
-interface Props { label?: string; small?: boolean; class?: string; showPrice?: boolean }
-const { label = 'Buy a Discovery Flight', small, class: cls, showPrice = false } = Astro.props;
+interface Props { label?: string; small?: boolean; class?: string; showPrice?: boolean; buy?: boolean }
+const { label, small, class: cls, showPrice = false, buy } = Astro.props;
+const here = Astro.url.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '');
+const direct = buy ?? here === '/discovery-flight/';
+const text = (label ?? (direct ? 'Buy a Discovery Flight' : 'Book a Discovery Flight')) + (showPrice ? `, ${money(facts.discovery_flight.price)}` : '');
 ---
-<Button href={facts.links.discovery_flight_payment} small={small} class={cls} external>{label}{showPrice && `, ${money(facts.discovery_flight.price)}`}</Button>
+<Button href={direct ? facts.links.discovery_flight_payment : '/discovery-flight/'} small={small} class={cls} external={direct}>{text}</Button>

@@ -27,9 +27,9 @@ const weekdays = lcfirst(df.weekdays);
     <p class="lead">A winch launch to about {launchHeight} in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
     <div class="actions">
       <BookButton showPrice />
-      <a class="more" href="#request">or book a date first</a>
+      <a class="more" href="#request">or pick a day first</a>
     </div>
-    <p class="fine">For you or as a gift. After you buy, choose your date with us. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">buy at the group rate, {money(df.group_price_each)} each</a>.</p>
+    <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 
@@ -37,8 +37,7 @@ const weekdays = lcfirst(df.weekdays);
     <div class="grid grid--2">
       <div>
         <h2 id="what-h">What happens</h2>
-        <p class="lead">The winch pulls the glider into the air in seconds. At about {launchHeight} your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
-        <p>How long depends on the air. On a calm day the flight is a smooth glide back down from the launch. When there is rising air, your pilot can use it to stay up longer and show you more.</p>
+        <p class="lead">The winch pulls the glider into the air in seconds. At about {launchHeight} your pilot releases the cable, and the flying goes quiet. Depending on the day and the weather, you'll be up for {df.duration_minutes} minutes.</p>
         <Photo class="cockpit" src={cockpitPhoto} alt="View from the front seat in flight: a student in a headset looks out over green prairie fields and the airfield below" crop="4 / 5" position="center 40%" sizes="(min-width: 760px) 45vw, 100vw" />
       </div>
       <div>
@@ -60,7 +59,7 @@ const weekdays = lcfirst(df.weekdays);
       row
       items={[
         { title: 'Buy your flight', text: `${money(df.price)} online, for yourself or as a gift.` },
-        { title: 'Book your date', text: 'Tell us which days suit you with the form below. A club member replies with a date and an arrival time.' },
+        { title: 'Book your flying day', text: 'Pick a day and time on the booking calendar below.' },
         { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
       ]}
     />
@@ -90,8 +89,8 @@ const weekdays = lcfirst(df.weekdays);
   </Section>
 
   <Section id="request" labelledby="req-h">
-    <h2 id="req-h">Book your date</h2>
-    <p>Bought a flight, been given one, or want to check dates before you buy? Pick a day and a time.</p>
+    <h2 id="req-h">Book your flying day</h2>
+    <p>Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.</p>
     <BookingCalendar />
   </Section>
 
@@ -99,7 +98,7 @@ const weekdays = lcfirst(df.weekdays);
     <h2 id="gift-h">Give a flight as a gift</h2>
     <p class="lead">A Discovery Flight makes a good present for anyone who has looked up and wondered.</p>
     <p>Buy it online now; gift flights don't expire. The person flying books their date with the <a href="#request">booking form</a> above, or by emailing <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
-    <div class="actions"><BookButton label="Buy a gift flight" showPrice /></div>
+    <div class="actions"><BookButton label="Buy a gift flight" showPrice buy /></div>
   </Section>
 
   <Section labelledby="faq-h">

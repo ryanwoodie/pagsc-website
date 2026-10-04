@@ -22,6 +22,7 @@ var BOOKING = {
   LAST: '16:00',         // last start time
   STEP: 30,              // minutes per person
   CAP: 6,                // guest half-hours per day
+  STUDENT_COST: 2,       // guest spots each student signed up on the schedule takes away
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
   TZ: 'America/Regina',
@@ -107,6 +108,16 @@ function scheduleDays(grid) {
     for (var r2 = 1; r2 < grid.length; r2++) {
       if (/intro\s*fam\s*flight\s*sign-?\s*up/i.test(String(grid[r2][c] || ''))) { introRow = r2; break; }
     }
+    var students = 0;
+    for (var r5 = 1; r5 < grid.length; r5++) {
+      if (!/student\/?\s*pilots?\s+sign-?\s*up\s+below/i.test(String(grid[r5][c] || ''))) continue;
+      for (var r6 = r5 + 1; r6 < grid.length; r6++) {
+        var sv = String(grid[r6][c] || '').trim();
+        if (/sign-?\s*up\s+below/i.test(sv)) break;
+        if (sv) students++;
+      }
+      break;
+    }
     var instructor = false;
     for (var r3 = 1; r3 < grid.length; r3++) {
       if (!/instructors?\s+sign-?\s*up\s+below/i.test(String(grid[r3][c] || ''))) continue;
@@ -122,6 +133,7 @@ function scheduleDays(grid) {
       col: c,
       introRow: introRow,
       statusText: statusRow >= 0 ? String(grid[statusRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 160) : '',
+      students: students,
       weather: weatherRow >= 0 && weatherRow !== statusRow ? String(grid[weatherRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 200) : '',
       instructor: instructor
     });
@@ -150,7 +162,7 @@ function computeAvailability(days, bookings, caps, today) {
       for (var k = 0; k < b.people; k++) if (i + k >= 0 && i + k < times.length) taken[i + k] = true;
       used += b.people;
     });
-    var cap = caps && caps[d.date] != null ? Number(caps[d.date]) : BOOKING.CAP;
+    var cap = (caps && caps[d.date] != null ? Number(caps[d.date]) : BOOKING.CAP) - BOOKING.STUDENT_COST * (d.students || 0);
     var status = classifyStatus(d.statusText);
     out.push({
       date: d.date,

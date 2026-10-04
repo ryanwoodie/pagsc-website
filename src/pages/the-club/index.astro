@@ -12,7 +12,7 @@ import { facts, num, listJoin } from '../../lib/facts';
 const outlines = ['k7', 'ka6e', 'phoebus'] as const;
 const k7 = facts.fleet[0]!;
 const ratio = Number(k7.best_glide.split(':')[0]);
-const glideKm = Math.round((ratio * 2000 * 0.3048) / 1000);
+const glideKm = Math.round((ratio * facts.discovery_flight.launch_height_feet * 0.3048) / 1000);
 const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
 ---
 <Base

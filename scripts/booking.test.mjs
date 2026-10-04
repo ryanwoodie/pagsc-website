@@ -17,7 +17,8 @@ const grid = [
   ['Status/Comments:', '', 'Day is a go', 'Cancelled: wind', '', ''],
   ['Intro', 'Intro Fam Flight Sign-up Below for Fri:', 'Intro Fam Flight Sign-up Below for Sat:', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below'],
   ['', '', 'Guest A', '', '', ''],
-  ['Students', 'Student/Pilots Sign-up Below', 'Student/Pilots Sign-up Below', '', '', ''],
+  ['Students', 'Student/Pilots Sign-up Below', 'Student/Pilots Sign-up Below', 'Student/Pilots SIgn-up Below:', '', ''],
+  ['', '', '', 'Student E', '', ''],
   ['Instructors:', 'Instructors Sign-up Below', 'Instructors Sign-up Below', 'Instructors Sign-up Below', '', ''],
   ['', '', 'Instructor D', '', '', ''],
 ];
@@ -32,7 +33,7 @@ test('slot times run 11:00 to 16:00 every half hour', () => {
 test('reads dates, status and intro rows', () => {
   const d = scheduleDays(grid);
   assert.equal(d.length, 5);
-  assert.deepEqual({ ...d[1] }, { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go', weather: 'Sunny', instructor: true });
+  assert.deepEqual({ ...d[1] }, { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go', students: 0, weather: 'Sunny', instructor: true });
   assert.equal(d[2].instructor, false);
 });
 
@@ -124,4 +125,13 @@ test('email text uses the site\'s time style and escapes names', () => {
   assert.match(r.subject, /^Flying is off/);
   assert.ok(r.html.includes('Cancel and rebook'));
   assert.match(statusEmail(b, true, { statusText: 'Day is a go', weather: 'Sunny', instructor: true }, links).subject, /^Flying is on/);
+});
+
+test('each student on the schedule takes 2 guest spots', () => {
+  const days = scheduleDays(grid);
+  assert.equal(days.find((d) => d.date === '2026-10-11').students, 1);
+  const sun = computeAvailability(days, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11');
+  assert.equal(sun.remaining, 4);
+  const busy = scheduleDays([grid[0], grid[1], grid[2], grid[3], ['', '', '', 'Student/Pilots Sign-up Below', '', ''], ['', '', '', 'A', '', ''], ['', '', '', 'B', '', ''], ['', '', '', 'C', '', ''], ['', '', '', 'D', '', '']]);
+  assert.equal(computeAvailability(busy, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 0);
 });

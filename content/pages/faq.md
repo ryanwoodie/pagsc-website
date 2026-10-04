@@ -18,7 +18,7 @@ No. The club provides the glider, the winch and free instruction.
 An experienced club pilot or instructor is in command. Gliding carries risk similar to other small-aircraft flying, and safety is the club's first priority.
 
 ### How long is the flight?
-About 5 to 30 minutes, depending on the day's conditions. The winch launch takes you to about 1,500 to 2,000 feet.
+About 5 to 30 minutes, depending on the day's conditions. The winch launch takes you to about 1,500 feet.
 
 ### Is there a weight limit?
 Yes. The maximum weight for an introductory flight is 230 lbs.

@@ -52,7 +52,6 @@ const schema = z
       group_minimum: z.number().int().positive(),
       duration_minutes: z.string(),
       launch: z.string(),
-      launch_height_feet_min: z.number().int().positive(),
       launch_height_feet: z.number().int().positive(),
       max_weight_lbs: z.number().int().positive(),
       membership_required: z.boolean(),
@@ -206,8 +205,8 @@ export const soloLine = `Most students go solo after ${facts.training.flights_to
 /** "A Glider Pilot Licence typically costs $500 to $1,000 in launches and glider time…" */
 export const licenceCostLine = `A Glider Pilot Licence typically costs ${facts.training.licence_cost} in launches and glider time, plus membership: about what ${facts.training.licence_cost_powered_hours} hours of powered flight training costs.`;
 
-/** "1,500 to 2,000 feet" */
-export const launchHeight = `${num(df.launch_height_feet_min)} to ${num(df.launch_height_feet)} feet`;
+/** "1,500 feet" */
+export const launchHeight = `${num(df.launch_height_feet)} feet`;
 
 /** tel: link for the club phone */
 export const telHref = 'tel:+1' + facts.contact.phone.replace(/\D/g, '');

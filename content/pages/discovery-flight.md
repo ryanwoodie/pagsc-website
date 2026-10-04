@@ -6,15 +6,15 @@ primary_action: Request a date
 
 # Your first flight in a glider
 
-A winch launch to about 1,500 to 2,000 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
+A winch launch to about 1,500 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
 
-[Buy a Discovery Flight, $50] · or book a date first
+[Buy a Discovery Flight, $50] · or pick a day first
 
-For you or as a gift. After you buy, choose your date with us. Groups of 4 or more: buy at the group rate, $40 each (group checkout link).
+For yourself or as a gift. Groups of 4 or more: $40 each (group checkout link).
 
 ## What happens
 
-The winch pulls the glider into the air in seconds. At about 1,500 to 2,000 feet your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for 5 to 30 minutes.
+The winch pulls the glider into the air in seconds. At about 1,500 feet your pilot releases the cable, and the flying goes quiet. Depending on the day and the weather, you'll be up for 5 to 30 minutes.
 
 ## At a glance
 
@@ -29,8 +29,8 @@ The winch pulls the glider into the air in seconds. At about 1,500 to 2,000 feet
 ### 1. Buy your flight
 $50 online, for yourself or as a gift.
 
-### 2. Book your date
-Tell us which days suit you with the form below. A club member replies with a date and an arrival time.
+### 2. Book your flying day
+Pick a day and time on the booking calendar below.
 
 ### 3. Come out and fly
 Check the day is on before you leave home, then meet us at the field.
@@ -48,16 +48,16 @@ Check the day is on before you leave home, then meet us at the field.
 **How the day runs**
 
 1. Meet the crew and get a safety briefing.
-2. Fly: a winch launch to about 1,500 to 2,000 feet, with a club pilot beside you the whole time.
+2. Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time.
 3. Stay, watch, learn, and fly again if time allows.
 
 ## Weather
 
 Gliding depends on the weather. If your day is cancelled, we rebook you at no charge, and a flight you've paid for carries over to the new date. Prepaid flights don't expire, and we refund on request.
 
-## Book your date
+## Book your flying day
 
-Bought a flight, been given one, or want to check dates before you buy? Tell us which days suit you.
+Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.
 
 Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
 

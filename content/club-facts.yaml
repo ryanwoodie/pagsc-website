@@ -48,8 +48,7 @@ discovery_flight:
   group_minimum: 4
   duration_minutes: "5 to 30"
   launch: winch
-  launch_height_feet_min: 1500   # winch launches reach about 1,500 to 2,000 ft
-  launch_height_feet: 2000
+  launch_height_feet: 1500   # "about 1,500 feet"; launches often reach more, but do not promise it
   max_weight_lbs: 230
   membership_required: false
   experience_required: false
@@ -67,7 +66,7 @@ discovery_flight:
     - A phone or camera, if you like
   day:
     - Meet the crew and get a safety briefing.
-    - "Fly: a winch launch to about 1,500 to 2,000 feet, with a club pilot beside you the whole time."
+    - "Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time."
     - Stay, watch, learn, and fly again if time allows.
 
 booking:   # the online calendar; keep in step with BOOKING in apps-script/Booking.gs

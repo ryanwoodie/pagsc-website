@@ -4,7 +4,7 @@
 
 Get a visitor to request a first flight. Everything else on the site either helps that happen or helps a first-timer come back and join.
 
-- **Primary conversion:** a Discovery Flight bought (Wave checkout), for the buyer or as a gift. Decided 3 October 2026: revenue first; $50 is an impulse price.
+- **Primary conversion:** a Discovery Flight bought (Wave checkout), for the buyer or as a gift. Decided 3 October 2026: revenue first; $50 is an impulse price. From 4 October the main button on other pages ("Book a Discovery Flight") goes to the Discovery Flight page, whose first screen buys directly, so buyers see the limits, weather and booking first.
 - **Secondary:** a date booked (form submitted), a membership form opened, a training inquiry.
 
 The Discovery Flight is presented as a first lesson, not a ride. The club has one two-seat trainer and volunteer instructors, so seat time is scarce; the framing attracts people who may go on to join. Whether the club's priority is members or ride revenue is an open question (`06-open-questions.md`, Q1). Until it is answered, build for members.
@@ -52,7 +52,7 @@ Each gets its own page with its own hook and the same button.
 - Distances as drive times: 25 minutes from Prince Albert, 1.5 hours from Saskatoon.
 - Club achievements are "out of PAGSC", never "by our members".
 - A single lesson in the air is an "instructional flight" (not a "lesson flight"); the course of them is "flight lessons". Ground school is separate and self-directed, or taken with pilottraining.ca.
-- Do not overpromise flight details: launches reach "about 1,500 to 2,000 feet", flights last "5 to 30 minutes", and weekday flying is "some weekdays, often on request".
+- Do not overpromise flight details: launches reach "about 1,500 feet", flights last "5 to 30 minutes", and weekday flying is "some weekdays, often on request".
 - Compare gliding with powered flying the way sailing compares with motorboating. Never run powered flying down; the site also recruits power pilots.
 - The idea to carry: gliding is a sport you never finish. Do not use the word "evergreen".
 

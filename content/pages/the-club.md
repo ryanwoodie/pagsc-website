@@ -40,6 +40,6 @@ An early fibreglass sailplane with a 17-metre wing, a T-tail and a retractable w
 
 ### Reading the numbers
 
-A best glide of 26:1 means 26 metres forward for every metre of height lost: about 16 km from a 2,000 ft launch in still air. Minimum sink is how slowly the glider descends when flown for time aloft.
+A best glide of 26:1 means 26 metres forward for every metre of height lost: about 12 km from a 1,500 ft launch in still air. Minimum sink is how slowly the glider descends when flown for time aloft.
 
 [Book a Discovery Flight]

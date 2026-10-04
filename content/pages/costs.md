@@ -14,7 +14,7 @@ primary_action: Book a Discovery Flight
 | Membership, Regular | $150 / year | For anyone not covered by the two categories below. |
 | Membership, Junior | $75 / year | Under 21, or a full-time student under 25. |
 | Membership, Youth / Air Cadet | $15 / year | Under 19. |
-| Winch launch (members) | $5 each | To about 2,000 feet. |
+| Winch launch (members) | $5 each | To about 1,500 feet. |
 | Glider rental (members) | $30 / hour | Billed by the minute, at $0.50. |
 | Instruction | Free | Taught by club members who hold an instructor rating. |
 

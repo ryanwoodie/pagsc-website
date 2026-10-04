@@ -36,7 +36,6 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
       <BookButton />
       <a class="more" href={href('/learn-to-fly/')}>or learn to fly</a>
     </div>
-    <p class="fine">For you or as a gift. After you buy, choose your date with us.</p>
     <HeroVideo slot="media" />
   </PageHero>
 
@@ -57,7 +56,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
       row
       items={[
         { title: 'Buy your flight', text: `${money(df.price)} online, for yourself or as a gift.` },
-        { title: 'Book your date', text: `Tell us which days suit you and <a href="${href('/discovery-flight/#request')}">a club member confirms</a>.` },
+        { title: 'Book your flying day', text: `Pick a day and time on our <a href="${href('/discovery-flight/#request')}">booking calendar</a>.` },
         { title: 'Come out and fly', text: `Meet the crew at ${facts.location.airfield}, get a safety briefing, and launch.` },
       ]}
     />

@@ -33,7 +33,7 @@ const isCurrent = (path: string) => here === href(path) || (path !== '/' && here
     </nav>
 
     <div class="site-header__actions">
-      <BookButton small class="book-short" label="Buy a flight" />
+      <BookButton small class="book-short" label={Astro.url.pathname.endsWith('/discovery-flight/') ? 'Buy a flight' : 'Book a flight'} />
       <BookButton small class="book-long" />
       <details class="nav-menu">
         <summary>
