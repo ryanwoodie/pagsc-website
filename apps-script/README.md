@@ -66,6 +66,25 @@ What it does with the sheets:
 - Guests get a confirmation email with a cancel link; cancelling frees the slot, clears the schedule
   cell and emails the club.
 
+## Emails and reminders (Emails.gs, Reminders.gs)
+
+Guest emails are HTML in the site's style, with times like "3:30 pm" and a "Change or cancel" button.
+
+- **Confirmation** when they book (weekend: "You're pencilled in"; weekday: "request is in").
+- **Reminders:** booked more than a week ahead, a reminder a week before; booked 4 to 7 days ahead,
+  3 days before; everyone, the day before from 4 pm. Each shows the day's Status / Comments text,
+  the forecast row and whether an instructor has signed up, and says so plainly if nothing is posted yet.
+- **Status updates:** when a day's Status / Comments text changes, guests booked within the next
+  week get an email (not after 3 pm on the day itself). If it says flying is off, the email offers
+  "Cancel and rebook".
+- The Bookings tab tracks which reminders went out ("Reminders sent") and the last status emailed.
+- To stop emails for a booking (for example a weekday request the club declined), set its Status to
+  `Cancelled`.
+
+**One-time setup:** in the Apps Script editor, pick `installReminders` in the function menu and click
+Run. Approve the permission to run on a schedule. It runs `runReminders` every hour. To preview every
+email, run `sendSampleEmails`: it sends 5 samples to the club address and books nothing.
+
 The slot settings (11:00, 16:00, 30 minutes, cap 6, groups of 4, 28 days) are at the top of
 `Booking.gs` and in `content/club-facts.yaml` under `booking`. Change both together; `npm test` checks
 they match.

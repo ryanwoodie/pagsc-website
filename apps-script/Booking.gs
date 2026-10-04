@@ -26,9 +26,12 @@ var BOOKING = {
   DAYS_AHEAD: 28,
   TZ: 'America/Regina',
   TAB: 'Bookings',
+  REMIND_HOUR: 9,        // week and 3-day reminders go out from this hour (field time)
+  DAY_BEFORE_HOUR: 16,   // the day-before reminder goes out from this hour, after most status updates
+  STATUS_DAYS: 7,        // status-change emails for bookings this many days out or fewer
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
-    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text']
+    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -90,10 +93,13 @@ function addDays(iso, n) {
 function scheduleDays(grid) {
   var days = [];
   if (!grid || !grid.length) return days;
-  var statusRow = -1;
+  var statusRow = -1, weatherRow = -1;
   for (var r = 0; r < grid.length; r++) {
-    if (/^status/i.test(String(grid[r][0] || '').trim())) { statusRow = r; break; }
+    var first = String(grid[r][0] || '').trim();
+    if (statusRow < 0 && /^status/i.test(first)) statusRow = r;
+    if (weatherRow < 0 && /weather|forecast/i.test(first)) weatherRow = r;
   }
+  if (weatherRow < 0 && grid.length > 1) weatherRow = 1; // row 2 holds the forecast
   for (var c = 1; c < grid[0].length; c++) {
     var date = parseSheetDate(grid[0][c]);
     if (!date) continue;
@@ -101,11 +107,23 @@ function scheduleDays(grid) {
     for (var r2 = 1; r2 < grid.length; r2++) {
       if (/intro\s*fam\s*flight\s*sign-?\s*up/i.test(String(grid[r2][c] || ''))) { introRow = r2; break; }
     }
+    var instructor = false;
+    for (var r3 = 1; r3 < grid.length; r3++) {
+      if (!/instructors?\s+sign-?\s*up\s+below/i.test(String(grid[r3][c] || ''))) continue;
+      for (var r4 = r3 + 1; r4 < grid.length; r4++) {
+        var v = String(grid[r4][c] || '').trim();
+        if (/sign-?\s*up\s+below/i.test(v)) break;
+        if (v) { instructor = true; break; }
+      }
+      break;
+    }
     days.push({
       date: date,
       col: c,
       introRow: introRow,
-      statusText: statusRow >= 0 ? String(grid[statusRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 160) : ''
+      statusText: statusRow >= 0 ? String(grid[statusRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 160) : '',
+      weather: weatherRow >= 0 && weatherRow !== statusRow ? String(grid[weatherRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 200) : '',
+      instructor: instructor
     });
   }
   return days;
@@ -165,6 +183,40 @@ function timeRange(start, people) {
   return start + ' to ' + fromMinutes(toMinutes(start) + people * BOOKING.STEP);
 }
 
+/** Whole days from a to b (ISO dates). */
+function daysBetween(a, b) {
+  return Math.round((new Date(b + 'T12:00:00Z') - new Date(a + 'T12:00:00Z')) / 86400000);
+}
+
+/**
+ * Which reminder, if any, is due now.
+ * Booked more than a week ahead: a week before and the day before.
+ * Booked 4 to 7 days ahead: 3 days before and the day before. Otherwise: the day before.
+ * @param lead days between booking and flight
+ * @param daysUntil days from today (field time) to the flight
+ * @param hour current hour on the field
+ * @param sent e.g. "7,1"
+ * @returns '7' | '3' | '1' | ''
+ */
+function reminderDue(lead, daysUntil, hour, sent) {
+  var done = String(sent || '').split(',');
+  var has = function (k) { return done.indexOf(k) >= 0; };
+  if (daysUntil === 1 && hour >= BOOKING.DAY_BEFORE_HOUR && !has('1')) return '1';
+  if (hour < BOOKING.REMIND_HOUR) return '';
+  if (lead > 7 && daysUntil <= 7 && daysUntil >= 2 && !has('7')) return '7';
+  if (lead > 3 && lead <= 7 && daysUntil <= 3 && daysUntil >= 2 && !has('3')) return '3';
+  return '';
+}
+
+/** Should the guest hear about a status change? Only for real changes to a non-empty status, within a week. */
+function statusChangeDue(lastStatus, currentStatus, daysUntil, hour) {
+  var cur = String(currentStatus || '').trim();
+  if (!cur || cur === String(lastStatus || '').trim()) return false;
+  if (daysUntil < 0 || daysUntil > BOOKING.STATUS_DAYS) return false;
+  if (daysUntil === 0 && hour >= 15) return false; // too late in the day to matter
+  return true;
+}
+
 // ---------- Google services ----------
 
 function doGet(e) {
@@ -191,7 +243,7 @@ function scheduleSheet() {
 }
 
 function activeBookings() {
-  var rows = sheet(BOOKING.TAB, BOOKING.HEADERS).getDataRange().getValues().slice(1);
+  var rows = bookingsSheet().getDataRange().getValues().slice(1);
   return rows.filter(function (r) { return r[5] !== 'Cancelled' && r[1]; }).map(function (r) {
     return { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1 };
   });
@@ -264,9 +316,9 @@ function bookingPost(p) {
     var text = (kind === 'Requested' ? 'Request: ' : '') + first + ' ' + b.start + (b.people > 1 ? ' (' + b.people + ')' : '') + ' web';
     var cell = writeToSchedule(sched, grid, days, b.date, text);
 
-    sheet(BOOKING.TAB, BOOKING.HEADERS).appendRow([
+    bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
-      b.interest, b.payment, b.message, token, cell, text
+      b.interest, b.payment, b.message, token, cell, text, '', day.statusText
     ]);
     result = { ok: true, kind: kind, date: b.date, start: b.start, people: b.people, range: timeRange(b.start, b.people), token: token, day: day };
   } finally {
@@ -294,36 +346,30 @@ function writeToSchedule(sched, grid, days, date, text) {
   return '';
 }
 
-function niceDate(iso) {
-  return Utilities.formatDate(new Date(iso + 'T12:00:00Z'), 'UTC', 'EEEE MMMM d');
+function siteOrigin() {
+  return ((PropertiesService.getScriptProperties().getProperty('SITE_ORIGINS') || 'https://www.pagsc.ca').split(',')[0]).trim();
+}
+
+/** Links used in every guest email. */
+function emailLinks(token) {
+  var site = siteOrigin();
+  return {
+    cancel: ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(token),
+    calendar: site + '/discovery-flight/#request',
+    site: site,
+    email: prop('CLUB_EMAIL'),
+    phone: '(306) 222-5684'
+  };
+}
+
+function sendGuestEmail(to, mail) {
+  MailApp.sendEmail({ to: to, replyTo: prop('CLUB_EMAIL'), name: EMAIL.CLUB, subject: mail.subject, body: mail.text, htmlBody: mail.html });
 }
 
 function sendBookingEmails(b, r) {
-  var cancelUrl = ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(r.token);
-  var when = niceDate(r.date) + ', ' + r.range + (r.people > 1 ? ' (' + r.people + ' people)' : '');
   var held = r.kind === 'Held';
-  MailApp.sendEmail({
-    to: b.email,
-    replyTo: prop('CLUB_EMAIL'),
-    name: 'Prince Albert Gliding and Soaring Club',
-    subject: (held ? 'You are pencilled in for a Discovery Flight: ' : 'Your Discovery Flight request: ') + when,
-    body: [
-      'Hi ' + b.name.split(/\s+/)[0] + ',',
-      '',
-      held
-        ? 'We have pencilled you in: ' + when + '.'
-        : 'We have your request for ' + when + '. Weekday flying depends on who is free, so a club member will email you to confirm.',
-      '',
-      'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will email you if the day changes. Check the day is on before you leave home, and arrive when we tell you.',
-      '',
-      'Need a different day? Cancel here and book again:',
-      cancelUrl,
-      '',
-      'Bring a hat, sunscreen, water, layers and a way to pay if you have not paid online.',
-      '',
-      'Prince Albert Gliding and Soaring Club'
-    ].join('\n')
-  });
+  sendGuestEmail(b.email, confirmationEmail(b, held, emailLinks(r.token)));
+  var when = whenText(b);
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
     replyTo: b.email,
@@ -339,24 +385,30 @@ function sendBookingEmails(b, r) {
       'Payment: ' + b.payment,
       'Message: ' + (b.message || '(none)'),
       '',
-      'It is in the "' + BOOKING.TAB + '" tab and on the Flying Schedule.'
+      'It is in the "' + BOOKING.TAB + '" tab and on the Flying Schedule. The guest gets reminders before the day and an email when the day\'s status changes.'
     ].join('\n')
   });
 }
 
+/** The Bookings tab, with header cells for any columns added since it was created. */
+function bookingsSheet() {
+  var sh = sheet(BOOKING.TAB, BOOKING.HEADERS);
+  if (sh.getLastColumn() < BOOKING.HEADERS.length) sh.getRange(1, 1, 1, BOOKING.HEADERS.length).setValues([BOOKING.HEADERS]);
+  return sh;
+}
+
 function cancelBooking(token) {
   token = String(token || '');
-  var page = function (title, body) {
-    return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + title + '</title><div style="font-family:sans-serif;max-width:32rem;margin:2rem auto;padding:0 1rem"><h1>' + title + '</h1>' + body + '</div>');
+  var calendar = siteOrigin() + '/discovery-flight/#request';
+  var page = function (title, message, showCalendar) {
+    return HtmlService.createHtmlOutput(cancelPageHtml(title, message, showCalendar ? calendar : ''));
   };
-  if (!/^[0-9a-f-]{36}$/i.test(token)) return page('Booking not found', '<p>That link is not valid.</p>');
-  var sh = sheet(BOOKING.TAB, BOOKING.HEADERS);
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return page('Booking not found', 'That link is not valid.', true);
+  var sh = bookingsSheet();
   var rows = sh.getDataRange().getValues();
-  var origin = ((PropertiesService.getScriptProperties().getProperty('SITE_ORIGINS') || 'https://www.pagsc.ca').split(',')[0]).trim();
-  var again = '<p><a href="' + origin + '/discovery-flight/#request">Book another day</a></p>';
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][12] !== token) continue;
-    if (rows[i][5] === 'Cancelled') return page('Already cancelled', again);
+    if (rows[i][5] === 'Cancelled') return page('Already cancelled', 'This booking was already cancelled.', true);
     var lock = LockService.getScriptLock();
     lock.waitLock(15000);
     try {
@@ -371,10 +423,10 @@ function cancelBooking(token) {
     }
     MailApp.sendEmail({
       to: prop('CLUB_EMAIL'),
-      subject: 'Guest cancelled: ' + rows[i][6] + ', ' + isoOf(rows[i][1]) + ' ' + hhmmOf(rows[i][2]),
+      subject: 'Guest cancelled: ' + rows[i][6] + ', ' + longDate(isoOf(rows[i][1])) + ' at ' + clock12(hhmmOf(rows[i][2])),
       body: rows[i][6] + ' cancelled their website booking. The slot is free again.'
     });
-    return page('Your booking is cancelled', '<p>The spot is free for someone else. Pick another day when it suits you.</p>' + again);
+    return page('Your booking is cancelled', 'The spot is free for someone else. Pick another day whenever it suits you.', true);
   }
-  return page('Booking not found', '<p>We could not find that booking.</p>' + again);
+  return page('Booking not found', 'We could not find that booking.', true);
 }

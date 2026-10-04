@@ -7,17 +7,19 @@ import { parse } from 'yaml';
 
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(readFileSync(new URL('../apps-script/Booking.gs', import.meta.url), 'utf8'), ctx);
-const { slotTimes, scheduleDays, computeAvailability, canBook, timeRange } = ctx;
+for (const f of ['Booking.gs', 'Emails.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
+const { slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
   ['', 'Fri Oct 9,2026', 'Sat Oct 10,2026', 'Sun Oct 11,2026', 'Tue Oct 13,2026', 'Sat Nov 28,2026'],
-  ['Weather', '', '', '', '', ''],
+  ['Weather forecast', '', 'Sunny', '', '', ''],
   ['Status/Comments:', '', 'Day is a go', 'Cancelled: wind', '', ''],
   ['Intro', 'Intro Fam Flight Sign-up Below for Fri:', 'Intro Fam Flight Sign-up Below for Sat:', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below'],
   ['', '', 'Guest A', '', '', ''],
   ['Students', 'Student/Pilots Sign-up Below', 'Student/Pilots Sign-up Below', '', '', ''],
+  ['Instructors:', 'Instructors Sign-up Below', 'Instructors Sign-up Below', 'Instructors Sign-up Below', '', ''],
+  ['', '', 'Instructor D', '', '', ''],
 ];
 
 test('slot times run 11:00 to 16:00 every half hour', () => {
@@ -30,7 +32,8 @@ test('slot times run 11:00 to 16:00 every half hour', () => {
 test('reads dates, status and intro rows', () => {
   const d = scheduleDays(grid);
   assert.equal(d.length, 5);
-  assert.deepEqual({ ...d[1] }, { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go' });
+  assert.deepEqual({ ...d[1] }, { date: '2026-10-10', col: 2, introRow: 3, statusText: 'Day is a go', weather: 'Sunny', instructor: true });
+  assert.equal(d[2].instructor, false);
 });
 
 test('availability: window, weekend/weekday, cancelled, cap and taken slots', () => {
@@ -72,4 +75,53 @@ test('club-facts.yaml booking settings match Booking.gs', () => {
   assert.equal(facts.guest_spots_per_day, B.CAP);
   assert.equal(facts.max_group, B.MAX_GROUP);
   assert.equal(facts.days_ahead, B.DAYS_AHEAD);
+});
+
+test('reminder timing', () => {
+  // booked 20 days ahead: week reminder from 9 am, 7 days out; day-before from 4 pm
+  assert.equal(reminderDue(20, 8, 10, ''), '');
+  assert.equal(reminderDue(20, 7, 8, ''), '');
+  assert.equal(reminderDue(20, 7, 9, ''), '7');
+  assert.equal(reminderDue(20, 5, 12, ''), '7'); // caught up if a run was missed
+  assert.equal(reminderDue(20, 5, 12, '7'), '');
+  assert.equal(reminderDue(20, 1, 15, '7'), '');
+  assert.equal(reminderDue(20, 1, 16, '7'), '1');
+  assert.equal(reminderDue(20, 1, 20, '7,1'), '');
+  // booked 5 days ahead: 3-day reminder, no week reminder
+  assert.equal(reminderDue(5, 4, 12, ''), '');
+  assert.equal(reminderDue(5, 3, 12, ''), '3');
+  assert.equal(reminderDue(5, 1, 17, '3'), '1');
+  // booked 2 days ahead: day-before only
+  assert.equal(reminderDue(2, 2, 12, ''), '');
+  assert.equal(reminderDue(2, 1, 16, ''), '1');
+  // never on the day or after
+  assert.equal(reminderDue(20, 0, 16, ''), '');
+});
+
+test('status-change emails', () => {
+  assert.equal(statusChangeDue('', 'Day is a go', 3, 10), true);
+  assert.equal(statusChangeDue('Day is a go', 'Day is a go', 3, 10), false);
+  assert.equal(statusChangeDue('Day is a go', '', 3, 10), false);
+  assert.equal(statusChangeDue('', 'Day is a go', 9, 10), false); // too far out
+  assert.equal(statusChangeDue('', 'Delayed to 1pm', 0, 9), true);
+  assert.equal(statusChangeDue('', 'Delayed to 1pm', 0, 16), false);
+});
+
+test('email text uses the site\'s time style and escapes names', () => {
+  assert.equal(clock12('15:30'), '3:30 pm');
+  assert.equal(clock12('12:00'), '12 pm');
+  assert.equal(clock12('11:00'), '11 am');
+  assert.equal(timeRange12('15:30', 1), '3:30 pm to 4 pm');
+  assert.equal(longDate('2026-10-10'), 'Saturday, October 10');
+  const links = { cancel: 'https://example.com/c?t=1', calendar: 'https://www.pagsc.ca/discovery-flight/#request', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684' };
+  const b = { name: '<b>Pat</b> Smith', date: '2026-10-10', start: '15:30', people: 2 };
+  const c = confirmationEmail(b, true, links);
+  assert.match(c.subject, /3:30 pm to 4:30 pm/);
+  assert.ok(!c.html.includes('<b>Pat</b>'));
+  assert.ok(c.html.includes('Change or cancel'));
+  assert.ok(!/arrive when we tell you/i.test(c.html + c.text));
+  const r = reminderEmail(b, true, '1', { statusText: 'Cancelled: wind', weather: '', instructor: false }, links);
+  assert.match(r.subject, /^Flying is off/);
+  assert.ok(r.html.includes('Cancel and rebook'));
+  assert.match(statusEmail(b, true, { statusText: 'Day is a go', weather: 'Sunny', instructor: true }, links).subject, /^Flying is on/);
 });
