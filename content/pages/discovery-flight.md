@@ -10,7 +10,7 @@ A winch launch to about 1,500 to 2,000 feet in a two-seat glider, with a club pi
 
 [Buy a Discovery Flight, $50] · or book a date first
 
-For you or as a gift. After you buy, choose your date with us. Groups of 4 or more ($40 each): book first.
+For you or as a gift. After you buy, choose your date with us. Groups of 4 or more: buy at the group rate, $40 each (group checkout link).
 
 ## What happens
 

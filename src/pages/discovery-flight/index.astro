@@ -28,7 +28,7 @@ const weekdays = lcfirst(df.weekdays);
       <BookButton showPrice />
       <a class="more" href="#request">or book a date first</a>
     </div>
-    <p class="fine">For you or as a gift. After you buy, choose your date with us. Groups of {df.group_minimum} or more ({money(df.group_price_each)} each): <a href="#request">book first</a>.</p>
+    <p class="fine">For you or as a gift. After you buy, choose your date with us. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">buy at the group rate, {money(df.group_price_each)} each</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 

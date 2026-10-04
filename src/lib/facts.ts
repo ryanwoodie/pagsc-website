@@ -37,6 +37,7 @@ const schema = z
       flying_schedule: url,
       membership_form: url,
       discovery_flight_payment: url,
+      discovery_flight_group_payment: url,
       soar_manual_pdf: url,
       ground_school: url,
       winch_launch_videos: url,
