@@ -18,6 +18,12 @@ There is no throttle, so every flight is a puzzle: find rising air, climb in it,
 
 Cross-country gliding is also a race: fly a set course around turnpoints, and the fastest average speed wins. Any flight can be scored online and ranked against pilots around the world.
 
+## Within reach
+
+Club instructors teach you for free. Members pay $5 a launch and $30 an hour of glider time, billed by the minute: about $10 for a typical 10-minute instructional flight. Membership is $15 to $150 a year.
+
+[See all costs]
+
 ## Always a next rung
 
 1. **First solo:** from age 14

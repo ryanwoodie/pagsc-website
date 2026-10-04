@@ -12,6 +12,7 @@ import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
 import cockpitPhoto from '../../assets/photos/cockpit-view.jpg';
 import { facts, df, money, lcfirst, launchHeight } from '../../lib/facts';
 import { beforeFirstFlight } from '../../lib/faq';
+import { href } from '../../lib/url';
 import { clubJsonLd } from '../../lib/schema';
 
 const dt = facts.location.drive_times;
@@ -37,6 +38,7 @@ const weekdays = lcfirst(df.weekdays);
       <div>
         <h2 id="what-h">What happens</h2>
         <p class="lead">The winch pulls the glider into the air in seconds. At about {launchHeight} your pilot releases the cable, and the flying goes quiet. Depending on the day you will be up for {df.duration_minutes} minutes.</p>
+        <p>How long depends on the air. On a calm day the flight is a smooth glide back down from the launch. When there is rising air, your pilot can use it to stay up longer and show you more.</p>
         <Photo class="cockpit" src={cockpitPhoto} alt="View from the front seat in flight: a student in a headset looks out over green prairie fields and the airfield below" crop="4 / 5" position="center 40%" sizes="(min-width: 760px) 45vw, 100vw" />
       </div>
       <div>
@@ -77,8 +79,14 @@ const weekdays = lcfirst(df.weekdays);
       </div>
     </div>
     <Callout lead="Weather">
-      <p>Gliding depends on the weather. If your day is cancelled, we rebook you at no charge.</p>
+      <p>Gliding depends on the weather. If your day is cancelled, we rebook you at no charge, and a flight you've paid for carries over to the new date.</p>
     </Callout>
+  </Section>
+
+  <Section labelledby="learn-h">
+    <h2 id="learn-h">Thinking of learning to fly?</h2>
+    <p class="lead">This flight is also your first lesson. Choose "A first lesson" when you book so we know, and ask your pilot anything on the day.</p>
+    <p><a class="more" href={href('/learn-to-fly/')}>What learning to fly involves</a></p>
   </Section>
 
   <Section id="request" labelledby="req-h">

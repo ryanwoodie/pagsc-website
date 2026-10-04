@@ -43,12 +43,12 @@ export const firstFlights: QA[] = [
   {
     id: 'weather',
     q: 'What if the weather cancels my day?',
-    a: "It happens. We rebook you, and there is no charge for a flight that didn't happen.",
+    a: "It happens. We rebook you at no charge, and a flight you've paid for carries over to the new date.",
   },
   {
     id: 'bring',
     q: 'What should I bring?',
-    a: `A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and a way to pay (${fees.guest_payment.toLowerCase()}).`,
+    a: `A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and, if you haven't paid online, a way to pay (${fees.guest_payment.toLowerCase()}).`,
   },
   {
     id: 'gift',

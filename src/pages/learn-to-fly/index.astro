@@ -46,6 +46,16 @@ const steps = t.steps.map((s) => ({
     />
   </Section>
 
+  <Section labelledby="first-h">
+    <h2 id="first-h">Your first flight</h2>
+    <p class="lead">You start with a Discovery Flight, the same flight our guests take. Choose "A first lesson" when you book so we know you're thinking of learning.</p>
+    <ul class="ticks">
+      <li>{t.who_can_learn[0]}</li>
+      <li>You learn one skill at a time, at your own pace, and book each lesson on the schedule.</li>
+      <li>You fly solo only when your instructor is satisfied you are ready.</li>
+    </ul>
+  </Section>
+
   <Section labelledby="cost-h">
     <h2 id="cost-h">What it costs</h2>
     <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs members: {lessonBreakdown}.</p>
@@ -55,11 +65,8 @@ const steps = t.steps.map((s) => ({
 
   <Section labelledby="path-h">
     <h2 id="path-h">Your path to a Glider Pilot Licence</h2>
-    <p class="lead">{soloLine}</p>
     <Steps items={steps} />
-    <h3 id="req-h" class="req-h">What the licence requires</h3>
-    <RequirementsTable />
-    <p class="small-note">A private pilot licence (aeroplane) waives ground school and the written exam, and cuts the flight time you need. <a href={href('/learn-to-fly/power-pilots/')}>Power pilots</a></p>
+    <p class="lead solo">{soloLine} Progress depends on the weather, how often you come and how quickly things click for you.</p>
   </Section>
 
   <Section labelledby="who-h">
@@ -67,7 +74,7 @@ const steps = t.steps.map((s) => ({
       <div>
         <h2 id="who-h">Who can learn</h2>
         <ul class="ticks">
-          {t.who_can_learn.map((w) => <li>{w}</li>)}
+          {t.who_can_learn.slice(1).map((w) => <li>{w}</li>)}
           <li>Our two-seat trainer is a {trainer.name.split(' ').slice(0, 2).join(' ')}.</li>
         </ul>
       </div>
@@ -76,6 +83,12 @@ const steps = t.steps.map((s) => ({
         <p>{t.come_regularly}</p>
       </div>
     </div>
+  </Section>
+
+  <Section labelledby="req-h">
+    <h2 id="req-h">What the licence requires</h2>
+    <RequirementsTable />
+    <p class="small-note">A private pilot licence (aeroplane) waives ground school and the written exam, and cuts the flight time you need. <a href={href('/learn-to-fly/power-pilots/')}>Power pilots</a></p>
   </Section>
 
   <Section labelledby="fast-h">
@@ -114,7 +127,7 @@ const steps = t.steps.map((s) => ({
   </Section>
 </Base>
 <style>
-  .req-h {
-    margin-top: 32px;
+  .solo {
+    margin-top: 24px;
   }
 </style>

@@ -7,9 +7,11 @@ import Tiles from '../../components/Tiles.astro';
 import BookButton from '../../components/BookButton.astro';
 import Photo from '../../components/Photo.astro';
 import flightPhoto from '../../assets/photos/glider-in-flight.jpg';
-import { facts, num } from '../../lib/facts';
+import { facts, fees, num, money } from '../../lib/facts';
+import { href } from '../../lib/url';
 
 const a = facts.achievements;
+const m = fees.membership;
 const rungs = [
   { name: 'First solo', detail: `from age ${facts.training.solo_age}` },
   { name: 'An hour aloft', detail: 'your first real soaring flight' },
@@ -34,8 +36,23 @@ const rungs = [
         <p>There is no throttle, so every flight is a puzzle: find rising air, climb in it, decide where to go next. The sky changes by the hour. Some days it gives you 10 minutes, some days 10 hours.</p>
       </div>
       <div>
-        <h2 id="race-h">And then there's racing</h2>
-        <p>Cross-country gliding is also a race: fly a set course around turnpoints, and the fastest average speed wins. Any flight can be scored online and ranked against pilots around the world.</p>
+        <h2 id="dec-h">A sport for decades</h2>
+        <p>Gliding rewards judgment more than strength, so a 16-year-old and a 70-year-old fly the same sky. And nobody launches alone: it takes a crew, which is why it works as a club.</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="reach-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="reach-h">Within reach</h2>
+        <p>Club instructors teach you for free. Members pay {money(fees.winch_launch)} a launch and {money(fees.glider_rental_per_hour)} an hour of glider time, billed by the minute: about {money(fees.typical_lesson_flight.cost)} for a typical {fees.typical_lesson_flight.minutes}-minute instructional flight. Membership is {money(m.youth_air_cadet.price)} to {money(m.regular.price)} a year.</p>
+        <p><a class="more" href={href('/costs/')}>See all costs</a></p>
+      </div>
+      <div>
+        <h2 id="better-h">It makes better pilots</h2>
+        <p>Gliding builds stick-and-rudder skill and energy management like nothing else. The captains of both the “Miracle on the Hudson” and the “Gimli Glider” were glider pilots.</p>
+        <p><a class="more" href={href('/learn-to-fly/power-pilots/')}>Already a power pilot?</a></p>
       </div>
     </div>
   </Section>
@@ -45,8 +62,9 @@ const rungs = [
     <Ladder rungs={rungs} />
   </Section>
 
-  <Section labelledby="fig-h">
-    <h2 id="fig-h" class="visually-hidden">Figures</h2>
+  <Section labelledby="race-h">
+    <h2 id="race-h">And then there's racing</h2>
+    <p>Cross-country gliding is also a race: fly a set course around turnpoints, and the fastest average speed wins. Any flight can be scored online and ranked against pilots around the world.</p>
     <Tiles
       items={[
         { figure: `${num(a.longest_cross_country_km)} km`, text: `the longest cross-country flight out of ${facts.club.short_name}` },
@@ -54,19 +72,6 @@ const rungs = [
         { figure: `${num(a.world_distance_record_km)} km`, text: 'the world distance record' },
       ]}
     />
-  </Section>
-
-  <Section labelledby="dec-h">
-    <div class="grid grid--2">
-      <div>
-        <h2 id="dec-h">A sport for decades</h2>
-        <p>Gliding rewards judgment more than strength, so a 16-year-old and a 70-year-old fly the same sky. And nobody launches alone: it takes a crew, which is why it works as a club.</p>
-      </div>
-      <div>
-        <h2 id="better-h">It makes better pilots</h2>
-        <p>Gliding builds stick-and-rudder skill and energy management like nothing else. The captains of both the “Miracle on the Hudson” and the “Gimli Glider” were glider pilots.</p>
-      </div>
-    </div>
     <div class="actions"><BookButton /></div>
   </Section>
 </Base>
