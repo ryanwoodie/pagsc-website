@@ -12,6 +12,7 @@ Ryan manages the site and is the only person who decides content and direction. 
 4. `docs/04-hosting-and-dns.md`: GitHub Pages deployment and the domain cutover
 5. `docs/05-build-plan.md`: phases, tasks and acceptance checks. Work through it in order.
 6. `docs/06-open-questions.md`: decisions still owed by Ryan. Do not guess these.
+7. `docs/07-stripe-handoff.md`: where the Stripe purchase and gift-certificate work stands, and how the site, booking script and deploys work. Read it before payment or voucher work.
 
 `content/` holds the facts and the page copy. `reference/` holds the current-site audit and the welcome pack the copy and look are drawn from.
 
