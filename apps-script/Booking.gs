@@ -13,7 +13,7 @@
  * Weekend bookings are pencilled in right away; weekday bookings are requests a member confirms.
  * Neither is a guarantee: flying depends on weather and volunteers.
  *
- * Extra Script Property: SCHEDULE_ID (the Flying Schedule spreadsheet ID).
+ * Optional Script Property: SCHEDULE_ID (defaults to the Flying Schedule below).
  * Optional tab "Guest caps" in the requests sheet: Date (yyyy-mm-dd) | Cap, to change one day's cap.
  */
 
@@ -182,8 +182,12 @@ function todayOnField() {
   return Utilities.formatDate(new Date(), BOOKING.TZ, 'yyyy-MM-dd');
 }
 
+// The Flying Schedule (public). A SCHEDULE_ID Script Property overrides it.
+var DEFAULT_SCHEDULE_ID = '18n3c3T0eJh9exZWXCKhG1IhYb_GXY45IwfDZP-xshwc';
+
 function scheduleSheet() {
-  return SpreadsheetApp.openById(prop('SCHEDULE_ID')).getSheets()[0];
+  var id = PropertiesService.getScriptProperties().getProperty('SCHEDULE_ID') || DEFAULT_SCHEDULE_ID;
+  return SpreadsheetApp.openById(id).getSheets()[0];
 }
 
 function activeBookings() {

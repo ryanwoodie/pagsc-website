@@ -12,7 +12,9 @@
     "preview": "astro preview",
     "schedule": "node scripts/fetch-schedule.mjs",
     "test": "node --test scripts/*.test.mjs",
-    "og": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=\"$PWD/public/og.png\" \"file://$PWD/scripts/og/og.html\""
+    "og": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=\"$PWD/public/og.png\" \"file://$PWD/scripts/og/og.html\"",
+    "script:push": "cd apps-script && clasp push --force",
+    "script:deploy": "npm test && cd apps-script && clasp push --force && clasp deploy -i AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA -d \"$(git log -1 --format=%s)\""
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",

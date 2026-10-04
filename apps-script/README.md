@@ -5,7 +5,24 @@ tab and are emailed to the club. Welcome pack requests from Learn to fly get an 
 link to the pack, go to a "Student leads" tab, and the club gets a short note. It runs under the club's Google account; nothing
 about it is secret except the sheet ID, which is kept in Script Properties, not here.
 
-## Deploy (Ryan, once)
+## Deploying with clasp (the usual way)
+
+The script is linked to this folder with clasp (Google's Apps Script command line), signed in as the
+club account. `apps-script/.clasp.json` holds the script ID; only `Code.gs`, `Booking.gs` and
+`appsscript.json` are pushed.
+
+```
+npm run script:deploy
+```
+
+runs the tests, pushes the code and updates the live web app deployment, so the `/exec` URL in
+`src/config.ts` never changes. To roll back, in the Apps Script editor use Deploy > Manage deployments >
+Edit and pick an earlier version.
+
+The installed clasp (3.0.3) does not run on Node 25; if `clasp` fails with a `SlowBuffer` error, run it
+with Node 22 (`/usr/local/bin/node /usr/local/bin/clasp …`) or update it: `npm install -g @google/clasp`.
+
+## Deploy by hand (first time, or without clasp)
 
 1. Signed in as the club's Google account, create a new Google Sheet for requests
    (or use an existing club sheet that is not public). Copy its ID from the URL.
@@ -32,8 +49,8 @@ To set it up (once):
 
 1. In the Apps Script editor, add a second file: **+ (Add a file) > Script**, name it `Booking`, and
    paste `Booking.gs` into it. Replace `Code.gs` with the new version too.
-2. **Project Settings > Script Properties**, add `SCHEDULE_ID`: `18n3c3T0eJh9exZWXCKhG1IhYb_GXY45IwfDZP-xshwc`
-   (the Flying Schedule). The club account needs edit access to that sheet.
+2. The Flying Schedule's ID is built in; a `SCHEDULE_ID` Script Property overrides it. The club
+   account needs edit access to that sheet.
 3. **Project Settings > Time zone**: America/Regina.
 4. **Deploy > Manage deployments > Edit > New version > Deploy.** Google asks to approve the new
    permissions (reading and editing the Flying Schedule); approve them as the club account.
