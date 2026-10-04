@@ -7,6 +7,9 @@ import { facts, df, telHref } from '../lib/facts';
 import { href } from '../lib/url';
 import Needed from './Needed.astro';
 
+interface Props { paid?: boolean }
+const { paid = false } = Astro.props;
+
 const requested = new URL(href('/discovery-flight/requested/'), Astro.site).toString();
 const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeURIComponent('Discovery Flight request')}`;
 ---
@@ -53,6 +56,12 @@ const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeU
     <input id="f-weight" name="weight_ok" type="checkbox" value="yes" required />
     <label for="f-weight">Everyone flying weighs {df.max_weight_lbs} lbs or less.</label>
   </div>
+  <fieldset class="field field--choice">
+    <legend>How are you paying?</legend>
+    <label><input type="radio" name="payment" value="Paid online" checked={paid} required /> I've paid online</label>
+    <label><input type="radio" name="payment" value="Gift" /> It's a gift: someone bought it for me</label>
+    <label><input type="radio" name="payment" value="Pay at the field" /> I'll pay at the field ({facts.fees.guest_payment.toLowerCase()})</label>
+  </fieldset>
   <div class="field">
     <label for="f-message">Message <span class="optional">(optional)</span></label>
     <textarea id="f-message" name="message" rows="4"></textarea>
@@ -99,6 +108,30 @@ const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeU
     background: var(--paper);
     color: var(--ink);
     font: inherit;
+  }
+  .field--choice {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    gap: 4px;
+  }
+  .field--choice legend {
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  .field--choice label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    font-weight: 500;
+  }
+  .field--choice input {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    accent-color: var(--orange);
   }
   .field--short input {
     max-width: 8rem;

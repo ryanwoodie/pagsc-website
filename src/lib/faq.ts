@@ -53,7 +53,7 @@ export const firstFlights: QA[] = [
   {
     id: 'gift',
     q: 'Can I give a flight as a gift?',
-    a: 'Yes. Buy a Discovery Flight online, then email us or use the request form to arrange the date for the person flying.',
+    a: 'Yes. Buy a Discovery Flight online. The person flying then books their date with the booking form or by email.',
   },
   {
     id: 'when',

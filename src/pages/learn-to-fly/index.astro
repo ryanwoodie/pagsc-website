@@ -31,7 +31,7 @@ const steps = t.steps.map((s) => ({
 >
   <PageHero label="Learn to fly" title="Learning to fly">
     <p class="lead">Instruction is free. You pay for launches and glider time: about {money(lesson.cost)} for a typical instructional flight.</p>
-    <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+    <div class="actions"><Button href="/discovery-flight/">Book a first lesson</Button></div>
     <Photo slot="media" src={studentPhoto} alt="A smiling student stands beside the club's two-seat glider on the runway under a sky full of cumulus clouds" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 
@@ -108,7 +108,7 @@ const steps = t.steps.map((s) => ({
     <h2 id="ready-h">Ready?</h2>
     <p class="lead">Your first lesson is a Discovery Flight. Join when you are ready with the membership form.</p>
     <div class="actions">
-      <Button href="/discovery-flight/#request">Book a first lesson</Button>
+      <Button href="/discovery-flight/">Book a first lesson</Button>
       <Button href={facts.links.membership_form} variant="ghost" external>Membership form</Button>
     </div>
   </Section>

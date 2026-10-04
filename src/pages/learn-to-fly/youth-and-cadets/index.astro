@@ -20,7 +20,7 @@ const ya = fees.membership.youth_air_cadet;
     <p class="lead"><span class="big-figure">{money(y.bursary_total)}</span> toward {y.bursary_covers.toLowerCase()}: a {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club.</p>
     <p>With the {money(y.membership_price)} youth membership, a glider licence can cost very little. Ask us and we'll help you apply.</p>
     <p class="small-note">The bursary is open to {y.bursary_who.charAt(0).toLowerCase() + y.bursary_who.slice(1)}. Availability is set by the Soaring Association of Canada each year, with up to {y.bursaries_per_club} bursaries per club. <a href={facts.links.sac_youth_bursary} rel="noopener">SAC Youth Bursary Program</a></p>
-    <div class="actions"><Button href="/discovery-flight/#request">Book a first lesson</Button></div>
+    <div class="actions"><Button href="/discovery-flight/">Book a first lesson</Button></div>
     <Photo slot="media" src={youthPhoto} alt="A young student sits in the front seat of the two-seat glider while a club member stands beside the cockpit" crop="4 / 3" position="center 60%" eager />
   </PageHero>
 

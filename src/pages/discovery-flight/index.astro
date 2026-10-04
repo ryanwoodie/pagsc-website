@@ -5,6 +5,7 @@ import Section from '../../components/Section.astro';
 import Steps from '../../components/Steps.astro';
 import Callout from '../../components/Callout.astro';
 import Button from '../../components/Button.astro';
+import BookButton from '../../components/BookButton.astro';
 import Qa from '../../components/Qa.astro';
 import RequestForm from '../../components/RequestForm.astro';
 import Photo from '../../components/Photo.astro';
@@ -15,7 +16,6 @@ import { beforeFirstFlight } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
 
 const dt = facts.location.drive_times;
-const giftAnswer = 'Buy a Discovery Flight online and we will arrange the date with the person flying.';
 const weekdays = lcfirst(df.weekdays);
 ---
 <Base
@@ -25,7 +25,11 @@ const weekdays = lcfirst(df.weekdays);
 >
   <PageHero label="Discovery Flight" title="Your first flight in a glider">
     <p class="lead">A winch launch to about {launchHeight} in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
-    <div class="actions"><Button href="#request">Request a date</Button></div>
+    <div class="actions">
+      <BookButton showPrice />
+      <a class="more" href="#request">or book a date first</a>
+    </div>
+    <p class="fine">For you or as a gift. After you buy, choose your date with us. Groups of {df.group_minimum} or more ({money(df.group_price_each)} each): <a href="#request">book first</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 
@@ -54,8 +58,8 @@ const weekdays = lcfirst(df.weekdays);
     <Steps
       row
       items={[
-        { title: 'Request a date', text: 'Use the form below.' },
-        { title: 'We confirm', text: 'A club member replies with a date and an arrival time.' },
+        { title: 'Buy your flight', text: `${money(df.price)} online, for yourself or as a gift.` },
+        { title: 'Book your date', text: 'Tell us which days suit you with the form below. A club member replies with a date and an arrival time.' },
         { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
       ]}
     />
@@ -79,15 +83,16 @@ const weekdays = lcfirst(df.weekdays);
   </Section>
 
   <Section id="request" labelledby="req-h">
-    <h2 id="req-h">Request a date</h2>
+    <h2 id="req-h">Book your date</h2>
+    <p>Bought a flight, been given one, or want to check dates before you buy? Tell us which days suit you.</p>
     <RequestForm />
   </Section>
 
   <Section labelledby="gift-h">
     <h2 id="gift-h">Give a flight as a gift</h2>
     <p class="lead">A Discovery Flight makes a good present for anyone who has looked up and wondered.</p>
-    <p>{giftAnswer} Email <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> to arrange the date, or use the <a href="#request">request form</a> above.</p>
-    <div class="actions"><Button href={facts.links.discovery_flight_payment} variant="ghost" external>Buy a gift flight</Button></div>
+    <p>Buy it online now. The person flying books their date with the <a href="#request">booking form</a> above, or by emailing <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
+    <div class="actions"><BookButton label="Buy a gift flight" showPrice /></div>
   </Section>
 
   <Section labelledby="faq-h">
@@ -97,6 +102,11 @@ const weekdays = lcfirst(df.weekdays);
 </Base>
 
 <style>
+  .fine {
+    margin: 10px 0 0;
+    font-size: 0.95rem;
+    color: var(--grey);
+  }
   .inline-price {
     font-family: var(--font-display);
     font-size: 1.6em;

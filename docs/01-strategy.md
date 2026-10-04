@@ -4,8 +4,8 @@
 
 Get a visitor to request a first flight. Everything else on the site either helps that happen or helps a first-timer come back and join.
 
-- **Primary conversion:** a Discovery Flight request (form submitted).
-- **Secondary:** a paid Discovery Flight or gift flight (Wave payment link), a membership form opened, a training inquiry.
+- **Primary conversion:** a Discovery Flight bought (Wave checkout), for the buyer or as a gift. Decided 3 October 2026: revenue first; $50 is an impulse price.
+- **Secondary:** a date booked (form submitted), a membership form opened, a training inquiry.
 
 The Discovery Flight is presented as a first lesson, not a ride. The club has one two-seat trainer and volunteer instructors, so seat time is scarce; the framing attracts people who may go on to join. Whether the club's priority is members or ride revenue is an open question (`06-open-questions.md`, Q1). Until it is answered, build for members.
 

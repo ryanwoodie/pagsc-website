@@ -8,7 +8,9 @@ primary_action: Request a date
 
 A winch launch to about 1,500 to 2,000 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
 
-[Request a date]
+[Buy a Discovery Flight, $50] · or book a date first
+
+For you or as a gift. After you buy, choose your date with us. Groups of 4 or more ($40 each): book first.
 
 ## What happens
 
@@ -24,11 +26,11 @@ The winch pulls the glider into the air in seconds. At about 1,500 to 2,000 feet
 
 ## How it works
 
-### 1. Request a date
-Use the form below.
+### 1. Buy your flight
+$50 online, for yourself or as a gift.
 
-### 2. We confirm
-A club member replies with a date and an arrival time.
+### 2. Book your date
+Tell us which days suit you with the form below. A club member replies with a date and an arrival time.
 
 ### 3. Come out and fly
 Check the day is on before you leave home, then meet us at the field.
@@ -53,9 +55,11 @@ Check the day is on before you leave home, then meet us at the field.
 
 Gliding depends on the weather. If your day is cancelled, we rebook you at no charge.
 
-## Request a date
+## Book your date
 
-Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, message.
+Bought a flight, been given one, or want to check dates before you buy? Tell us which days suit you.
+
+Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
 
 Hint under preferred dates: Weekends are the main flying days.
 
@@ -69,7 +73,7 @@ Button: Send request
 
 A club member will reply to confirm a date and an arrival time.
 
-**Paying.** Pay online now, or by e-transfer or cash on the day.
+**Not paid yet?** Pay online now, or by e-transfer or cash on the day.
 
 [Pay for a Discovery Flight]
 

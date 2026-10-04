@@ -12,7 +12,9 @@ No engine. No experience needed. A winch launch to about 1,500 to 2,000 feet, an
 
 **Your first flight is $50.**
 
-[Book a Discovery Flight] · or learn to fly
+[Buy a Discovery Flight] · or learn to fly
+
+For you or as a gift. After you buy, choose your date with us.
 
 ## Three facts
 
@@ -22,11 +24,11 @@ No engine. No experience needed. A winch launch to about 1,500 to 2,000 feet, an
 
 ## How it works
 
-### 1. Request a date
-Tell us who is flying and which days suit you.
+### 1. Buy your flight
+$50 online, for yourself or as a gift.
 
-### 2. We confirm
-A club member replies with a date and what to expect.
+### 2. Book your date
+Tell us which days suit you and a club member confirms.
 
 ### 3. Come out and fly
 Meet the crew at Birch Hills Airport, get a safety briefing, and launch.

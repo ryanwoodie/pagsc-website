@@ -16,7 +16,7 @@
  */
 
 var TAB = 'Guest requests';
-var HEADERS = ['Received', 'Name', 'Email', 'Phone', 'Flyers', 'Preferred dates', 'Weight confirmed', 'Message', 'Page'];
+var HEADERS = ['Received', 'Name', 'Email', 'Phone', 'Flyers', 'Preferred dates', 'Weight confirmed', 'Message', 'Page', 'Payment'];
 var LEADS_TAB = 'Student leads';
 var LEADS_HEADERS = ['Received', 'Name', 'Email', 'Page'];
 var MAX = 2000; // longest accepted field, in characters
@@ -38,7 +38,8 @@ function doPost(e) {
     dates: clean(p.dates),
     weightOk: p.weight_ok === 'yes',
     message: clean(p.message),
-    page: clean(p.page)
+    page: clean(p.page),
+    payment: clean(p.payment) || 'Not stated'
   };
 
   var problems = validate(req);
@@ -49,7 +50,7 @@ function doPost(e) {
   try {
     sheet(TAB, HEADERS).appendRow([
       new Date(), req.name, req.email, req.phone, req.flyers, req.dates,
-      req.weightOk ? 'Yes' : 'No', req.message, req.page
+      req.weightOk ? 'Yes' : 'No', req.message, req.page, req.payment
     ]);
   } finally {
     lock.releaseLock();
@@ -58,7 +59,7 @@ function doPost(e) {
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
     replyTo: req.email,
-    subject: 'Discovery Flight request: ' + req.name + ' (' + req.flyers + ')',
+    subject: 'Discovery Flight booking: ' + req.name + ' (' + req.flyers + ', ' + req.payment + ')',
     body: [
       'A new Discovery Flight request from the website.',
       '',
@@ -68,6 +69,7 @@ function doPost(e) {
       'Flyers: ' + req.flyers,
       'Preferred dates: ' + req.dates,
       'Everyone under the weight limit: ' + (req.weightOk ? 'Yes' : 'No'),
+      'Payment: ' + req.payment,
       'Message: ' + (req.message || '(none)'),
       '',
       'Reply to this email to confirm a date and an arrival time.'
