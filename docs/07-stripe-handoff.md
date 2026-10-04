@@ -39,11 +39,10 @@ the deposits.
 - [x] Voucher system built (4 October 2026): `apps-script/Vouchers.gs`, `apps-script/Qr.gs`,
   booking code checks in `Booking.gs`, the paid page and the calendar's code field.
   Tests in `scripts/vouchers.test.mjs`. Details in `apps-script/README.md`.
-- [ ] **Ryan:** run `installVouchers` once in the Apps Script editor (approves Stripe access,
-  installs the hourly `syncStripe`). Then `npm run script:deploy`.
+- [x] `installVouchers` run and script deployed (4 October 2026).
 - [ ] One real $50 purchase and refund on the live link; check the email, PDF, Vouchers tab,
   booking with the code, cancel, and the Refunded mark.
-- [ ] Push the site (links switch from Wave to Stripe; already changed in `club-facts.yaml`).
+- [x] Site pushed with the Stripe links (4 October 2026).
 
 ## What to build
 
@@ -85,7 +84,17 @@ Test card: 4242 4242 4242 4242, any future date, any CVC. The site still uses th
 | Payment Link: single (qty 1 to 10) | `plink_1UMifqAmFx3WHRxVPsSflat9` | https://buy.stripe.com/28EaEW5PZ0QQ6hY55KbV600 |
 | Payment Link: group (qty 4 to 99) | `plink_1UMifqAmFx3WHRxVdN7jUVzS` | https://buy.stripe.com/7sY7sKdirdDC5dU9m0bV601 |
 
-Same settings as the sandbox links. `src/scripts/track.ts` tells the group link by its URL.
+Same settings as the sandbox links, except the wording, revised 4 October 2026 to match the site:
+- Single product description: "Your first flight in a glider: a winch launch to about 1,500 feet in a two-seat
+  glider, with a club pilot beside you the whole time. At Birch Hills Airport, 25 minutes from Prince Albert.
+  We email you a certificate for each flight, and it never expires." Group: the same for "a group of 4 or more".
+- Field labels: "Name on the certificate (if it's a gift)", "Message on the certificate" (plural on the group link).
+- Above the Pay button: "We email you a certificate with a booking code for each flight. Then pick your flying
+  day on our booking calendar."
+Keep these in step with `content/club-facts.yaml` (launch height, airfield, drive time, price).
+`src/scripts/track.ts` tells the group link by its URL.
+
+Tested 4 October 2026: one real $50 purchase issued `PAGSC-J6RA-QDTE`. Refund still to test.
 
 ### Vouchers (Apps Script, new `Vouchers.gs`)
 
