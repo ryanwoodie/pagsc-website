@@ -24,14 +24,15 @@ the deposits.
   bundles the Stripe MCP server `plugin:stripe:stripe` at `https://mcp.stripe.com`.
 - [ ] **Ryan:** create the club's Stripe account (club Gmail, legal details, bank account,
   identity verification). Ask Stripe about the non-profit / registered-charity rate.
-- [ ] **Ryan:** authenticate the MCP server: in Terminal, `cd` to this repo, run `claude`, type
-  `/mcp`, choose `plugin:stripe:stripe` > Authenticate, sign in to the **club** Stripe account.
-  Then start a new conversation so the Stripe tools load.
+- [x] MCP server authenticated (3 October 2026). It reaches only the **sandbox**
+  "Prince Albert Gliding and Soaring Club Inc. sandbox" (`acct_1UMDdbABB6Va3lZY`, test mode).
+  To create the live objects through the MCP, Ryan grants the live account in the Stripe
+  dashboard (MCP > manage accounts), or recreates them by hand in live mode.
 - [ ] Run `stripe_implementation_planner` with: Business `pagsc.ca`; "Non-profit gliding club,
   provides glider flight training"; products Payments (now), Billing, Invoicing, Terminal (later).
   If the planner is unavailable after authenticating, fall back to `npx skills add https://docs.stripe.com`.
-- [ ] Create products and Payment Links (see "Stripe objects" below), via the MCP tools or by
-  Ryan in the dashboard.
+- [x] Sandbox products and Payment Links created (3 October 2026), see "Sandbox objects" below.
+- [ ] Same products and Payment Links in **live** mode, once the account is verified.
 - [ ] **Ryan:** create a **restricted key** (read Checkout Sessions, read Line Items, read and
   write Refunds if refunds should sync) and paste it into Apps Script > Project Settings > Script
   Properties as `STRIPE_KEY`. Never put a key in this repo or in chat.
@@ -54,6 +55,20 @@ Prices and the group minimum live in `content/club-facts.yaml` (`discovery_fligh
 `content/club-facts.yaml` under `links` in place of the Wave ones (`discovery_flight_payment`,
 `discovery_flight_group_payment`). `src/scripts/track.ts` tells single from group by the group
 link's ID, so update it too.
+
+### Sandbox objects (test mode, created 3 October 2026)
+
+| Object | ID | URL |
+| --- | --- | --- |
+| Product "Discovery Flight" | `prod_VNTFOaNuWjKA0r`, price `price_1UMiItABB6Va3lZYpNOSgTZZ` ($50 CAD) | |
+| Product "Discovery Flight, group rate" | `prod_VNTFLg4ypipEnk`, price `price_1UMiItABB6Va3lZYoardNG89` ($40 CAD) | |
+| Payment Link: single (qty 1 to 10) | `plink_1UMiJ6ABB6Va3lZY1ua5U0vF` | https://buy.stripe.com/test_28E6oGchncSf2AO3cYcEw00 |
+| Payment Link: group (qty 4 to 99) | `plink_1UMiJ7ABB6Va3lZYQknC0gVn` | https://buy.stripe.com/test_00w9ASa9ff0n5N000McEw01 |
+
+Both links collect name and email, have optional custom fields `recipient` and `giftmessage`,
+carry `metadata.pagsc_type` (`single` / `group`, copied to each Checkout Session so the script
+can tell them apart), and redirect to `/discovery-flight/paid/?session_id={CHECKOUT_SESSION_ID}`.
+Test card: 4242 4242 4242 4242, any future date, any CVC. The site still uses the Wave links.
 
 ### Vouchers (Apps Script, new `Vouchers.gs`)
 
