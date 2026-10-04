@@ -10,11 +10,11 @@ export function track(path: string, title = location.pathname) {
   }
 }
 
-/** Count clicks on any Wave checkout link: buy/single or buy/group, titled with the page. */
+/** Count clicks on any Stripe checkout link: buy/single or buy/group, titled with the page. */
 export function trackBuyClicks() {
   document.addEventListener('click', (e) => {
-    const a = (e.target as Element | null)?.closest?.('a[href*="link.waveapps.com"]') as HTMLAnchorElement | null;
+    const a = (e.target as Element | null)?.closest?.('a[href*="buy.stripe.com"]') as HTMLAnchorElement | null;
     if (!a) return;
-    track(a.href.includes('398m3y') ? 'buy/group' : 'buy/single', `${location.pathname} · ${a.textContent?.trim() ?? ''}`);
+    track(a.href.includes('7sY7sKdirdDC5dU9m0bV601') ? 'buy/group' : 'buy/single', `${location.pathname} · ${a.textContent?.trim() ?? ''}`);
   });
 }

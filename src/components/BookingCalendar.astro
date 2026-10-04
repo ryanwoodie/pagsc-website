@@ -1,7 +1,8 @@
 ---
 // Discovery Flight booking calendar. Reads open days and free half-hour slots from the
 // Apps Script (apps-script/Booking.gs), which reads the Flying Schedule. Weekends are held
-// right away; weekdays are requests. Without JavaScript, or if the calendar cannot load,
+// right away; weekdays are requests. Flights paid online or given as a gift carry certificate
+// codes: read from ?code= (the certificate's QR code) or sent by the paid page. Without JavaScript, or if the calendar cannot load,
 // the plain booking form shows instead.
 import { FORM_ENDPOINT } from '../config';
 import { facts, df, telHref } from '../lib/facts';
@@ -72,8 +73,16 @@ const config = {
     const fallback = root.querySelector<HTMLElement>('.booking__fallback')!;
     if (!cfg.endpoint) continue;
 
-    const wanted = new URLSearchParams(location.search).get('date') || '';
-    const state = { days: [] as Day[], people: 1, date: wanted, start: '' };
+    const params = new URLSearchParams(location.search);
+    const wanted = params.get('date') || '';
+    const codes = (params.get('code') || '').split(',').map((c) => c.trim()).filter(Boolean);
+    const state = { days: [] as Day[], people: Math.min(Math.max(codes.length, 1), cfg.maxGroup), date: wanted, start: '', codes };
+    // The paid page sends the codes it was given for this purchase.
+    document.addEventListener('pagsc:codes', (e) => {
+      state.codes = (e as CustomEvent<string[]>).detail;
+      state.people = Math.min(Math.max(state.codes.length, state.people), cfg.maxGroup);
+      if (state.days.length) render();
+    });
 
     async function load() {
       fallback.hidden = true;
@@ -156,6 +165,10 @@ const config = {
       const end = fromMin(toMin(state.start) + state.people * cfg.minutes);
       const held = day.kind === 'weekend';
       const form = el('form', { class: 'bk-step bk-form', novalidate: '' });
+      const codeInput = el('input', { id: 'bk-codes', name: 'codes', type: 'text', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', placeholder: 'PAGSC-XXXX-XXXX', 'aria-describedby': 'bk-codes-hint' }) as HTMLInputElement;
+      codeInput.value = state.codes.join(', ');
+      const codeField = el('div', { class: 'field' }, el('label', { for: 'bk-codes' }, state.people > 1 ? 'Certificate codes' : 'Certificate code'), codeInput,
+        el('p', { class: 'bk-hint', id: 'bk-codes-hint' }, state.people > 1 ? 'One for each person flying, separated by commas. They are on the certificates and in the email.' : 'On your certificate and in the email.'));
       form.append(
         el('h3', {}, '4. Your details'),
         el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}, ${state.people} ${state.people === 1 ? 'person' : 'people'}. ${held ? 'We pencil you in for this spot.' : 'This is a request; we confirm by email.'}`),
@@ -164,10 +177,17 @@ const config = {
         field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
         field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' })),
         radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
-        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : ''),
+        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
+        codeField,
         el('div', { class: 'field field--check' }, el('input', { id: 'bk-weight', name: 'weight_ok', type: 'checkbox', value: 'yes', required: '' }), el('label', { for: 'bk-weight' }, `Everyone flying weighs ${cfg.maxWeight} lbs or less.`)),
         field('bk-message', 'Message (optional)', el('textarea', { id: 'bk-message', name: 'message', rows: '3' })),
       );
+      const showCode = () => {
+        const p = (form.elements.namedItem('payment') as RadioNodeList).value;
+        codeField.hidden = p !== 'Paid online' && p !== 'Gift';
+      };
+      form.addEventListener('change', showCode);
+      showCode();
       const err = el('div', { class: 'bk-error', role: 'alert', tabindex: '-1' });
       if (message) err.textContent = message; else err.hidden = true;
       const submit = el('button', { class: 'btn', type: 'submit' }, held ? 'Pencil me in' : 'Send my request');

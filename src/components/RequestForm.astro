@@ -63,6 +63,10 @@ const action = FORM_ENDPOINT || `mailto:${facts.contact.email}?subject=${encodeU
     <label><input type="radio" name="payment" value="Pay at the field" /> I'll pay at the field ({facts.fees.guest_payment.toLowerCase()})</label>
   </fieldset>
   <div class="field">
+    <label for="f-codes">Certificate code <span class="optional">(if you have one)</span></label>
+    <input id="f-codes" name="codes" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PAGSC-XXXX-XXXX" />
+  </div>
+  <div class="field">
     <label for="f-message">Message <span class="optional">(optional)</span></label>
     <textarea id="f-message" name="message" rows="4"></textarea>
   </div>

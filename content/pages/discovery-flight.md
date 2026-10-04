@@ -85,6 +85,8 @@ A club member will reply to confirm a date and an arrival time.
 
 A Discovery Flight makes a good present for anyone who has looked up and wondered.
 
+Buy it online and we email you a printable certificate with its own code. Gift flights don't expire. The person flying books their date with the code on the booking calendar above, or by emailing the club.
+
 [Buy a gift flight]
 
 ## Before a first flight

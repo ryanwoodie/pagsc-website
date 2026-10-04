@@ -32,12 +32,18 @@ the deposits.
   provides glider flight training"; products Payments (now), Billing, Invoicing, Terminal (later).
   If the planner is unavailable after authenticating, fall back to `npx skills add https://docs.stripe.com`.
 - [x] Sandbox products and Payment Links created (3 October 2026), see "Sandbox objects" below.
-- [ ] Same products and Payment Links in **live** mode, once the account is verified.
-- [ ] **Ryan:** create a **restricted key** (read Checkout Sessions, read Line Items, read and
-  write Refunds if refunds should sync) and paste it into Apps Script > Project Settings > Script
-  Properties as `STRIPE_KEY`. Never put a key in this repo or in chat.
-- [ ] Build the voucher system (below), test with Stripe test mode, then one real $50 purchase
-  and refund, then switch the site's links from Wave to Stripe.
+- [x] Live products and Payment Links created (4 October 2026), see "Live objects" below. The MCP
+  connection has write access to the live account.
+- [x] Live restricted key in Apps Script Script Properties as `STRIPE_KEY` (4 October 2026). It
+  was pasted into a chat once; Ryan to rotate it in Stripe and paste the new one into Script Properties.
+- [x] Voucher system built (4 October 2026): `apps-script/Vouchers.gs`, `apps-script/Qr.gs`,
+  booking code checks in `Booking.gs`, the paid page and the calendar's code field.
+  Tests in `scripts/vouchers.test.mjs`. Details in `apps-script/README.md`.
+- [ ] **Ryan:** run `installVouchers` once in the Apps Script editor (approves Stripe access,
+  installs the hourly `syncStripe`). Then `npm run script:deploy`.
+- [ ] One real $50 purchase and refund on the live link; check the email, PDF, Vouchers tab,
+  booking with the code, cancel, and the Refunded mark.
+- [ ] Push the site (links switch from Wave to Stripe; already changed in `club-facts.yaml`).
 
 ## What to build
 
@@ -69,6 +75,17 @@ Both links collect name and email, have optional custom fields `recipient` and `
 carry `metadata.pagsc_type` (`single` / `group`, copied to each Checkout Session so the script
 can tell them apart), and redirect to `/discovery-flight/paid/?session_id={CHECKOUT_SESSION_ID}`.
 Test card: 4242 4242 4242 4242, any future date, any CVC. The site still uses the Wave links.
+
+### Live objects (created 4 October 2026, account `acct_1UMhKXAmFx3WHRxV`)
+
+| Object | ID | URL |
+| --- | --- | --- |
+| Product "Discovery Flight" | `prod_VNTcrQjXNLASP5`, price `price_1UMifaAmFx3WHRxVpZU81K68` ($50 CAD) | |
+| Product "Discovery Flight, group rate" | `prod_VNTcNg7KGMGH7U`, price `price_1UMifaAmFx3WHRxViTj9mmiB` ($40 CAD) | |
+| Payment Link: single (qty 1 to 10) | `plink_1UMifqAmFx3WHRxVPsSflat9` | https://buy.stripe.com/28EaEW5PZ0QQ6hY55KbV600 |
+| Payment Link: group (qty 4 to 99) | `plink_1UMifqAmFx3WHRxVdN7jUVzS` | https://buy.stripe.com/7sY7sKdirdDC5dU9m0bV601 |
+
+Same settings as the sandbox links. `src/scripts/track.ts` tells the group link by its URL.
 
 ### Vouchers (Apps Script, new `Vouchers.gs`)
 

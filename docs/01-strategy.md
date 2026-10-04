@@ -4,7 +4,7 @@
 
 Get a visitor to request a first flight. Everything else on the site either helps that happen or helps a first-timer come back and join.
 
-- **Primary conversion:** a Discovery Flight bought (Wave checkout), for the buyer or as a gift. Decided 3 October 2026: revenue first; $50 is an impulse price. From 4 October the main button on other pages ("Book a Discovery Flight") goes to the Discovery Flight page, whose first screen buys directly, so buyers see the limits, weather and booking first.
+- **Primary conversion:** a Discovery Flight bought (Stripe checkout), for the buyer or as a gift. Decided 3 October 2026: revenue first; $50 is an impulse price. From 4 October the main button on other pages ("Book a Discovery Flight") goes to the Discovery Flight page, whose first screen buys directly, so buyers see the limits, weather and booking first.
 - **Secondary:** a date booked (form submitted), a membership form opened, a training inquiry.
 
 The Discovery Flight is presented as a first lesson, not a ride. The club has one two-seat trainer and volunteer instructors, so seat time is scarce; the framing attracts people who may go on to join. Whether the club's priority is members or ride revenue is an open question (`06-open-questions.md`, Q1). Until it is answered, build for members.
@@ -87,9 +87,9 @@ One number matters: Discovery Flight requests. Then, by hand at season's end: re
 
 Analytics is GoatCounter (https://pagsc.goatcounter.com): cookie-free, no banner. Besides page views it counts these events (`src/scripts/track.ts`):
 
-- `buy/single`, `buy/group`: clicks on a Wave checkout link, titled with the page and button. Completed purchases are in Wave.
+- `buy/single`, `buy/group`: clicks on a Stripe checkout link, titled with the page and button. Completed purchases are in Stripe and the Vouchers tab.
 - `booking/weekend|weekday/discovery|first-lesson`: bookings made in the calendar. The Bookings tab is the record.
 - `booking/form/flight`: bookings through the plain fallback form.
 - `welcome-pack/request`: welcome pack requests.
 
-At season's end, compare: buy clicks, Wave purchases, bookings, flights flown, first-lesson interest and new members.
+At season's end, compare: buy clicks, Stripe purchases, bookings, flights flown, first-lesson interest and new members.

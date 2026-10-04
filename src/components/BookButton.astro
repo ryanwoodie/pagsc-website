@@ -1,6 +1,6 @@
 ---
 // The site's one primary action. Everywhere except the Discovery Flight page it goes to that page,
-// where the price, limits and booking are explained; on that page it buys (Wave checkout) directly.
+// where the price, limits and booking are explained; on that page it buys (Stripe checkout) directly.
 import Button from './Button.astro';
 import { facts, money } from '../lib/facts';
 interface Props { label?: string; small?: boolean; class?: string; showPrice?: boolean; buy?: boolean }

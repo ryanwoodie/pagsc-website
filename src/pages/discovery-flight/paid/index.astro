@@ -1,10 +1,13 @@
 ---
-// Where the Wave checkout sends buyers after paying (set as the checkout's redirect, if Wave allows).
+// Where Stripe sends buyers after paying: /discovery-flight/paid/?session_id=cs_…
+// The Apps Script (apps-script/Vouchers.gs) confirms the payment with Stripe, issues one certificate
+// per flight and emails them; this page shows the codes and hands them to the booking calendar.
 import Base from '../../../layouts/Base.astro';
 import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
 import BookingCalendar from '../../../components/BookingCalendar.astro';
+import { FORM_ENDPOINT } from '../../../config';
 import { facts } from '../../../lib/facts';
 ---
 <Base
@@ -13,7 +16,11 @@ import { facts } from '../../../lib/facts';
   noindex
 >
   <PageHero title="Thanks. Your flight is paid.">
-    <p class="lead">Now pick a day and a time. If it's a gift, pass this page on to the person flying.</p>
+    <p class="lead">Now pick a day and a time. If it's a gift, pass the certificate on to the person flying.</p>
+    <div class="certs" data-endpoint={FORM_ENDPOINT} data-email={facts.contact.email} hidden>
+      <p class="certs__status" role="status">Getting your certificate…</p>
+      <div class="certs__codes" hidden></div>
+    </div>
     <div class="actions"><Button href="#request">Book your flying day</Button></div>
   </PageHero>
   <Section id="request" variant="plain" labelledby="req-h">
@@ -21,3 +28,74 @@ import { facts } from '../../../lib/facts';
     <BookingCalendar paid />
   </Section>
 </Base>
+
+<script>
+  const box = document.querySelector<HTMLElement>('.certs');
+  const session = new URLSearchParams(location.search).get('session_id') || '';
+  if (box && box.dataset.endpoint && /^cs_(live|test)_\w+$/.test(session)) {
+    const status = box.querySelector<HTMLElement>('.certs__status')!;
+    const list = box.querySelector<HTMLElement>('.certs__codes')!;
+    const email = box.dataset.email!;
+    box.hidden = false;
+    const later = (text: string) => {
+      status.replaceChildren(text, ' Questions? Email ', Object.assign(document.createElement('a'), { href: `mailto:${email}`, textContent: email }), '.');
+    };
+    const ask = async (tries: number): Promise<void> => {
+      try {
+        const res = await fetch(`${box.dataset.endpoint}?action=voucher&session_id=${encodeURIComponent(session)}`, { signal: AbortSignal.timeout(45000) });
+        const data = await res.json();
+        if (data.ok) {
+          const codes: string[] = data.codes;
+          const many = codes.length > 1;
+          status.textContent = `We've emailed ${many ? 'the certificates' : 'your certificate'} to ${data.email}.`;
+          list.replaceChildren(
+            Object.assign(document.createElement('p'), { className: 'certs__label', textContent: many ? 'Certificate codes' : 'Certificate code' }),
+            ...codes.map((c) => Object.assign(document.createElement('p'), { className: 'certs__code', textContent: c })),
+          );
+          list.hidden = false;
+          document.dispatchEvent(new CustomEvent('pagsc:codes', { detail: codes }));
+          return;
+        }
+        if (data.error === 'pending' && tries > 0) {
+          status.textContent = 'Your payment is still going through…';
+          await new Promise((r) => setTimeout(r, 5000));
+          return ask(tries - 1);
+        }
+        later('Your certificate will arrive by email within the hour.');
+      } catch {
+        later('Your certificate will arrive by email within the hour.');
+      }
+    };
+    ask(6);
+  }
+</script>
+
+<style>
+  .certs {
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    padding: 14px 18px;
+    margin: 0 0 18px;
+    max-width: 32rem;
+  }
+  .certs p {
+    margin: 0;
+  }
+  .certs__codes {
+    margin-top: 10px;
+  }
+  .certs__label {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+  }
+  .certs__code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+</style>
