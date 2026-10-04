@@ -8,7 +8,8 @@
  *   - answers GET ?action=availability with free / taken slots (no names),
  *   - takes POST form=booking, re-checks the slot, saves it, writes "First name 11:30 (2)" into
  *     that day's intro-flight block on the Flying Schedule, and emails the guest and the club,
- *   - handles GET ?action=cancel&token=… from the guest's email.
+ *   - handles GET ?action=cancel&token=… from the guest's email,
+ *   - checks certificate codes (Vouchers.gs) for bookings paid online or given as a gift.
  *
  * Weekend bookings are pencilled in right away; weekday bookings are requests a member confirms.
  * Neither is a guarantee: flying depends on weather and volunteers.
@@ -32,7 +33,7 @@ var BOOKING = {
   STATUS_DAYS: 7,        // status-change emails for bookings this many days out or fewer
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
-    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status']
+    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -235,6 +236,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'availability') return json(availabilityResponse());
   if (p.action === 'cancel') return cancelBooking(p.token);
+  if (p.action === 'voucher') return json(voucherResponse(p.session_id));
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
 }
 
@@ -300,14 +302,21 @@ function bookingPost(p) {
     interest: clean(p.interest) || 'Discovery flight',
     payment: clean(p.payment) || 'Not stated',
     message: clean(p.message),
-    weightOk: p.weight_ok === 'yes'
+    weightOk: p.weight_ok === 'yes',
+    codes: []
   };
+  var prepaid = b.payment === 'Paid online' || b.payment === 'Gift';
   var problems = [];
   if (!b.name) problems.push('your name');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) problems.push('a valid email address');
   if (!/\d{3}.*\d{4}/.test(b.phone)) problems.push('a phone number');
   if (!b.weightOk) problems.push('the weight confirmation');
   if (problems.length) return json({ ok: false, error: 'We still need ' + problems.join(', ') + '.' });
+  if (prepaid) {
+    var parsed = parseCodes(p.codes);
+    if (parsed.bad.length) return json({ ok: false, error: '"' + clean(parsed.bad[0]) + '" is not a certificate code. Codes look like PAGSC-7KQ2-XM9D.' });
+    b.codes = parsed.codes.slice(0, VOUCHER.MAX_CODES + 1);
+  }
 
   var lock = LockService.getScriptLock();
   lock.waitLock(15000);
@@ -321,6 +330,8 @@ function bookingPost(p) {
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
     if (why) return json({ ok: false, error: why, refresh: true });
+    var codeCheck = checkCodes(b.codes, b.people);
+    if (codeCheck.error) return json({ ok: false, error: codeCheck.error });
 
     var kind = day.kind === 'weekend' ? 'Held' : 'Requested';
     var token = Utilities.getUuid();
@@ -330,8 +341,9 @@ function bookingPost(p) {
 
     bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
-      b.interest, b.payment, b.message, token, cell, text, '', day.statusText
+      b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', ')
     ]);
+    markCodesBooked(codeCheck.rows, token, b.date);
     result = { ok: true, kind: kind, date: b.date, start: b.start, people: b.people, range: timeRange(b.start, b.people), token: token, day: day };
   } finally {
     lock.releaseLock();
@@ -394,12 +406,20 @@ function sendBookingEmails(b, r) {
       'Email: ' + b.email,
       'Phone: ' + b.phone,
       'Interest: ' + b.interest,
-      'Payment: ' + b.payment,
+      'Payment: ' + b.payment + paymentNote(b),
       'Message: ' + (b.message || '(none)'),
       '',
       'It is in the "' + BOOKING.TAB + '" tab and on the Flying Schedule. The guest gets reminders before the day and an email when the day\'s status changes.'
     ].join('\n')
   });
+}
+
+/** For the club: which certificates cover the booking, and how many people still need to pay. */
+function paymentNote(b) {
+  if (b.payment !== 'Paid online' && b.payment !== 'Gift') return '';
+  var rest = b.people - b.codes.length;
+  if (!b.codes.length) return ' (no certificate code given: check how they paid)';
+  return ' (certificate' + (b.codes.length > 1 ? 's ' : ' ') + b.codes.join(', ') + (rest > 0 ? '; ' + rest + ' more to pay or check' : '') + ')';
 }
 
 /** The Bookings tab, with header cells for any columns added since it was created. */
@@ -425,6 +445,7 @@ function cancelBooking(token) {
     lock.waitLock(15000);
     try {
       sh.getRange(i + 1, 6).setValue('Cancelled');
+      releaseCodes(token);
       var a1 = rows[i][13], text = rows[i][14];
       if (a1) {
         var cell = scheduleSheet().getRange(a1);

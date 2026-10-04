@@ -43,7 +43,7 @@ function doPost(e) {
     weightOk: p.weight_ok === 'yes',
     message: clean(p.message),
     page: clean(p.page),
-    payment: clean(p.payment) || 'Not stated'
+    payment: (clean(p.payment) || 'Not stated') + (clean(p.codes) ? ' (certificate ' + clean(p.codes) + ')' : '')
   };
 
   var problems = validate(req);

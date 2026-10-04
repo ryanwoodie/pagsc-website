@@ -8,7 +8,7 @@ about it is secret except the sheet ID, which is kept in Script Properties, not 
 ## Deploying with clasp (the usual way)
 
 The script is linked to this folder with clasp (Google's Apps Script command line), signed in as the
-club account. `apps-script/.clasp.json` holds the script ID; only `Code.gs`, `Booking.gs` and
+club account. `apps-script/.clasp.json` holds the script ID; the `.gs` files listed in `.claspignore` and
 `appsscript.json` are pushed.
 
 ```
@@ -88,6 +88,32 @@ email, run `sendSampleEmails`: it sends 5 samples to the club address and books 
 The slot settings (11:00 to 16:30 starts, 30 minutes, 2 spots per student, groups of 4, 28 days) are at the top of
 `Booking.gs` and in `content/club-facts.yaml` under `booking`. Change both together; `npm test` checks
 they match.
+
+## Certificates for flights bought online (Vouchers.gs, Qr.gs)
+
+Discovery Flights are sold on two Stripe Payment Links (single and group). After paying, Stripe sends the
+buyer to `/discovery-flight/paid/?session_id=…`; that page asks this script for the certificates.
+
+- The script fetches the Checkout Session from Stripe, checks it is paid, and issues one code per flight
+  (`PAGSC-XXXX-XXXX`, no look-alike characters) into a **Vouchers** tab: Code, Session ID, Payment ID,
+  Issued, Buyer name, Buyer email, For, Message, Type, Value, Status, Booking token, Booked date, Flown date, Notes.
+- The buyer gets one email with a PDF, a page per flight: recipient and message (or lines to write on),
+  the code and a QR code that opens the booking calendar with the code filled in. The club gets a note.
+- Each Checkout Session issues certificates once. An hourly job, `syncStripe`, catches buyers who closed
+  the tab, and marks flights **Refunded** when a refund is made in the Stripe dashboard (unused ones first;
+  the club is emailed, and told if a refunded certificate was already booked).
+- Booking with "I've paid online" or "It's a gift" asks for the code(s), one per person. A code must be
+  **Issued** to be used; the booking marks it **Booked**, and cancelling returns it to **Issued**. Leaving the
+  code blank is allowed (flights bought before Stripe, or by e-transfer); the club email says so.
+- After the flight, set Status to **Flown** by hand.
+- **Manual certificates** (cash or e-transfer gifts): add a row with Type `manual`, Buyer name, Buyer email,
+  and optionally For, Message and Value (default $50). Leave Code empty. Within the hour the code is filled in
+  and the certificate emailed. One row per flight.
+
+**Setup (once):** Script Property `STRIPE_KEY`, a Stripe restricted key with read access to Checkout Sessions,
+Charges and Refunds. Then in the editor pick `installVouchers` and Run: Google asks to approve connecting to an
+external service (Stripe); approve as the club account. It checks the key works and installs the hourly job.
+Do this before deploying a version that includes Vouchers.gs, or the web app stops until it is approved.
 
 ## Updating the deployed script
 
