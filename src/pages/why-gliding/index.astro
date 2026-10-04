@@ -7,7 +7,7 @@ import Tiles from '../../components/Tiles.astro';
 import BookButton from '../../components/BookButton.astro';
 import Photo from '../../components/Photo.astro';
 import flightPhoto from '../../assets/photos/glider-in-flight.jpg';
-import { facts, fees, num, money } from '../../lib/facts';
+import { facts, fees, num, money, licenceCostLine } from '../../lib/facts';
 import { href } from '../../lib/url';
 
 const a = facts.achievements;
@@ -47,6 +47,7 @@ const rungs = [
       <div>
         <h2 id="reach-h">Within reach</h2>
         <p>Club instructors teach you for free. Members pay {money(fees.winch_launch)} a launch and {money(fees.glider_rental_per_hour)} an hour of glider time, billed by the minute: about {money(fees.typical_lesson_flight.cost)} for a typical {fees.typical_lesson_flight.minutes}-minute instructional flight. Membership is {money(m.youth_air_cadet.price)} to {money(m.regular.price)} a year.</p>
+        <p>{licenceCostLine}</p>
         <p><a class="more" href={href('/costs/')}>See all costs</a></p>
       </div>
       <div>

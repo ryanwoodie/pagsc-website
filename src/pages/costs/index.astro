@@ -3,7 +3,7 @@ import Base from '../../layouts/Base.astro';
 import PageHero from '../../components/PageHero.astro';
 import Section from '../../components/Section.astro';
 import BookButton from '../../components/BookButton.astro';
-import { facts, df, fees, money, lessonBreakdown, launchHeight } from '../../lib/facts';
+import { facts, df, fees, money, lessonBreakdown, launchHeight, licenceCostLine } from '../../lib/facts';
 import { href } from '../../lib/url';
 
 const m = fees.membership;
@@ -38,6 +38,7 @@ const rows = [
         ))}
       </tbody>
     </table>
+    <p class="notes">{licenceCostLine}</p>
     <p class="notes">Buy online: <a href={facts.links.discovery_flight_payment} rel="noopener">a Discovery Flight, {money(df.price)}</a> or <a href={facts.links.discovery_flight_group_payment} rel="noopener">group flights, {money(df.group_price_each)} each for {df.group_minimum} or more</a>.</p>
     <p class="notes">{fees.membership_notes.join(' ')} Pay by e-transfer to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
   </Section>

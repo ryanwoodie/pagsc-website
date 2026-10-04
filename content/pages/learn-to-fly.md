@@ -14,11 +14,17 @@ Instruction is free. Members pay for launches and glider time: about $10 for a t
 
 [Book a first lesson]
 
+## Your first three visits
+
+A day at the field is usually 3 to 6 instructional flights, taking 1 to 3 hours. (Visit-by-visit guide in club-facts.yaml, training.first_visits.) A rough guide: your instructor sets the pace.
+
 ## What it costs
 
 **$10** is about what a typical 10-minute instructional flight costs members: a $5 launch plus $5 of glider time.
 
 Membership is $150 a year, $75 for juniors and $15 for youth and Air Cadets.
+
+A Glider Pilot Licence typically costs $500 to $1,000 in launches and glider time, plus membership: about what 2 to 4 hours of powered flight training costs.
 
 [See all costs]
 

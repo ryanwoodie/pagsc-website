@@ -61,6 +61,8 @@ const schema = z
       weekdays: z.string(),
       season: z.string(),
       weather_cancellation: z.string(),
+      prepaid_expiry: z.literal('none'),
+      refund: z.string(),
       bring: z.array(z.string()).min(1),
       day: z.array(z.string()).min(1),
     }),
@@ -91,6 +93,12 @@ const schema = z
       flights_to_solo_experienced: z.string(),
       who_can_learn: z.array(z.string()),
       steps: z.array(z.strictObject({ title: z.string(), text: z.string() })).length(5),
+      flights_per_visit: z.string(),
+      visit_hours: z.string(),
+      licence_cost: z.string(),
+      licence_cost_powered_hours: z.string(),
+      first_visits: z.array(z.strictObject({ title: z.string(), text: z.string() })).length(3),
+      after_first_visits: z.string(),
       come_regularly: z.string(),
     }),
     youth: z.strictObject({
@@ -194,6 +202,9 @@ export function shortDuration(s: string): string {
 
 /** "Most students go solo after around 40 instructional flights; …" */
 export const soloLine = `Most students go solo after ${facts.training.flights_to_solo} instructional flights. With previous aviation experience or a pilot licence, it can be as few as ${facts.training.flights_to_solo_experienced}.`;
+
+/** "A Glider Pilot Licence typically costs $500 to $1,000 in launches and glider time…" */
+export const licenceCostLine = `A Glider Pilot Licence typically costs ${facts.training.licence_cost} in launches and glider time, plus membership: about what ${facts.training.licence_cost_powered_hours} hours of powered flight training costs.`;
 
 /** "1,500 to 2,000 feet" */
 export const launchHeight = `${num(df.launch_height_feet_min)} to ${num(df.launch_height_feet)} feet`;

@@ -57,6 +57,8 @@ discovery_flight:
   weekdays: Some weekdays too, often on request
   season: Spring through fall, with occasional winter flying
   weather_cancellation: Rebooked at no charge
+  prepaid_expiry: none          # prepaid and gift flights never expire
+  refund: On request
   bring:
     - Hat, sunscreen, sunglasses
     - Water, lunch or snacks
@@ -114,6 +116,18 @@ training:
       text: Once your instructor is satisfied you are ready.
     - title: Licence, from age 16
       text: Solo practice, then a flight test. You need at least 6 hours of flight time, including 1 hour dual, 2 hours solo and 20 solo flights.
+  flights_per_visit: 3 to 6
+  visit_hours: 1 to 3           # time for a day's instructional flights
+  licence_cost: "$500 to $1,000"            # launches and glider time to a Glider Pilot Licence, typical; plus membership
+  licence_cost_powered_hours: 2 to 4        # what that buys in powered flight training, roughly
+  first_visits:   # a rough guide drawn from a club gliding syllabus; the instructor sets the pace
+    - title: Visit 1
+      text: "Your Discovery Flight, then the glider itself: the controls, the instruments, cockpit checks, and how the crew hooks up and launches a glider. In the air you start on look-out and the effects of the controls."
+    - title: Visit 2
+      text: Flying straight towards a point on the horizon, gentle turns, and controlling your speed with the glider's attitude and trim.
+    - title: Visit 3
+      text: Steeper turns, the launch, and the airbrakes, then your first approaches and landings with your instructor.
+  after_first_visits: Circuits and landings, slow flight and stalls, spin and spiral recovery, sideslips and launch failures come next, and then your first solo.
   come_regularly: Skills fade between visits. Flying as many weekends (and even weekdays) as you can over a stretch of the season gets you solo sooner and costs less in total.
 
 youth:

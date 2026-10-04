@@ -51,6 +51,11 @@ export const firstFlights: QA[] = [
     a: `A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and, if you haven't paid online, a way to pay (${fees.guest_payment.toLowerCase()}).`,
   },
   {
+    id: 'expiry',
+    q: 'Do prepaid or gift flights expire?',
+    a: "No. A flight you've paid for never expires and can be rebooked at no charge. If you need a refund, just ask.",
+  },
+  {
     id: 'gift',
     q: 'Can I give a flight as a gift?',
     a: 'Yes. Buy a Discovery Flight online. The person flying then books their date with the booking form or by email.',

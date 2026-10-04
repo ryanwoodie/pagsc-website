@@ -53,7 +53,7 @@ Check the day is on before you leave home, then meet us at the field.
 
 ## Weather
 
-Gliding depends on the weather. If your day is cancelled, we rebook you at no charge.
+Gliding depends on the weather. If your day is cancelled, we rebook you at no charge, and a flight you've paid for carries over to the new date. Prepaid flights don't expire, and we refund on request.
 
 ## Book your date
 
