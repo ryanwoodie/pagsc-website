@@ -111,6 +111,8 @@ buyer to `/discovery-flight/paid/?session_id=…`; that page asks this script fo
   **Issued** to be used; the booking marks it **Booked**, and cancelling returns it to **Issued**. Leaving the
   code blank is allowed (flights bought before Stripe, or by e-transfer); the club email says so.
 - After the flight, set Status to **Flown** by hand.
+- The certificate's banner (photo, title, club mark) is `public/certificate/hero.jpg` on the site; the PDF loads it
+  from there. To preview the PDF, run `sendSampleCertificate` in the editor: it emails the club a filled-in and a blank page.
 - **Manual certificates** (cash or e-transfer gifts): add a row with Type `manual`, Buyer name, Buyer email,
   and optionally For, Message and Value (default $50). Leave Code empty. Within the hour the code is filled in
   and the certificate emailed. One row per flight.

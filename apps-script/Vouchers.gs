@@ -127,49 +127,81 @@ function qrTable(text, cellPx) {
 }
 
 /**
- * One page per certificate.
+ * One page per certificate. The banner (photo, title and club mark) is an image on the site,
+ * because Google's HTML-to-PDF conversion only has basic fonts; everything that changes is HTML.
  * @param vouchers [{code, recipient, message, value}]
  * @param links {site, email, phone}
  */
 function certificateHtml(vouchers, links) {
-  var F = "Arial,Helvetica,sans-serif";
+  var SANS = 'Arial,Helvetica,sans-serif', NARROW = "'Barlow Condensed','Arial Narrow',Arial,sans-serif";
+  var SERIF = 'Georgia,"Times New Roman",serif', MONO = "'Courier New',Courier,monospace";
+  var site = links.site.replace(/^https?:\/\//, '');
+  var label = function (t, color) {
+    return '<div style="font-family:' + SANS + ';font-size:10px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:' + (color || EMAIL.ORANGE_DARK) + ';margin:0 0 6px">' + t + '</div>';
+  };
+  var line = '<div style="border-bottom:1px solid ' + EMAIL.RULE + ';height:30px"></div>';
+  var step = function (n, title, text) {
+    return '<td width="33%" style="vertical-align:top;padding:0 10px">' +
+      '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
+      '<td style="vertical-align:top;padding:0 8px 0 0"><div style="width:24px;height:24px;line-height:24px;text-align:center;background:' + EMAIL.ORANGE + ';color:#FFFFFF;font-family:' + SANS + ';font-size:13px;font-weight:bold">' + n + '</div></td>' +
+      '<td style="vertical-align:top;font-family:' + SANS + ';font-size:12px;line-height:1.45;color:' + EMAIL.INK + '"><b>' + title + '</b><br>' + text + '</td>' +
+      '</tr></table></td>';
+  };
   var pages = vouchers.map(function (v, i) {
     var url = bookingLink(links.site, [v.code]);
-    var line = '<div style="border-bottom:1px solid ' + EMAIL.RULE + ';height:26px"></div>';
-    var forBlock = v.recipient
-      ? '<div style="font-family:' + F + ';font-size:24px;font-weight:bold;color:' + EMAIL.INK + '">' + esc(v.recipient) + '</div>'
+    var who = v.recipient
+      ? '<div style="font-family:' + NARROW + ';font-size:34px;line-height:1.1;font-weight:bold;color:' + EMAIL.INK + '">' + esc(v.recipient) + '</div>'
       : line;
-    var msgBlock = v.message
-      ? '<div style="font-family:' + F + ';font-size:16px;line-height:1.45;color:' + EMAIL.INK + '">&ldquo;' + esc(v.message) + '&rdquo;</div>'
+    var msg = v.message
+      ? '<div style="font-family:' + SERIF + ';font-style:italic;font-size:17px;line-height:1.5;color:' + EMAIL.INK + '">&ldquo;' + esc(v.message) + '&rdquo;</div>'
       : line + line;
-    var small = function (t) { return '<div style="font-family:' + F + ';font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + EMAIL.ORANGE_DARK + ';margin:0 0 6px">' + t + '</div>'; };
-    return '<div style="' + (i < vouchers.length - 1 ? 'page-break-after:always;' : '') + 'padding:0">' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr><td style="background:' + EMAIL.INK + ';padding:18px 28px;font-family:' + F + ';color:#FFFFFF">' +
-      '<span style="font-size:24px;font-weight:bold;letter-spacing:3px">PAGSC</span>' +
-      '<span style="font-size:13px;color:#C9D6E0">&nbsp;&nbsp;' + EMAIL.CLUB + '</span></td></tr></table>' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:' + EMAIL.SKY + '"><tr><td style="padding:34px 28px 28px">' +
-      small('Flight certificate') +
-      '<div style="font-family:' + F + ';font-size:52px;line-height:1;font-weight:bold;color:' + EMAIL.INK + '">Discovery Flight</div>' +
-      '<div style="font-family:' + F + ';font-size:18px;line-height:1.4;color:' + EMAIL.INK + ';margin-top:12px">A winch launch to about 1,500 feet in a two-seat glider, with a club pilot beside you the whole time. At Birch Hills Airport, 25 minutes from Prince Albert.</div>' +
-      '<div style="font-family:' + F + ';font-size:16px;color:' + EMAIL.GREY + ';margin-top:10px">Value ' + dollars(v.value) + ' &middot; Never expires</div>' +
-      '</td></tr></table>' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:26px"><tr>' +
-      '<td style="vertical-align:top;padding:0 24px 0 28px">' +
-      small('For') + forBlock +
-      '<div style="height:22px"></div>' + small('Message') + msgBlock +
-      '<div style="height:26px"></div>' + small('Certificate code') +
-      '<div style="font-family:\'Courier New\',Courier,monospace;font-size:30px;font-weight:bold;letter-spacing:2px;color:' + EMAIL.INK + '">' + esc(v.code) + '</div>' +
+    return '<div style="' + (i < vouchers.length - 1 ? 'page-break-after:always;' : '') + '">' +
+      // Frame: navy outer rule, orange inner rule.
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:3px solid ' + EMAIL.INK + '"><tr><td style="padding:6px">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1px solid ' + EMAIL.ORANGE + '"><tr><td style="padding:0">' +
+      // Banner
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr><td style="background:' + EMAIL.INK + ';padding:0;line-height:0">' +
+      '<img src="' + esc(links.site) + '/certificate/hero.jpg" width="704" height="372" alt="Discovery Flight" style="display:block;width:100%;height:auto;border:0"></td></tr></table>' +
+      // Presented to, message, QR
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
+      '<td style="vertical-align:top;padding:30px 20px 26px 34px">' +
+      label('Presented to') + who +
+      '<div style="height:24px"></div>' + label('Message') + msg +
       '</td>' +
-      '<td style="vertical-align:top;width:210px;padding:0 28px 0 0">' + qrTable(url, 4) +
-      '<div style="font-family:' + F + ';font-size:12px;color:' + EMAIL.GREY + ';margin-top:6px">Scan to book</div></td>' +
+      '<td style="vertical-align:top;width:190px;padding:28px 34px 26px 0" align="center">' +
+      '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:2px solid ' + EMAIL.INK + '"><tr><td style="padding:6px;background:#FFFFFF">' + qrTable(url, 4) + '</td></tr></table>' +
+      '<div style="font-family:' + SANS + ';font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + EMAIL.INK + ';margin-top:8px;text-align:center">Scan to book your day</div>' +
+      '</td></tr></table>' +
+      // Code band
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
+      '<td style="background:' + EMAIL.INK + ';padding:18px 34px;vertical-align:middle">' +
+      label('Certificate code', '#F0A27A') +
+      '<div style="font-family:' + MONO + ';font-size:30px;font-weight:bold;letter-spacing:3px;color:#FFFFFF">' + esc(v.code) + '</div></td>' +
+      '<td style="background:' + EMAIL.INK + ';padding:18px 34px;vertical-align:middle;text-align:right;white-space:nowrap">' +
+      '<div style="font-family:' + NARROW + ';font-size:30px;font-weight:bold;color:#FFFFFF">Value ' + dollars(v.value) + '</div>' +
+      '<div style="font-family:' + SANS + ';font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#C9D6E0;margin-top:2px">Never expires</div></td>' +
       '</tr></table>' +
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:30px"><tr><td style="border-top:2px solid ' + EMAIL.INK + ';padding:16px 28px 0;font-family:' + F + ';font-size:14px;line-height:1.55;color:' + EMAIL.INK + '">' +
-      '<b>How to book.</b> Scan the code, or go to ' + esc(links.site.replace(/^https?:\/\//, '')) + '/discovery-flight, pick a day and a time, and enter the certificate code. ' +
-      'Flying is on weekends and holidays from spring to fall, weather permitting. If your day is cancelled, rebook at no charge.' +
-      '<div style="margin-top:12px;color:' + EMAIL.GREY + '">' + esc(links.email) + ' &middot; ' + esc(links.phone) + ' &middot; Birch Hills Airport, Saskatchewan</div>' +
-      '</td></tr></table></div>';
+      // How to book
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:' + EMAIL.SKY + '"><tr><td style="padding:20px 24px 6px">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
+      step(1, 'Book your day', 'Scan the code or go to ' + esc(site) + '/discovery-flight, pick a day and a time, and enter the certificate code.') +
+      step(2, 'Check the day is on', 'Flying is on weekends and holidays, spring to fall, weather permitting. If your day is cancelled, rebook at no charge.') +
+      step(3, 'Come out and fly', 'Meet us at Birch Hills Airport, 25 minutes from Prince Albert. Bring a hat, sunscreen, water and layers.') +
+      '</tr></table></td></tr>' +
+      '<tr><td style="padding:12px 34px 16px;font-family:' + SANS + ';font-size:11px;color:' + EMAIL.GREY + ';text-align:center">' +
+      EMAIL.CLUB + ' &middot; ' + esc(links.email) + ' &middot; ' + esc(links.phone) + ' &middot; ' + esc(site) +
+      '</td></tr></table>' +
+      '</td></tr></table></td></tr></table></div>';
   });
-  return '<!doctype html><html><head><meta charset="utf-8"><style>@page{margin:0.5in}body{margin:0}</style></head><body>' + pages.join('') + '</body></html>';
+  return '<!doctype html><html><head><meta charset="utf-8"><style>@page{size:letter;margin:0.4in}body{margin:0}</style></head><body>' + pages.join('') + '</body></html>';
+}
+
+/** Run from the editor to email the club a sample certificate PDF (two pages: filled in and blank). Issues nothing. */
+function sendSampleCertificate() {
+  sendVouchers({ name: 'Sample Buyer', email: prop('CLUB_EMAIL') }, [
+    { code: 'PAGSC-SAMP-LE2X', recipient: 'Sample Recipient', message: 'Happy birthday! Enjoy the view from up there.', value: VOUCHER.PRICE },
+    { code: 'PAGSC-SAMP-LE3X', recipient: '', message: '', value: VOUCHER.PRICE }
+  ]);
 }
 
 /**
