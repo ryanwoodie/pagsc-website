@@ -272,3 +272,76 @@ function qrPenalty(q) {
   score += (Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1) * 10;
   return score;
 }
+
+// ---------- PNG output (Google's HTML-to-PDF conversion drops table cell backgrounds) ----------
+
+/** A black-on-white PNG of the QR code, `scale` pixels per module, 4-module quiet zone. Returns a byte array. */
+function qrPng(text, scale) {
+  var m = qrMatrix(text), quiet = 4, n = (m.length + quiet * 2) * scale;
+  var rowBytes = Math.ceil(n / 8), raw = [];
+  for (var y = 0; y < n; y++) {
+    raw.push(0); // filter: none
+    var my = Math.floor(y / scale) - quiet;
+    for (var bx = 0; bx < rowBytes; bx++) {
+      var byte = 0;
+      for (var bit = 0; bit < 8; bit++) {
+        var x = bx * 8 + bit, mx = Math.floor(x / scale) - quiet;
+        var dark = x < n && my >= 0 && my < m.length && mx >= 0 && mx < m.length && m[my][mx];
+        byte = (byte << 1) | (dark ? 0 : 1); // 1-bit greyscale: 1 is white
+      }
+      raw.push(byte);
+    }
+  }
+  // zlib stream of stored (uncompressed) deflate blocks
+  var z = [0x78, 0x01];
+  for (var i = 0; i < raw.length; i += 65535) {
+    var len = Math.min(65535, raw.length - i);
+    z.push(i + len >= raw.length ? 1 : 0, len & 0xFF, len >>> 8, ~len & 0xFF, (~len >>> 8) & 0xFF);
+    for (var k = 0; k < len; k++) z.push(raw[i + k]);
+  }
+  var a = 1, b = 0;
+  raw.forEach(function (v) { a = (a + v) % 65521; b = (b + a) % 65521; });
+  qrPush32(z, ((b << 16) | a) >>> 0);
+  var png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  var ihdr = [];
+  qrPush32(ihdr, n); qrPush32(ihdr, n);
+  ihdr.push(1, 0, 0, 0, 0); // bit depth 1, greyscale, deflate, no filter, no interlace
+  qrChunk(png, 'IHDR', ihdr);
+  qrChunk(png, 'IDAT', z);
+  qrChunk(png, 'IEND', []);
+  return png;
+}
+
+function qrPush32(arr, v) { arr.push((v >>> 24) & 0xFF, (v >>> 16) & 0xFF, (v >>> 8) & 0xFF, v & 0xFF); }
+
+var QR_CRC = (function () {
+  var t = [];
+  for (var n = 0; n < 256; n++) {
+    var c = n;
+    for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t.push(c >>> 0);
+  }
+  return t;
+})();
+
+function qrChunk(png, type, data) {
+  var body = [];
+  for (var i = 0; i < 4; i++) body.push(type.charCodeAt(i));
+  body = body.concat(data);
+  qrPush32(png, data.length);
+  var crc = 0xFFFFFFFF;
+  body.forEach(function (v) { png.push(v); crc = QR_CRC[(crc ^ v) & 0xFF] ^ (crc >>> 8); });
+  qrPush32(png, (crc ^ 0xFFFFFFFF) >>> 0);
+}
+
+/** Bytes to base64, without Google services. */
+function qrBase64(bytes) {
+  var abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', out = '';
+  for (var i = 0; i < bytes.length; i += 3) {
+    var b0 = bytes[i], b1 = bytes[i + 1], b2 = bytes[i + 2];
+    out += abc.charAt(b0 >> 2) + abc.charAt(((b0 & 3) << 4) | ((b1 || 0) >> 4)) +
+      (i + 1 < bytes.length ? abc.charAt(((b1 & 15) << 2) | ((b2 || 0) >> 6)) : '=') +
+      (i + 2 < bytes.length ? abc.charAt(b2 & 63) : '=');
+  }
+  return out;
+}

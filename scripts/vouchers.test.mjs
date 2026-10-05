@@ -91,3 +91,11 @@ test('club-facts.yaml price and group size match Vouchers.gs', () => {
   assert.equal(facts.discovery_flight.price, VOUCHER.PRICE);
   assert.equal(VOUCHER.MAX_CODES, BOOKING.MAX_GROUP);
 });
+
+test('certificate QR is an embedded PNG, not table cells', () => {
+  const { qrPng } = ctx;
+  const png = qrPng('https://www.pagsc.ca/', 4);
+  assert.deepEqual([...png.slice(0, 8)], [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  const html = certificateHtml([{ code: 'PAGSC-7KQ2-XM9D', recipient: '', message: '', value: 50 }], links);
+  assert.equal(html.match(/data:image\/png;base64,/g).length, 1);
+});

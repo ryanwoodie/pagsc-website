@@ -111,24 +111,11 @@ function dollars(v) {
 
 // ---------- Certificate and email (pure string building) ----------
 
-/** A QR code as an HTML table, which survives Google's HTML-to-PDF conversion. */
-function qrTable(text, cellPx) {
-  var m = qrMatrix(text), quiet = 3, n = m.length + quiet * 2;
-  var html = '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#FFFFFF">';
-  for (var y = 0; y < n; y++) {
-    html += '<tr>';
-    for (var x = 0; x < n; x++) {
-      var dark = y >= quiet && x >= quiet && y < n - quiet && x < n - quiet && m[y - quiet][x - quiet];
-      html += '<td style="width:' + cellPx + 'px;height:' + cellPx + 'px;padding:0;background:' + (dark ? '#000000' : '#FFFFFF') + '"></td>';
-    }
-    html += '</tr>';
-  }
-  return html + '</table>';
-}
-
 /**
  * One page per certificate. The banner (photo, title and club mark) is an image on the site,
  * because Google's HTML-to-PDF conversion only has basic fonts; everything that changes is HTML.
+ * That conversion also drops table cell backgrounds, so colour comes from borders, text and images,
+ * and the QR code is an embedded PNG.
  * @param vouchers [{code, recipient, message, value}]
  * @param links {site, email, phone}
  */
@@ -143,7 +130,7 @@ function certificateHtml(vouchers, links) {
   var step = function (n, title, text) {
     return '<td width="33%" style="vertical-align:top;padding:0 10px">' +
       '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
-      '<td style="vertical-align:top;padding:0 8px 0 0"><div style="width:24px;height:24px;line-height:24px;text-align:center;background:' + EMAIL.ORANGE + ';color:#FFFFFF;font-family:' + SANS + ';font-size:13px;font-weight:bold">' + n + '</div></td>' +
+      '<td style="vertical-align:top;padding:0 8px 0 0;font-family:' + NARROW + ';font-size:28px;line-height:1;font-weight:bold;color:' + EMAIL.ORANGE + '">' + n + '</td>' +
       '<td style="vertical-align:top;font-family:' + SANS + ';font-size:12px;line-height:1.45;color:' + EMAIL.INK + '"><b>' + title + '</b><br>' + text + '</td>' +
       '</tr></table></td>';
   };
@@ -169,26 +156,28 @@ function certificateHtml(vouchers, links) {
       '<div style="height:24px"></div>' + label('Message') + msg +
       '</td>' +
       '<td style="vertical-align:top;width:190px;padding:28px 34px 26px 0" align="center">' +
-      '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:2px solid ' + EMAIL.INK + '"><tr><td style="padding:6px;background:#FFFFFF">' + qrTable(url, 4) + '</td></tr></table>' +
+      '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:2px solid ' + EMAIL.INK + '"><tr><td style="padding:4px;line-height:0">' +
+      '<img src="data:image/png;base64,' + qrBase64(qrPng(url, 6)) + '" width="160" height="160" alt="QR code to book" style="display:block;border:0"></td></tr></table>' +
       '<div style="font-family:' + SANS + ';font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + EMAIL.INK + ';margin-top:8px;text-align:center">Scan to book your day</div>' +
       '</td></tr></table>' +
-      // Code band
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
-      '<td style="background:' + EMAIL.INK + ';padding:18px 34px;vertical-align:middle">' +
-      label('Certificate code', '#F0A27A') +
-      '<div style="font-family:' + MONO + ';font-size:30px;font-weight:bold;letter-spacing:3px;color:#FFFFFF">' + esc(v.code) + '</div></td>' +
-      '<td style="background:' + EMAIL.INK + ';padding:18px 34px;vertical-align:middle;text-align:right;white-space:nowrap">' +
-      '<div style="font-family:' + NARROW + ';font-size:30px;font-weight:bold;color:#FFFFFF">Value ' + dollars(v.value) + '</div>' +
-      '<div style="font-family:' + SANS + ';font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:#C9D6E0;margin-top:2px">Never expires</div></td>' +
-      '</tr></table>' +
+      // Code band: navy rules above and below
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr><td style="padding:0 34px">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:3px solid ' + EMAIL.INK + ';border-bottom:3px solid ' + EMAIL.INK + '"><tr>' +
+      '<td style="padding:16px 0;vertical-align:middle">' +
+      label('Certificate code') +
+      '<div style="font-family:' + MONO + ';font-size:32px;font-weight:bold;letter-spacing:3px;color:' + EMAIL.INK + '">' + esc(v.code) + '</div></td>' +
+      '<td style="padding:16px 0;vertical-align:middle;text-align:right;white-space:nowrap">' +
+      '<div style="font-family:' + NARROW + ';font-size:32px;font-weight:bold;color:' + EMAIL.ORANGE_DARK + '">Value ' + dollars(v.value) + '</div>' +
+      '<div style="font-family:' + SANS + ';font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + EMAIL.INK + ';margin-top:2px">Never expires</div></td>' +
+      '</tr></table></td></tr></table>' +
       // How to book
-      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:' + EMAIL.SKY + '"><tr><td style="padding:20px 24px 6px">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr><td style="padding:22px 24px 6px">' +
       '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse"><tr>' +
       step(1, 'Book your day', 'Scan the code or go to ' + esc(site) + '/discovery-flight, pick a day and a time, and enter the certificate code.') +
       step(2, 'Check the day is on', 'Flying is on weekends and holidays, spring to fall, weather permitting. If your day is cancelled, rebook at no charge.') +
       step(3, 'Come out and fly', 'Meet us at Birch Hills Airport, 25 minutes from Prince Albert. Bring a hat, sunscreen, water and layers.') +
       '</tr></table></td></tr>' +
-      '<tr><td style="padding:12px 34px 16px;font-family:' + SANS + ';font-size:11px;color:' + EMAIL.GREY + ';text-align:center">' +
+      '<tr><td style="padding:12px 34px 16px;border-top:1px solid ' + EMAIL.RULE + ';font-family:' + SANS + ';font-size:11px;color:' + EMAIL.GREY + ';text-align:center">' +
       EMAIL.CLUB + ' &middot; ' + esc(links.email) + ' &middot; ' + esc(links.phone) + ' &middot; ' + esc(site) +
       '</td></tr></table>' +
       '</td></tr></table></td></tr></table></div>';
