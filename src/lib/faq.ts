@@ -1,4 +1,5 @@
 // Questions and answers from content/pages/faq.md, with every figure bound to club-facts.yaml.
+import { href } from './url';
 import { facts, df, fees, money, lcfirst, lessonBreakdown, listJoin, launchHeight, soloLine } from './facts';
 
 const t = facts.training;
@@ -58,7 +59,7 @@ export const firstFlights: QA[] = [
   {
     id: 'gift',
     q: 'Can I give a flight as a gift?',
-    a: 'Yes. Buy a Discovery Flight online. The person flying then books their date with the booking form or by email.',
+    a: `Yes. <a href="${facts.links.discovery_flight_payment}" rel="noopener">Buy a Discovery Flight online</a> and we email you a printable certificate with its own code. The person flying books their date with the code on the <a href="${href('/discovery-flight/#request')}">booking calendar</a>, or by email.`,
   },
   {
     id: 'when',
@@ -101,7 +102,7 @@ export const learning: QA[] = [
   {
     id: 'pilot-licence',
     q: 'I already have a pilot licence. What carries over?',
-    a: `With a PPL(A), ground school and the written exam are waived and you need ${ppl('Total flight time')}, not ${scratch('Total flight time')}.`,
+    a: `With a PPL(A), ground school and the written exam are waived and you need ${ppl('Total flight time')}, not ${scratch('Total flight time')}. <a href="${href('/learn-to-fly/power-pilots/')}">More for power pilots</a>`,
   },
 ];
 

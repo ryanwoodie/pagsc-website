@@ -20,7 +20,7 @@ const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g
   description={`The ${facts.club.name} is a non-profit club founded in ${facts.club.founded}, flying a Schleicher K7, a Ka 6E and a Bölkow Phoebus C from ${facts.location.airfield}.`}
 >
   <PageHero title="The club">
-    <p class="lead">A friendly non-profit club, founded in {facts.club.founded}, flying from {facts.location.airfield}. We are affiliated with the {listJoin(facts.club.affiliations)}.</p>
+    <p class="lead">A friendly non-profit club, founded in {facts.club.founded}, flying from {facts.location.airfield}. We are affiliated with the <Fragment set:html={listJoin(facts.club.affiliations.map((a) => a === 'Soaring Association of Canada' ? `<a href="${facts.links.sac}" rel="noopener">${a}</a>` : a))} />.</p>
     <div class="actions"><BookButton /></div>
     <Photo slot="media" src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" eager />
   </PageHero>

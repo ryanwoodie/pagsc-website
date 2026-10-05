@@ -48,7 +48,7 @@ const steps = t.steps.map((s) => ({
 
   <Section labelledby="first-h">
     <h2 id="first-h">Your first flight</h2>
-    <p class="lead">You start with a Discovery Flight, the same flight our guests take. Choose "A first lesson" when you book so we know you're thinking of learning.</p>
+    <p class="lead">You start with a <a href={href('/discovery-flight/')}>Discovery Flight</a>, the same flight our guests take. Choose "A first lesson" when you book so we know you're thinking of learning.</p>
     <ul class="ticks">
       <li>{t.who_can_learn[0]}</li>
       <li>You learn one skill at a time, at your own pace, and book each lesson on the schedule.</li>
@@ -84,7 +84,7 @@ const steps = t.steps.map((s) => ({
         <h2 id="who-h">Who can learn</h2>
         <ul class="ticks">
           {t.who_can_learn.slice(1).map((w) => <li>{w}</li>)}
-          <li>Our two-seat trainer is a {trainer.name.split(' ').slice(0, 2).join(' ')}.</li>
+          <li>Our two-seat trainer is a <a href={href('/the-club/')}>{trainer.name.split(' ').slice(0, 2).join(' ')}</a>.</li>
         </ul>
       </div>
       <div>

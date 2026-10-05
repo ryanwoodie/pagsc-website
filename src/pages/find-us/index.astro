@@ -7,6 +7,7 @@ import BookButton from '../../components/BookButton.astro';
 import { facts, df, lcfirst, listJoin, directionsHref, telHref, facebookHandle, instagramHandle } from '../../lib/facts';
 import { guestHours, weekdaysLine } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
+import { href } from '../../lib/url';
 
 const dt = facts.location.drive_times;
 ---
@@ -37,7 +38,7 @@ const dt = facts.location.drive_times;
     <div class="grid grid--2">
       <div>
         <h2 id="car-h">Carpooling</h2>
-        <p>Carpooling is often available from {listJoin(facts.location.carpool_from)}. Ask when you request your flight.</p>
+        <p>Carpooling is often available from {listJoin(facts.location.carpool_from)}. Ask when you <a href={href('/discovery-flight/#request')}>book your flight</a>.</p>
       </div>
       <div>
         <h2 id="when-h">When we fly</h2>

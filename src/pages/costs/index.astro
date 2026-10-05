@@ -40,7 +40,7 @@ const rows = [
     </table>
     <p class="notes">{licenceCostLine}</p>
     <p class="notes">Buy online: <a href={facts.links.discovery_flight_payment} rel="noopener">a Discovery Flight, {money(df.price)}</a> or <a href={facts.links.discovery_flight_group_payment} rel="noopener">group flights, {money(df.group_price_each)} each for {df.group_minimum} or more</a>.</p>
-    <p class="notes">{fees.membership_notes.join(' ')} Pay by e-transfer to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
+    <p class="notes">{fees.membership_notes.join(' ')} Join with the <a href={facts.links.membership_form} rel="noopener">membership form</a> and pay by e-transfer to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
   </Section>
 
   <Section labelledby="youth-h">

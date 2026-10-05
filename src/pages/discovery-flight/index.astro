@@ -45,7 +45,7 @@ const weekdays = lcfirst(df.weekdays);
         <ul class="defs">
           <li><strong>Price</strong> {money(df.price)}, or {money(df.group_price_each)} each for a group of {df.group_minimum} or more</li>
           <li><strong>When</strong> <span>{lcfirst(df.when)}; {weekdays}</span></li>
-          <li><strong>Where</strong> {facts.location.airfield}, {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon</li>
+          <li><strong>Where</strong> <a href={href('/find-us/')}>{facts.location.airfield}</a>, {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon</li>
           <li><strong>Who can fly</strong> maximum weight {df.max_weight_lbs} lbs. No experience and no membership needed.</li>
           <li><strong>Season</strong> {lcfirst(df.season)}</li>
         </ul>
@@ -58,11 +58,17 @@ const weekdays = lcfirst(df.weekdays);
     <Steps
       row
       items={[
-        { title: 'Buy your flight', text: `${money(df.price)} online, for yourself or as a gift.` },
-        { title: 'Book your flying day', text: 'Pick a day and time on the booking calendar below.' },
+        { title: 'Buy your flight', text: `<a href="${facts.links.discovery_flight_payment}" rel="noopener">${money(df.price)} online</a>, for yourself or as a gift.` },
+        { title: 'Book your flying day', text: 'Pick a day and time on the <a href="#request">booking calendar</a> below.' },
         { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
       ]}
     />
+  </Section>
+
+  <Section id="request" labelledby="req-h">
+    <h2 id="req-h">Book your flying day</h2>
+    <p>Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.</p>
+    <BookingCalendar />
   </Section>
 
   <Section labelledby="day-h">
@@ -86,12 +92,6 @@ const weekdays = lcfirst(df.weekdays);
     <h2 id="learn-h">Thinking of learning to fly?</h2>
     <p class="lead">This flight is also your first lesson. Choose "A first lesson" when you book so we know, and ask your pilot anything on the day.</p>
     <p><a class="more" href={href('/learn-to-fly/')}>What learning to fly involves</a></p>
-  </Section>
-
-  <Section id="request" labelledby="req-h">
-    <h2 id="req-h">Book your flying day</h2>
-    <p>Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.</p>
-    <BookingCalendar />
   </Section>
 
   <Section labelledby="gift-h">

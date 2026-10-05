@@ -30,7 +30,7 @@ It happens. We rebook you, and there is no charge for a flight that didn't happe
 A hat, sunscreen and sunglasses; water and lunch or snacks; layers, because it is cooler at altitude; and a way to pay (e-transfer or cash).
 
 ### Can I give a flight as a gift?
-Yes. Buy a Discovery Flight online, then email us or use the request form to arrange the date for the person flying.
+Yes. Buy a Discovery Flight online and we email you a printable certificate with its own code. The person flying books their date with the code on the booking calendar, or by email.
 
 ### When do you fly?
 Weekends and holidays, about 11 am to 5 pm for guest flights, weather permitting. Some weekdays too, often on request. The main season runs spring through fall, with occasional winter flying.

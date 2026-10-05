@@ -35,6 +35,18 @@ Pick a day and time on the booking calendar below.
 ### 3. Come out and fly
 Check the day is on before you leave home, then meet us at the field.
 
+## Book your flying day
+
+Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.
+
+Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
+
+Hint under preferred dates: Weekends are the main flying days.
+
+Checkbox: Everyone flying weighs 230 lbs or less.
+
+Button: Send request
+
 ## Your first day
 
 **Bring**
@@ -54,18 +66,6 @@ Check the day is on before you leave home, then meet us at the field.
 ## Weather
 
 Gliding depends on the weather. If your day is cancelled, we rebook you at no charge, and a flight you've paid for carries over to the new date. Prepaid flights don't expire, and we refund on request.
-
-## Book your flying day
-
-Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.
-
-Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
-
-Hint under preferred dates: Weekends are the main flying days.
-
-Checkbox: Everyone flying weighs 230 lbs or less.
-
-Button: Send request
 
 ## After you request
 
