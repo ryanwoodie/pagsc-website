@@ -183,6 +183,7 @@ export function num(n: number): string {
 
 /** "Weekends and holidays" -> "weekends and holidays" */
 export function lcfirst(s: string): string {
+  if (/^[A-Z]{2}/.test(s)) return s; // leave acronyms such as SAC alone
   return s.charAt(0).toLowerCase() + s.slice(1);
 }
 
