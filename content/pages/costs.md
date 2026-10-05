@@ -1,12 +1,14 @@
 ---
 title: What gliding costs
 description: A first flight is $50. Membership is $150 a year, a winch launch is $5, glider time is $30 an hour and instruction is free.
-primary_action: Book a Discovery Flight
+primary_action: Apply for membership (membership form); secondary link to the Discovery Flight
 ---
 
 # What it costs
 
-**$50** is your first flight, with no membership needed. After that, a typical 10-minute instructional flight costs members about $10: a $5 launch plus $5 of glider time. Instruction is free.
+**$10** is about what a typical 10-minute instructional flight costs members: a $5 launch plus $5 of glider time. Instruction is free.
+
+[Apply for membership] [or try a Discovery Flight first]
 
 | What | Price (CAD) | Good to know |
 | --- | --- | --- |

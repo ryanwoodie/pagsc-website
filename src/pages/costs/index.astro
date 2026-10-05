@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHero from '../../components/PageHero.astro';
 import Section from '../../components/Section.astro';
-import BookButton from '../../components/BookButton.astro';
+import Button from '../../components/Button.astro';
 import { facts, df, fees, money, lessonBreakdown, launchHeight, licenceCostLine, lcfirst } from '../../lib/facts';
 import { href } from '../../lib/url';
 
@@ -24,8 +24,11 @@ const rows = [
   description={`A first flight is ${money(df.price)}. Membership is ${money(m.regular.price)} a year, a winch launch is ${money(fees.winch_launch)}, glider time is ${money(fees.glider_rental_per_hour)} an hour and instruction is free.`}
 >
   <PageHero label="Costs" title="What it costs">
-    <p class="lead"><span class="big-figure">{money(df.price)}</span> is your first flight, with no membership needed. After that, a typical {lesson.minutes}-minute instructional flight costs members about {money(lesson.cost)}: {lessonBreakdown}. Instruction is free.</p>
-    <div class="actions"><BookButton showPrice /></div>
+    <p class="lead"><span class="big-figure">{money(lesson.cost)}</span> is about what a typical {lesson.minutes}-minute instructional flight costs members: {lessonBreakdown}. Instruction is free.</p>
+    <div class="actions">
+      <Button href={facts.links.membership_form} external>Apply for membership</Button>
+      <a class="more" href={href('/discovery-flight/')}>or try a Discovery Flight first</a>
+    </div>
   </PageHero>
 
   <Section variant="plain" labelledby="prices-h">
@@ -48,7 +51,10 @@ const rows = [
     <p class="lead">A {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club, gives youth members {money(y.bursary_total)} toward {y.bursary_covers.toLowerCase()}.</p>
     <p class="small-note">The bursary is open to {lcfirst(y.bursary_who)}. Availability is set by the Soaring Association of Canada each year, with up to {y.bursaries_per_club} bursaries per club. <a href={facts.links.sac_youth_bursary} rel="noopener">SAC Youth Bursary Program</a></p>
     <p><a class="more" href={href('/learn-to-fly/youth-and-cadets/')}>Youth and cadets</a></p>
-    <div class="actions"><BookButton /></div>
+    <div class="actions">
+      <Button href={facts.links.membership_form} external>Apply for membership</Button>
+      <a class="more" href={href('/discovery-flight/')}>or try a Discovery Flight first</a>
+    </div>
   </Section>
 </Base>
 <style>

@@ -19,7 +19,7 @@ Footer, every page: the button again; email, phone, Facebook; **Members**; affil
 | `/learn-to-fly/youth-and-cadets/` | Youth and cadets | Book a first lesson | `youth-and-cadets.md` |
 | `/learn-to-fly/power-pilots/` | Power pilots | Book a first lesson | `power-pilots.md` |
 | `/why-gliding/` | Why gliding | Book a Discovery Flight | `why-gliding.md` |
-| `/costs/` | Costs | Book a Discovery Flight | `costs.md` |
+| `/costs/` | Costs | Apply for membership (secondary: try a Discovery Flight first). Changed 4 October 2026. | `costs.md` |
 | `/find-us/` | Find us | Book a Discovery Flight | `find-us.md` |
 | `/the-club/` | The club and the fleet | Book a Discovery Flight | `the-club.md` |
 | `/faq/` | Questions | Book a Discovery Flight | `faq.md` |
