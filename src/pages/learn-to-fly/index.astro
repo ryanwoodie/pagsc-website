@@ -22,7 +22,9 @@ const trainer = facts.fleet.find((g) => g.seats === 2)!;
 const ground = facts.links.ground_school;
 const steps = t.steps.map((s) => ({
   title: s.title,
-  text: s.text.replace(new URL(ground).host, `<a href="${ground}" rel="noopener">${new URL(ground).host}</a>`),
+  text: s.text
+    .replace(new URL(ground).host, `<a href="${ground}" rel="noopener">${new URL(ground).host}</a>`)
+    .replace('Category 4 medical', `<a href="${facts.links.category_4_medical_form}" rel="noopener">Category 4 medical</a>`),
 }));
 ---
 <Base

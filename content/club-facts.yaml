@@ -39,6 +39,8 @@ links:
   winch_launch_videos: https://members.gliding.co.uk/safety/safe-winching
   glider_flying_handbook: https://www.faa.gov/regulations_policies/handbooks_manuals/aviation/glider_handbook
   sac: https://sac.ca/
+  category_4_medical_form: https://wwwapps.tc.gc.ca/Corp-Serv-Gen/5/forms-formulaires/download/26-0297_BO_PD   # Transport Canada form 26-0297 (PDF download)
+  weglide: https://www.weglide.org/flight?country=Canada,CA&order_by=-points   # Canadian flights ranked by points
   sac_youth_bursary: https://sac.ca/youth-bursary-program/
   birch_hills_weather: https://www.theweathernetwork.com/ca/weather/saskatchewan/birch-hills   # Members page, from the old /useful-link/ page
   cypa_forecast: "https://flightplanning.navcanada.ca/cgi-bin/CreePage.pl?Langue=anglais&NoSession=NS_Inconnu&Page=Fore-obs%2Fmetar-taf-map&TypeDoc=html"

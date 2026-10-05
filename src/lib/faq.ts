@@ -87,7 +87,7 @@ export const learning: QA[] = [
   {
     id: 'medical',
     q: 'Do I need a medical?',
-    a: "Most students use a Category 4 medical, a self-declaration with no doctor's visit. Do it early in training. A Category 1 or 3 medical also counts.",
+    a: `Most students use a <a href="${facts.links.category_4_medical_form}" rel="noopener">Category 4 medical</a>, a self-declaration with no doctor's visit. Do it early in training. A Category 1 or 3 medical also counts.`,
   },
   {
     id: 'ground-school',

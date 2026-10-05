@@ -43,6 +43,8 @@ const schema = z
       winch_launch_videos: url,
       glider_flying_handbook: url,
       sac: url,
+      category_4_medical_form: url,
+      weglide: url,
       sac_youth_bursary: url,
       birch_hills_weather: url,
       cypa_forecast: url,
