@@ -2,7 +2,9 @@
 // Discovery Flight booking calendar. Reads open days and free half-hour slots from the
 // Apps Script (apps-script/Booking.gs), which reads the Flying Schedule. Weekends are held
 // right away; weekdays are requests. Flights paid online or given as a gift carry certificate
-// codes: read from ?code= (the certificate's QR code) or sent by the paid page. Without JavaScript, or if the calendar cannot load,
+// codes: read from ?code= (the certificate's QR code) or sent by the paid page.
+// For speed it first shows the newer of a build-time snapshot (scripts/fetch-availability.mjs) and the
+// visitor's last live load, then swaps in the live data. Without JavaScript, or if the calendar cannot load,
 // the plain booking form shows instead.
 import { FORM_ENDPOINT } from '../config';
 import { facts, df, telHref } from '../lib/facts';
@@ -11,6 +13,8 @@ import RequestForm from './RequestForm.astro';
 interface Props { paid?: boolean }
 const { paid = false } = Astro.props;
 const bk = facts.booking;
+const snapshots = import.meta.glob<{ default: { updated: string | null; days: unknown[] } }>('../data/availability.json', { eager: true });
+const snapshot = Object.values(snapshots)[0]?.default ?? { updated: null, days: [] };
 const config = {
   endpoint: FORM_ENDPOINT,
   maxGroup: bk.max_group,
@@ -21,6 +25,7 @@ const config = {
   phone: facts.contact.phone,
   tel: telHref,
   paid,
+  snapshot,
 };
 ---
 <div class="booking" data-config={JSON.stringify(config)}>
@@ -29,6 +34,7 @@ const config = {
   </div>
 
   <p class="booking__loading" hidden>Loading the flying calendar…</p>
+  <p class="booking__fresh" hidden>Checking for the latest spots…</p>
   <div class="booking__app" hidden></div>
 
   <div class="booking__fallback">
@@ -40,7 +46,26 @@ const config = {
   import { track } from '../scripts/track';
   type Slot = { time: string; free: boolean };
   type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; statusText: string; remaining: number; slots: Slot[] };
-  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean };
+  type Snapshot = { updated: string | null; days: Day[] };
+  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot };
+  const CACHE_KEY = 'pagsc-availability';
+  const MAX_AGE = 24 * 3600 * 1000;
+  const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Regina' }).format(new Date());
+
+  /** The newer of the build-time snapshot and this browser's last live load, without past days. */
+  function startingDays(snapshot: Snapshot): Day[] | null {
+    let best: Snapshot | null = snapshot.updated ? snapshot : null;
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null') as Snapshot | null;
+      if (cached?.updated && Array.isArray(cached.days) && (!best || cached.updated > best.updated!)) best = cached;
+    } catch {
+      /* no storage: use the snapshot */
+    }
+    if (!best || Date.now() - Date.parse(best.updated!) > MAX_AGE) return null;
+    const today = fieldToday();
+    const days = best.days.filter((d) => d.date > today);
+    return days.length ? days : null;
+  }
 
   const fmtDay = new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
   const fmtLong = new Intl.DateTimeFormat('en-CA', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
@@ -71,6 +96,7 @@ const config = {
     const app = root.querySelector<HTMLElement>('.booking__app')!;
     const loading = root.querySelector<HTMLElement>('.booking__loading')!;
     const fallback = root.querySelector<HTMLElement>('.booking__fallback')!;
+    const fresh = root.querySelector<HTMLElement>('.booking__fresh')!;
     if (!cfg.endpoint) continue;
 
     const params = new URLSearchParams(location.search);
@@ -84,22 +110,57 @@ const config = {
       if (state.days.length) render();
     });
 
-    async function load() {
-      fallback.hidden = true;
-      loading.hidden = false;
+    async function fetchLive(): Promise<Day[]> {
+      const res = await fetch(`${cfg.endpoint}?action=availability`, { signal: AbortSignal.timeout(20000) });
+      const data = await res.json();
+      if (!data.ok || !Array.isArray(data.days) || !data.days.length) throw new Error('no days');
       try {
-        const res = await fetch(`${cfg.endpoint}?action=availability`, { signal: AbortSignal.timeout(15000) });
-        const data = await res.json();
-        if (!data.ok || !Array.isArray(data.days) || !data.days.length) throw new Error('no days');
-        state.days = data.days;
-        if (!state.days.some((d) => d.date === state.date)) { state.date = ''; state.start = ''; }
-        loading.hidden = true;
-        app.hidden = false;
-        render();
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ updated: new Date().toISOString(), days: data.days }));
       } catch {
-        loading.hidden = true;
-        app.hidden = true;
-        fallback.hidden = false;
+        /* storage full or blocked */
+      }
+      return data.days;
+    }
+
+    function show(days: Day[]) {
+      state.days = days;
+      if (!state.days.some((d) => d.date === state.date)) { state.date = ''; state.start = ''; }
+      loading.hidden = true;
+      fallback.hidden = true;
+      app.hidden = false;
+    }
+
+    /** Fresh data after a booking was refused; the caller renders. */
+    async function load() {
+      try { show(await fetchLive()); } catch { /* keep what is shown; the script re-checks every booking */ }
+    }
+
+    async function start() {
+      const initial = startingDays(cfg.snapshot);
+      if (initial) {
+        show(initial);
+        render();
+        fresh.hidden = false;
+      } else {
+        fallback.hidden = true;
+        loading.hidden = false;
+      }
+      try {
+        const days = await fetchLive();
+        // Someone already filling in the form keeps it, unless their time is no longer free.
+        const typing = !!app.querySelector('.bk-form');
+        const day = days.find((d) => d.date === state.date);
+        const stillFree = !!day && !!state.start && canBook(day, state.start, state.people);
+        show(days);
+        if (!(typing && stillFree)) render();
+      } catch {
+        if (!initial) {
+          loading.hidden = true;
+          app.hidden = true;
+          fallback.hidden = false;
+        }
+      } finally {
+        fresh.hidden = true;
       }
     }
 
@@ -251,7 +312,7 @@ const config = {
       box.focus();
     }
 
-    load();
+    start();
   }
 </script>
 
@@ -267,8 +328,13 @@ const config = {
   .booking__notice p {
     margin: 0;
   }
-  .booking__loading {
+  .booking__loading,
+  .booking__fresh {
     color: var(--grey);
+  }
+  .booking__fresh {
+    font-size: 0.85rem;
+    margin: 0 0 8px;
   }
   .booking :global(.bk-step) {
     border: 0;

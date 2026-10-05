@@ -3,7 +3,7 @@ name: Build and deploy
 on:
   push:
     branches: [main]
-  # Refresh "Next flying days" from the Flying Schedule.
+  # Refresh "Next flying days" and the booking calendar snapshot from the Flying Schedule.
   schedule:
     - cron: '7 */3 * 4-10 *'      # every three hours, April to October
     - cron: '7 12 * 1-3,11,12 *'  # daily otherwise

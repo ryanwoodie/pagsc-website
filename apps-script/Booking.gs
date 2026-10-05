@@ -324,13 +324,25 @@ function guestCaps() {
   return caps;
 }
 
+var AVAILABILITY_CACHE = 'availability';
+var AVAILABILITY_SECONDS = 60; // edits to the schedule show within a minute; bookings clear it at once
+
 function availabilityResponse() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get(AVAILABILITY_CACHE);
+  if (hit) return JSON.parse(hit);
   try {
     var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
-    return { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField()) };
+    var out = { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField()) };
+    try { cache.put(AVAILABILITY_CACHE, JSON.stringify(out), AVAILABILITY_SECONDS); } catch (e) { /* too big to cache */ }
+    return out;
   } catch (err) {
     return { ok: false, error: 'unavailable' };
   }
+}
+
+function clearAvailabilityCache() {
+  CacheService.getScriptCache().remove(AVAILABILITY_CACHE);
 }
 
 function bookingPost(p) {
@@ -386,6 +398,7 @@ function bookingPost(p) {
       b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', ')
     ]);
     markCodesBooked(codeCheck.rows, token, b.date);
+    clearAvailabilityCache();
     result = { ok: true, kind: kind, date: b.date, start: b.start, people: b.people, range: timeRange(b.start, b.people), token: token, day: day };
   } finally {
     lock.releaseLock();
@@ -488,6 +501,7 @@ function cancelBooking(token) {
     try {
       sh.getRange(i + 1, 6).setValue('Cancelled');
       releaseCodes(token);
+      clearAvailabilityCache();
       var a1 = rows[i][13], text = rows[i][14];
       if (a1) {
         var cell = scheduleSheet().getRange(a1);

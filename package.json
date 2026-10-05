@@ -7,8 +7,8 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "node scripts/fetch-schedule.mjs && astro dev",
-    "build": "node scripts/fetch-schedule.mjs && astro check && astro build && node scripts/check-links.mjs",
+    "dev": "node scripts/fetch-schedule.mjs && node scripts/fetch-availability.mjs && astro dev",
+    "build": "node scripts/fetch-schedule.mjs && node scripts/fetch-availability.mjs && astro check && astro build && node scripts/check-links.mjs",
     "preview": "astro preview",
     "schedule": "node scripts/fetch-schedule.mjs",
     "test": "node --test scripts/*.test.mjs",
