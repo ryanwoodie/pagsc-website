@@ -27,7 +27,7 @@ const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g
 >
   <PageHero label="About us" title="About the club">
     <p class="lead">{c.mission}</p>
-    <p>A friendly non-profit club, founded in {c.founded}, flying from {facts.location.airfield}. We are affiliated with the <Fragment set:html={listJoin(facts.club.affiliations.map((a) => a === 'Soaring Association of Canada' ? `<a href="${facts.links.sac}" rel="noopener">${a}</a>` : a))} />.</p>
+    <p>Founded in {c.founded}, we fly from {facts.location.airfield}, {facts.location.drive_times.prince_albert} from Prince Albert.</p>
     <div class="actions"><BookButton /></div>
     <Photo slot="media" src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" eager />
   </PageHero>
@@ -70,7 +70,7 @@ const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g
 
   <Section labelledby="run-h">
     <h2 id="run-h">How the club is run</h2>
-    <p>{c.governance} We are affiliated with the {listJoin(c.affiliations)}.</p>
+    <p>{c.governance} We are affiliated with the <Fragment set:html={listJoin(facts.club.affiliations.map((a) => a === 'Soaring Association of Canada' ? `<a href="${facts.links.sac}" rel="noopener">${a}</a>` : a))} />.</p>
     <dl class="details">
       <div><dt>Legal name</dt><dd>{c.legal_name}</dd></div>
       <div><dt>Status</dt><dd>Non-profit corporation registered in Saskatchewan (Corporate Registry entity no. {c.registry_entity_number})</dd></div>
