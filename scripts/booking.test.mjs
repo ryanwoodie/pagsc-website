@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -154,4 +154,18 @@ test('guests typed into the schedule by hand', () => {
   assert.equal(sat.remaining, 10);
   assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['13:30', '14:00']);
   assert.ok(!JSON.stringify(sat).includes('Jane'));
+});
+
+test('upcoming days for the home page: today on, weekends and status days, live status', () => {
+  const days = scheduleDays(grid);
+  const avail = computeAvailability(days, [], {}, '2026-10-10');
+  const up = upcomingDays(days, avail, '2026-10-10', 4);
+  // Fri Oct 9 is past; Sat 10 is today (no online booking); Sun 11 cancelled; Tue 13 has no status; Sat Nov 28 is outside the window
+  assert.deepEqual([...up.map((d) => d.date)], ['2026-10-10', '2026-10-11', '2026-11-28']);
+  assert.equal(up[0].statusText, 'Day is a go');
+  assert.equal(up[0].instructor, true);
+  assert.equal(up[0].remaining, null);
+  assert.equal(up[1].status, 'cancelled');
+  assert.equal(typeof up[1].remaining, 'number');
+  assert.equal(up[2].remaining, null);
 });

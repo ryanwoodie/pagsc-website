@@ -1,6 +1,8 @@
 ---
-// Next flying days, built from the Flying Schedule at deploy time
-// (scripts/fetch-schedule.mjs). Renders nothing when there is no data.
+// Next flying days. Built from the Flying Schedule at deploy time (scripts/fetch-schedule.mjs), then
+// replaced on every visit with live data from the booking script (?action=days), so a status posted
+// minutes ago shows here. If there is no build-time data the section starts hidden and appears
+// once the live data arrives; if neither is available it stays hidden.
 import Section from './Section.astro';
 import { FORM_ENDPOINT } from '../config';
 import { href } from '../lib/url';
@@ -31,8 +33,8 @@ const updated = data?.updated
     }).format(new Date(data.updated))
   : null;
 ---
-{days.length > 0 && (
-  <Section id="next-flying-days" labelledby="nfd-h">
+{(days.length > 0 || FORM_ENDPOINT) && (
+  <Section id="next-flying-days" labelledby="nfd-h" class={days.length ? undefined : 'nfd-pending'}>
     <h2 id="nfd-h">Next flying days</h2>
     <ul class="days">
       {days.map((d) => (
@@ -49,37 +51,67 @@ const updated = data?.updated
       ))}
     </ul>
     <script is:inline type="application/json" id="nfd-endpoint" set:html={JSON.stringify(FORM_ENDPOINT)} />
-    {updated && <p class="days__note">From the club's Flying Schedule, {updated.replace(/\.$/, '')}. Flying depends on the weather.</p>}
+    <p class="days__note" data-book-base={href('/discovery-flight/')} hidden={!updated}>From the club's Flying Schedule, <span class="days__when">{updated?.replace(/\.$/, '')}</span>. Flying depends on the weather.</p>
   </Section>
 )}
 <script>
-  // Live spot counts from the booking script; the links work without them.
-  const books = [...document.querySelectorAll<HTMLElement>('.day__book')];
+  // Replace the build-time cards with live data from the booking script.
+  type LiveDay = { date: string; kind: string; status: string; statusText: string; instructor: boolean; remaining: number | null };
+  const section = document.getElementById('next-flying-days');
+  const list = section?.querySelector('.days');
+  const note = section?.querySelector<HTMLElement>('.days__note');
   const endpoint = JSON.parse(document.getElementById('nfd-endpoint')?.textContent || '""');
-  if (books.length && endpoint) {
-    fetch(`${endpoint}?action=availability`, { signal: AbortSignal.timeout(15000) })
+  const LABELS: Record<string, string> = { on: 'Flying is on', delayed: 'Delayed', cancelled: 'Cancelled', unknown: 'Update posted', '': 'No update posted yet' };
+  const dayFmt = new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const whenFmt = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Regina' });
+
+  function el(tag: string, cls: string, text?: string) {
+    const n = document.createElement(tag);
+    n.className = cls;
+    if (text !== undefined) n.textContent = text;
+    return n;
+  }
+
+  function card(d: LiveDay, bookBase: string) {
+    const li = el('li', 'day');
+    const time = el('time', 'day__date', dayFmt.format(new Date(d.date + 'T12:00:00Z')));
+    time.setAttribute('datetime', d.date);
+    li.append(time, el('span', `day__status${d.status ? ' day__status--' + d.status : ''}`, LABELS[d.status] ?? LABELS['']));
+    if (d.statusText) li.append(el('span', 'day__note', `“${d.statusText}”`));
+    if (d.instructor) li.append(el('span', 'day__tag', 'Instructor signed up'));
+    if (d.status !== 'cancelled' && d.remaining !== null) {
+      const book = el('span', 'day__book');
+      if (d.remaining === 0) book.append(el('span', 'day__spots', 'Guest spots full'));
+      else {
+        book.append(el('span', 'day__spots', d.kind === 'weekday' ? 'On request' : `${d.remaining} spot${d.remaining === 1 ? '' : 's'} left`));
+        const a = el('a', '', 'Book a spot') as HTMLAnchorElement;
+        a.href = `${bookBase}?date=${d.date}#request`;
+        book.append(a);
+      }
+      li.append(book);
+    }
+    return li;
+  }
+
+  if (section && list && note && endpoint) {
+    fetch(`${endpoint}?action=days`, { signal: AbortSignal.timeout(15000) })
       .then((r) => r.json())
-      .then((data) => {
-        if (!data.ok) return;
-        const byDate = new Map<string, { status: string; remaining: number; kind: string }>(
-          data.days.map((d: { date: string; status: string; remaining: number; kind: string }) => [d.date, d]),
-        );
-        for (const b of books) {
-          const day = byDate.get(b.dataset.date!);
-          const spots = b.querySelector<HTMLElement>('.day__spots')!;
-          const link = b.querySelector('a')!;
-          if (!day) { b.remove(); continue; } // today or past: no longer bookable online
-          if (day.status === 'cancelled') { spots.textContent = 'Not flying'; link.remove(); continue; }
-          if (day.remaining === 0) { spots.textContent = 'Guest spots full'; link.remove(); continue; }
-          spots.textContent = day.kind === 'weekday' ? 'On request' : `${day.remaining} spot${day.remaining === 1 ? '' : 's'} left`;
-        }
+      .then((data: { ok: boolean; updated: string; days: LiveDay[] }) => {
+        if (!data.ok || !Array.isArray(data.days) || !data.days.length) return;
+        list.replaceChildren(...data.days.map((d) => card(d, note.dataset.bookBase!)));
+        note.querySelector('.days__when')!.textContent = whenFmt.format(new Date(data.updated)).replace(/\.$/, '');
+        note.hidden = false;
+        section.classList.remove('nfd-pending');
       })
       .catch(() => {});
   }
 </script>
 
-<style>
-  .day__book {
+<style is:global>
+  .nfd-pending {
+    display: none;
+  }
+  #next-flying-days .day__book {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -87,27 +119,27 @@ const updated = data?.updated
     margin-top: auto;
     padding-top: 10px;
   }
-  .day__spots {
+  #next-flying-days .day__spots {
     font-size: 0.9rem;
     color: var(--grey);
   }
-  .day__spots:empty {
+  #next-flying-days .day__spots:empty {
     display: none;
   }
-  .day__book a {
+  #next-flying-days .day__book a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
     font-weight: 600;
   }
-  .days {
+  #next-flying-days .days {
     list-style: none;
     padding: 0;
     margin: 0;
     display: grid;
     gap: 12px;
   }
-  .day {
+  #next-flying-days .day {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -116,24 +148,24 @@ const updated = data?.updated
     border-top: 2px solid var(--ink);
     max-width: none;
   }
-  .day__date {
+  #next-flying-days .day__date {
     font-family: var(--font-display);
     font-size: 1.6rem;
     font-weight: 700;
     line-height: 1.1;
   }
-  .day__status {
+  #next-flying-days .day__status {
     font-weight: 600;
   }
-  .day__note {
+  #next-flying-days .day__note {
     color: var(--grey);
     font-size: 0.95rem;
     line-height: 1.35;
   }
-  .day__status--cancelled {
+  #next-flying-days .day__status--cancelled {
     color: var(--orange-dark);
   }
-  .day__tag {
+  #next-flying-days .day__tag {
     align-self: flex-start;
     margin-top: 4px;
     font-family: var(--font-display);
@@ -143,13 +175,13 @@ const updated = data?.updated
     text-transform: uppercase;
     color: var(--orange-dark);
   }
-  .days__note {
+  #next-flying-days .days__note {
     margin-top: 12px;
     color: var(--grey);
     font-size: 0.95rem;
   }
   @media (min-width: 640px) {
-    .days {
+    #next-flying-days .days {
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
   }

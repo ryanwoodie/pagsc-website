@@ -121,7 +121,7 @@ Not a login. A plain page for people who already fly here:
 
 ## Next flying days
 
-Built at deploy time, not in the browser.
+Built at deploy time as a fallback, then replaced on every visit with live data from the booking script (`?action=days`: today onward, weekends and days with a status, with status text, instructor sign-up and guest spots), so a status posted minutes ago shows on the home page. The scheduled rebuild (every three hours in season; GitHub often runs it later) only matters if the script is unreachable.
 
 - A scheduled GitHub Actions run (every few hours in season) fetches the public schedule as CSV and rebuilds the site.
 - Read only: the date row, the Status / Comments row, and whether the instructors block has any entry under a date.

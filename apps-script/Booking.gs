@@ -220,6 +220,36 @@ function computeAvailability(days, bookings, caps, today) {
   return out;
 }
 
+/**
+ * The next flying days for the home page: today onward, weekends plus any day with a status posted,
+ * each with its status text, instructor sign-up and (when bookable online) guest spots left.
+ * @param days from scheduleDays()  @param avail from computeAvailability()  @param today ISO date
+ */
+function upcomingDays(days, avail, today, limit) {
+  var byDate = {};
+  avail.forEach(function (a) { byDate[a.date] = a; });
+  return days
+    .filter(function (d) {
+      if (d.date < today) return false;
+      var wd = weekdayOf(d.date);
+      return wd === 0 || wd === 6 || !!d.statusText;
+    })
+    .sort(function (a, b) { return a.date < b.date ? -1 : 1; })
+    .slice(0, limit || 4)
+    .map(function (d) {
+      var a = byDate[d.date];
+      var wd = weekdayOf(d.date);
+      return {
+        date: d.date,
+        kind: wd === 0 || wd === 6 ? 'weekend' : 'weekday',
+        status: classifyStatus(d.statusText),
+        statusText: d.statusText,
+        instructor: !!d.instructor,
+        remaining: a ? a.remaining : null // null: today, or outside the booking window
+      };
+    });
+}
+
 /** Can a group of `people` start at `start` on this availability day? */
 function canBook(day, start, people) {
   if (!day || day.status === 'cancelled') return 'That day is not running.';
@@ -277,6 +307,7 @@ function statusChangeDue(lastStatus, currentStatus, daysUntil, hour) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'availability') return json(availabilityResponse());
+  if (p.action === 'days') return json(daysResponse());
   if (p.action === 'cancel') return cancelBooking(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
@@ -326,6 +357,17 @@ function guestCaps() {
 
 var AVAILABILITY_CACHE = 'availability';
 var AVAILABILITY_SECONDS = 60; // edits to the schedule show within a minute; bookings clear it at once
+
+function daysResponse() {
+  try {
+    var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
+    var today = todayOnField();
+    var avail = computeAvailability(days, activeBookings(), guestCaps(), today);
+    return { ok: true, updated: new Date().toISOString(), days: upcomingDays(days, avail, today, 4) };
+  } catch (err) {
+    return { ok: false, error: 'unavailable' };
+  }
+}
 
 function availabilityResponse() {
   var cache = CacheService.getScriptCache();
