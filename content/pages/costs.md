@@ -22,6 +22,10 @@ primary_action: Apply for membership (membership form); secondary link to the Di
 
 Every membership includes Soaring Association of Canada membership. New members joining after August 1 pay half. Ages are as of January 1 of the membership year. Pay by e-transfer to pa.gliding.soaring.club@gmail.com.
 
+## Where your money goes
+
+PAGSC is run entirely by volunteers, with no paid staff. Flight fees and memberships pay for winch launches, glider maintenance, insurance, equipment, and the hangar lease. Nobody profits from your flight; the money keeps the club flying.
+
 ## Youth and cadets
 
 A $500 Soaring Association of Canada bursary, matched by $500 from the club, gives youth members $1,000 toward launches and glider rental.
