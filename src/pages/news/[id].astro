@@ -1,0 +1,78 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import Photo from '../../components/Photo.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts } from '../../lib/facts';
+import { href } from '../../lib/url';
+import { newsPosts, newsDate, isoDate, type NewsPost } from '../../lib/news';
+
+export async function getStaticPaths() {
+  const posts = await newsPosts();
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+
+interface Props { post: NewsPost }
+const { post } = Astro.props;
+const { Content } = await render(post);
+const sourceName = post.data.source ? (/instagram\./.test(post.data.source) ? 'Instagram' : /facebook\./.test(post.data.source) ? 'Facebook' : 'social media') : '';
+const articleLd = {
+  '@context': 'https://schema.org',
+  '@type': 'NewsArticle',
+  headline: post.data.title,
+  datePublished: isoDate(post.data.date),
+  description: post.data.summary,
+  publisher: { '@type': 'Organization', name: facts.club.name },
+};
+---
+<Base title={post.data.title} description={post.data.summary} jsonLd={articleLd}>
+  <article>
+    <section class="post-hero">
+      <div class="wrap">
+        <p class="label"><a href={href('/news/')}>Club news</a></p>
+        <h1>{post.data.title}</h1>
+        <time datetime={isoDate(post.data.date)} class="post-date">{newsDate(post.data.date)}</time>
+      </div>
+    </section>
+    <Section variant="plain">
+      <div class="post">
+        {post.data.image && <Photo src={post.data.image} alt={post.data.image_alt!} eager sizes="(min-width: 760px) 680px, 100vw" />}
+        <div class="post__body"><Content /></div>
+        {post.data.source && <p class="post__source">Originally posted on <a href={post.data.source} rel="noopener">{sourceName}</a>.</p>}
+        <p class="post__back"><a class="more" href={href('/news/')}>More club news</a></p>
+        <div class="actions"><BookButton /></div>
+      </div>
+    </Section>
+  </article>
+</Base>
+<style>
+  .post-hero {
+    background: var(--sky);
+    padding: 28px 0 32px;
+  }
+  .post-hero .label a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .post-hero h1 {
+    margin-bottom: 8px;
+  }
+  .post-date {
+    color: var(--grey);
+    font-weight: 600;
+  }
+  .post {
+    max-width: 680px;
+  }
+  .post__body {
+    margin-top: 24px;
+  }
+  .post__body :global(p) {
+    font-size: 1.08em;
+  }
+  .post__source,
+  .post__back {
+    color: var(--grey);
+  }
+</style>

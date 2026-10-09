@@ -23,6 +23,7 @@ Footer, every page: the button again; email, phone, Facebook; **Members**; affil
 | `/find-us/` | Find us | Book a Discovery Flight | `find-us.md` |
 | `/about/` | About the club (mission, programs, where fees go, governance, legal details, fleet) | Book a Discovery Flight | `the-club.md` |
 | `/faq/` | Questions | Book a Discovery Flight | `faq.md` |
+| `/news/` | Club news (list) and `/news/<file-name>/` (one post) | Book a Discovery Flight | `content/news/*.md`, format in `CLAUDE.md` |
 | `/members/` | Members | Open the Flying Schedule | `members.md` |
 | `/404` | Not found | Go home | none |
 

@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import NewsList from '../../components/NewsList.astro';
+import BookButton from '../../components/BookButton.astro';
+import { facts } from '../../lib/facts';
+import { newsPosts } from '../../lib/news';
+
+const posts = await newsPosts();
+---
+<Base title="Club news" description={`News from the ${facts.club.name}: first solos, licences, flying days and what is happening at ${facts.location.airfield}.`}>
+  <PageHero label="News" title="Club news">
+    <p class="lead">First solos, new licences, flying days and what is happening at the field.</p>
+    <div class="actions"><BookButton /></div>
+  </PageHero>
+  <Section variant="plain" labelledby="posts-h">
+    <h2 id="posts-h" class="visually-hidden">Posts</h2>
+    <NewsList posts={posts} />
+    <p class="more-social">More on <a href={facts.contact.instagram} rel="noopener">Instagram</a> and <a href={facts.contact.facebook} rel="noopener">Facebook</a>.</p>
+  </Section>
+</Base>
+<style>
+  .more-social {
+    margin-top: 20px;
+  }
+</style>

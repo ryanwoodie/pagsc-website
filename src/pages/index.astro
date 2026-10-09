@@ -8,6 +8,8 @@ import PathCards from '../components/PathCards.astro';
 import Qa from '../components/Qa.astro';
 import BookButton from '../components/BookButton.astro';
 import NextFlyingDays from '../components/NextFlyingDays.astro';
+import NewsList from '../components/NewsList.astro';
+import { newsPosts } from '../lib/news';
 import GliderThermal from '../components/GliderThermal.astro';
 import HeroVideo from '../components/HeroVideo.astro';
 import Photo from '../components/Photo.astro';
@@ -23,6 +25,7 @@ const m = fees.membership;
 const y = facts.youth;
 const lesson = fees.typical_lesson_flight;
 const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total flight time')!.with_ppl;
+const latestNews = (await newsPosts()).slice(0, 3);
 ---
 <Base
   title="Glider flights and flying lessons near Prince Albert and Saskatoon"
@@ -83,6 +86,14 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
   </Section>
 
   <NextFlyingDays />
+
+  {latestNews.length > 0 && (
+    <Section labelledby="news-h">
+      <h2 id="news-h">Club news</h2>
+      <NewsList posts={latestNews} headingLevel="h3" />
+      <p class="actions"><a class="more" href={href('/news/')}>All club news</a></p>
+    </Section>
+  )}
 
   <Section labelledby="why-h">
     <div class="split">

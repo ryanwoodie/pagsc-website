@@ -1,0 +1,80 @@
+---
+// A list of news posts: date, title, summary and a small photo.
+import { Picture } from 'astro:assets';
+import { href } from '../lib/url';
+import { newsDate, isoDate, type NewsPost } from '../lib/news';
+interface Props { posts: NewsPost[]; headingLevel?: 'h2' | 'h3' }
+const { posts, headingLevel: H = 'h2' } = Astro.props;
+---
+<ul class="news">
+  {posts.map((p) => (
+    <li class="news__item">
+      {p.data.image && (
+        <Picture src={p.data.image} alt="" widths={[240, 480]} sizes="160px" formats={['avif', 'webp']} fallbackFormat="jpg" class="news__img" />
+      )}
+      <div>
+        <time datetime={isoDate(p.data.date)} class="news__date">{newsDate(p.data.date)}</time>
+        <H class="news__title"><a href={href(`/news/${p.id}/`)}>{p.data.title}</a></H>
+        <p>{p.data.summary}</p>
+      </div>
+    </li>
+  ))}
+</ul>
+<style>
+  .news {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 2px solid var(--ink);
+  }
+  .news__item {
+    position: relative;
+    display: grid;
+    gap: 12px 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+    max-width: none;
+  }
+  .news__item:has(.news__img) {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .news__img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    background: var(--sky);
+  }
+  .news__date {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+  }
+  .news__title {
+    margin: 2px 0 6px;
+    font-size: 1.45rem;
+  }
+  .news__title a {
+    color: var(--ink);
+  }
+  .news__title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .news__item p {
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .news__item:has(.news__img) {
+      grid-template-columns: 160px minmax(0, 1fr);
+    }
+    .news__img {
+      width: 160px;
+      height: 120px;
+    }
+  }
+</style>
