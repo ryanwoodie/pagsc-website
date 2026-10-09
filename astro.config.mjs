@@ -26,8 +26,9 @@ export default defineConfig({
   redirects: {
     '/come-fly-with-us': to('/discovery-flight/'),
     '/learn-to-soar-gliding': to('/learn-to-fly/'),
-    '/about-our-club': to('/the-club/'),
-    '/pictures-videos-gallery': to('/the-club/'),
+    '/about-our-club': to('/about/'),
+    '/pictures-videos-gallery': to('/about/'),
+    '/the-club': to('/about/'),
     '/members-fees': to('/costs/'),
     '/useful-link': to('/members/'),
     '/contact-us': to('/find-us/'),

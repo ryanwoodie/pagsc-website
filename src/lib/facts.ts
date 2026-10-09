@@ -16,6 +16,13 @@ const schema = z
       short_name: z.string(),
       founded: z.number().int(),
       status: z.string(),
+      legal_name: z.string(),
+      incorporation: z.string(),
+      registry_entity_number: z.string().regex(/^\d+$/),
+      registered_office: z.string(),
+      mission: z.string(),
+      fees_fund: z.array(z.string()).min(1),
+      governance: z.string(),
       affiliations: z.array(z.string()).min(1),
     }),
     location: z.strictObject({

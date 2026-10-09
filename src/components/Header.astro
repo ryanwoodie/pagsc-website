@@ -10,6 +10,7 @@ const nav = [
   { label: 'Why gliding', path: '/why-gliding/' },
   { label: 'Costs', path: '/costs/' },
   { label: 'Find us', path: '/find-us/' },
+  { label: 'About', path: '/about/' },
 ];
 const here = Astro.url.pathname;
 const isCurrent = (path: string) => here === href(path) || (path !== '/' && here.startsWith(href(path)));

@@ -110,7 +110,8 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
 
   <Section labelledby="club-h">
     <h2 id="club-h">The club</h2>
-    <p class="lead">A friendly non-profit club, founded in {facts.club.founded} and affiliated with the {listJoin(facts.club.affiliations)}. The longest cross-country flight out of {facts.club.short_name} is {num(facts.achievements.longest_cross_country_km)} km.</p>
+    <p class="lead">{facts.club.mission}</p>
+    <p>Founded in {facts.club.founded} and affiliated with the {listJoin(facts.club.affiliations)}.</p>
     <Tiles
       items={[
         { figure: `${num(facts.achievements.longest_cross_country_km)} km`, text: `the longest cross-country flight out of ${facts.club.short_name}` },
@@ -122,7 +123,7 @@ const pplHours = facts.power_pilots.table.find((r) => r.requirement === 'Total f
       <Photo src={youthPhoto} alt="A young student sits in the front seat of the two-seat glider while a club member stands beside the cockpit" crop="4 / 3" position="center 60%" />
       <Photo src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" />
     </div>
-    <p class="actions"><a class="more" href={href('/the-club/')}>The club and the fleet</a></p>
+    <p class="actions"><a class="more" href={href('/about/')}>About the club</a></p>
   </Section>
 
   <Section labelledby="q-h">

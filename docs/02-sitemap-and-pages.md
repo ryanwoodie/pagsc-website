@@ -21,12 +21,12 @@ Footer, every page: the button again; email, phone, Facebook; **Members**; affil
 | `/why-gliding/` | Why gliding | Book a Discovery Flight | `why-gliding.md` |
 | `/costs/` | Costs | Apply for membership (secondary: try a Discovery Flight first). Changed 4 October 2026. | `costs.md` |
 | `/find-us/` | Find us | Book a Discovery Flight | `find-us.md` |
-| `/the-club/` | The club and the fleet | Book a Discovery Flight | `the-club.md` |
+| `/about/` | About the club (mission, programs, where fees go, governance, legal details, fleet) | Book a Discovery Flight | `the-club.md` |
 | `/faq/` | Questions | Book a Discovery Flight | `faq.md` |
 | `/members/` | Members | Open the Flying Schedule | `members.md` |
 | `/404` | Not found | Go home | none |
 
-`/the-club/`, `/faq/` and the two audience pages are reached from other pages and the footer, not the header.
+`/faq/` and the two audience pages are reached from other pages and the footer, not the header. `/about/` is in the header (Google Ad Grants reviewers look for mission, address and registration). `/the-club/` redirects to `/about/`.
 
 ## Home
 

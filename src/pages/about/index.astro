@@ -1,0 +1,218 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import GliderOutline from '../../components/GliderOutline.astro';
+import Callout from '../../components/Callout.astro';
+import BookButton from '../../components/BookButton.astro';
+import Photo from '../../components/Photo.astro';
+import wingPhoto from '../../assets/photos/running-the-wing.webp';
+import { facts, df, money, num, listJoin, telHref } from '../../lib/facts';
+import { href } from '../../lib/url';
+import { clubJsonLd } from '../../lib/schema';
+
+const c = facts.club;
+const y = facts.youth;
+
+const outlines = ['k7', 'ka6e', 'phoebus'] as const;
+const k7 = facts.fleet[0]!;
+const ratio = Number(k7.best_glide.split(':')[0]);
+const glideKm = Math.round((ratio * facts.discovery_flight.launch_height_feet * 0.3048) / 1000);
+const slug = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+---
+<Base
+  title="About the club"
+  description={`The ${c.name} is a volunteer-run non-profit, founded in ${c.founded}, that teaches people to fly gliders from ${facts.location.airfield}, Saskatchewan.`}
+  jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
+>
+  <PageHero label="About us" title="About the club">
+    <p class="lead">{c.mission}</p>
+    <p>A friendly non-profit club, founded in {c.founded}, flying from {facts.location.airfield}. We are affiliated with the <Fragment set:html={listJoin(facts.club.affiliations.map((a) => a === 'Soaring Association of Canada' ? `<a href="${facts.links.sac}" rel="noopener">${a}</a>` : a))} />.</p>
+    <div class="actions"><BookButton /></div>
+    <Photo slot="media" src={wingPhoto} alt="A club member holds a glider's wingtip level on the grass field, ready for launch" crop="4 / 3" position="40% center" eager />
+  </PageHero>
+
+  <Section variant="plain" labelledby="do-h">
+    <h2 id="do-h">What we do</h2>
+    <ul class="programs">
+      <li>
+        <h3><a href={href('/learn-to-fly/')}>Flight training</a></h3>
+        <p>Certified volunteer instructors teach members to fly gliders, from a first lesson to a Glider Pilot Licence. Instruction is free; members pay only for launches and glider time.</p>
+      </li>
+      <li>
+        <h3><a href={href('/discovery-flight/')}>Discovery Flights</a></h3>
+        <p>Anyone can try gliding with a club pilot for {money(df.price)}, with no experience or membership needed. For many members it is where they started.</p>
+      </li>
+      <li>
+        <h3><a href={href('/learn-to-fly/youth-and-cadets/')}>Youth and Air Cadets</a></h3>
+        <p>Youth membership is {money(y.membership_price)} a year, and bursaries put up to {money(y.bursary_total)} toward a young pilot's flying. Air Cadets can earn their Glider Pilot Licence here.</p>
+      </li>
+      <li>
+        <h3><a href={href('/why-gliding/')}>Soaring and cross-country flying</a></h3>
+        <p>Members go on to soaring, cross-country flights and FAI badges. The longest cross-country flight out of {c.short_name} is {num(facts.achievements.longest_cross_country_km)} km.</p>
+      </li>
+    </ul>
+    <p class="lead serve">We serve pilots and would-be pilots from Prince Albert, Saskatoon and the communities between, from teenagers to retirees.</p>
+  </Section>
+
+  <Section labelledby="team-h">
+    <div class="grid grid--2">
+      <div>
+        <h2 id="team-h">A team sport</h2>
+        <p>Gliding is a team sport. It takes a crew to launch a glider, and members keep the cost of flying low by pitching in: driving the winch, running a wing, looking after the gliders and the field.</p>
+      </div>
+      <div>
+        <h2 id="fees-h">Where the money goes</h2>
+        <p>Flight fees, Discovery Flights and memberships pay for running the club: {listJoin(c.fees_fund)}. That is what keeps instruction free and flying affordable.</p>
+      </div>
+    </div>
+  </Section>
+
+  <Section labelledby="run-h">
+    <h2 id="run-h">How the club is run</h2>
+    <p>{c.governance} We are affiliated with the {listJoin(c.affiliations)}.</p>
+    <dl class="details">
+      <div><dt>Legal name</dt><dd>{c.legal_name}</dd></div>
+      <div><dt>Status</dt><dd>Non-profit corporation registered in Saskatchewan (Corporate Registry entity no. {c.registry_entity_number})</dd></div>
+      <div><dt>Registered office</dt><dd>{c.registered_office}</dd></div>
+      <div><dt>Where we fly</dt><dd>{facts.location.airfield}, {facts.location.town} (<a href={href('/find-us/')}>directions</a>)</dd></div>
+      <div><dt>Contact</dt><dd><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a> · <a href={telHref}>{facts.contact.phone}</a></dd></div>
+    </dl>
+  </Section>
+
+  <Section labelledby="fleet-h">
+    <h2 id="fleet-h">The fleet</h2>
+    <p>Three gliders: a two-seat trainer and two single-seaters.</p>
+    <div class="fleet">
+      {facts.fleet.map((g, i) => (
+        <article class="glider" aria-labelledby={slug(g.name)}>
+          <div class="glider__head">
+            <GliderOutline type={outlines[i]!} />
+            <div>
+              <h3 id={slug(g.name)}>{g.name}</h3>
+              <p class="label">{g.role}</p>
+              <p>{g.description}</p>
+            </div>
+          </div>
+          <dl class="specs">
+            <div><dt>Seats</dt><dd>{g.seats}</dd></div>
+            <div><dt>Wingspan</dt><dd>{g.wingspan_m.toFixed(1)} m</dd></div>
+            <div><dt>Best glide</dt><dd>{g.best_glide}</dd></div>
+            <div><dt>Min. sink</dt><dd>{g.min_sink_ms.toFixed(2)} m/s</dd></div>
+            <div><dt>Empty weight</dt><dd>{g.empty_weight_kg} kg</dd></div>
+            <div><dt>Introduced</dt><dd>{g.introduced}</dd></div>
+          </dl>
+        </article>
+      ))}
+    </div>
+    <Callout tone="sky" lead="Reading the numbers">
+      <p>A best glide of {k7.best_glide} means {ratio} metres forward for every metre of height lost: about {glideKm} km from a {num(facts.discovery_flight.launch_height_feet)} ft launch in still air. Minimum sink is how slowly the glider descends when flown for time aloft.</p>
+    </Callout>
+    <div class="actions"><BookButton /></div>
+  </Section>
+</Base>
+<style>
+  .fleet {
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    margin: 20px 0 24px;
+  }
+  .glider {
+    padding: 20px 0;
+  }
+  .glider + .glider {
+    border-top: 1px solid var(--rule);
+  }
+  .glider__head {
+    display: grid;
+    gap: 12px 24px;
+  }
+  .glider h3 {
+    margin: 0;
+  }
+  .glider .label {
+    margin: 2px 0 6px;
+  }
+  .specs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 14px 0 0;
+  }
+  .specs dt {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+  .specs dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  @media (min-width: 760px) {
+    .glider__head {
+      grid-template-columns: 224px minmax(0, 1fr);
+      align-items: center;
+    }
+    .specs {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+  }
+  .programs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0 32px;
+    border-top: 2px solid var(--ink);
+  }
+  .programs li {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule);
+    max-width: none;
+  }
+  .programs h3 {
+    margin: 0 0 4px;
+  }
+  .programs h3 a {
+    color: var(--ink);
+  }
+  .programs p {
+    margin: 0;
+  }
+  .serve {
+    margin-top: 24px;
+  }
+  @media (min-width: 760px) {
+    .programs {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .details {
+    margin: 16px 0 0;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+  }
+  .details div {
+    display: grid;
+    gap: 2px 16px;
+    padding: 10px 0;
+  }
+  .details div + div {
+    border-top: 1px solid var(--rule);
+  }
+  .details dt {
+    font-weight: 600;
+  }
+  .details dd {
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .details div {
+      grid-template-columns: 11em minmax(0, 1fr);
+    }
+  }
+</style>

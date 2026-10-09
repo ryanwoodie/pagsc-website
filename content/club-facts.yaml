@@ -7,6 +7,13 @@ club:
   short_name: PAGSC
   founded: 1986
   status: Non-profit club
+  legal_name: Prince Albert Gliding and Soaring Club Inc.
+  incorporation: Saskatchewan non-profit corporation
+  registry_entity_number: "208722"   # Saskatchewan Corporate Registry
+  registered_office: 219 Scissons Court, Saskatoon, SK   # public record; shown on the About page only
+  mission: The Prince Albert Gliding and Soaring Club is a volunteer-run non-profit that makes gliding accessible in north-central Saskatchewan. We teach people of all ages to fly gliders, introduce the public to soaring through first flights, and help youth and Air Cadets learn to fly for less.
+  fees_fund: [winch launches, glider maintenance, insurance, equipment, the hangar lease]   # what flight fees and memberships pay for
+  governance: The club is run by a volunteer board elected by members at the annual general meeting. There are no paid staff; instructors, winch drivers and ground crew are all volunteers.
   affiliations:
     - Soaring Association of Saskatchewan
     - Soaring Association of Canada

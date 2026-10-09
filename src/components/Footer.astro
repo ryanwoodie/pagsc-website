@@ -11,7 +11,7 @@ const more = [
   { label: 'Power pilots', path: '/learn-to-fly/power-pilots/' },
   { label: 'Why gliding', path: '/why-gliding/' },
   { label: 'Costs', path: '/costs/' },
-  { label: 'The club and the fleet', path: '/the-club/' },
+  { label: 'About the club', path: '/about/' },
   { label: 'Questions', path: '/faq/' },
   { label: 'Find us', path: '/find-us/' },
   { label: 'Members', path: '/members/' },
@@ -42,7 +42,7 @@ const more = [
       </nav>
     </div>
     <p class="site-footer__small">
-      {facts.club.name}. {facts.club.status}, founded {facts.club.founded}. Affiliated with {listJoin(facts.club.affiliations)}. © {year}
+      {facts.club.legal_name}, a {facts.club.incorporation} (entity no. {facts.club.registry_entity_number}), founded {facts.club.founded}. Affiliated with {listJoin(facts.club.affiliations)}. © {year}
     </p>
   </div>
 </footer>
