@@ -34,7 +34,7 @@ npm test           # schedule parser tests
 - `src/config.ts` holds the form endpoint.
 - Club news: Markdown posts in `content/news/` (format in `CLAUDE.md`). A separate agent pushes them to `main`; every push deploys.
 - Analytics: GoatCounter at https://pagsc.goatcounter.com (club account). Events are listed in `docs/01-strategy.md` under Measuring.
-- The welcome pack is `public/welcome-pack.pdf` (served at `/welcome-pack.pdf`). Replace the file to update it.
+- The welcome pack PDF (`/welcome-pack.pdf`) is generated on every build from `src/pages/welcome-pack/print.astro` and `content/club-facts.yaml`, by `scripts/build-pack.mjs` using headless Chrome. Edit the page or the facts, never the PDF. Preview locally with `npm run pack`.
 - `SKIP_SCHEDULE=1 npm run build` builds without fetching the Flying Schedule.
 - `npm run og` regenerates `public/og.png` from `scripts/og/og.html` (needs Google Chrome).
 

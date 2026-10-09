@@ -38,7 +38,7 @@ const schema = z
       phone: z.string().regex(/^\(\d{3}\) \d{3}-\d{4}$/),
       facebook: url,
       instagram: url,
-      whatsapp_group: z.null(),
+      whatsapp_group: z.url().regex(/^https:\/\/chat\.whatsapp\.com\//),
     }),
     links: z.strictObject({
       flying_schedule: url,

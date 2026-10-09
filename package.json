@@ -8,20 +8,23 @@
   },
   "scripts": {
     "dev": "node scripts/fetch-schedule.mjs && node scripts/fetch-availability.mjs && astro dev",
-    "build": "node scripts/fetch-schedule.mjs && node scripts/fetch-availability.mjs && astro check && astro build && node scripts/check-links.mjs",
+    "build": "node scripts/fetch-schedule.mjs && astro check && astro build && node scripts/build-pack.mjs && node scripts/check-links.mjs",
     "preview": "astro preview",
     "schedule": "node scripts/fetch-schedule.mjs",
     "test": "node --test scripts/*.test.mjs",
     "og": "\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 --screenshot=\"$PWD/public/og.png\" \"file://$PWD/scripts/og/og.html\"",
     "script:push": "cd apps-script && clasp push --force",
-    "script:deploy": "npm test && cd apps-script && clasp push --force && clasp deploy -i AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA -d \"$(git log -1 --format=%s)\""
+    "script:deploy": "npm test && cd apps-script && clasp push --force && clasp deploy -i AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA -d \"$(git log -1 --format=%s)\"",
+    "pack": "astro build && node scripts/build-pack.mjs && open dist/welcome-pack.pdf"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource/barlow": "^5.3.0",
     "@fontsource/barlow-condensed": "^5.3.0",
+    "@types/qrcode": "^1.5.6",
     "astro": "^7.3.5",
+    "qrcode": "^1.5.4",
     "typescript": "^6.0.3",
     "yaml": "^2.9.1"
   }

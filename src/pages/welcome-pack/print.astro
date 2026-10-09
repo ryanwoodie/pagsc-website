@@ -1,0 +1,837 @@
+---
+// The welcome pack, as nine letter-size pages. Built from club-facts.yaml like the rest of the site and
+// printed to /welcome-pack.pdf on every build (scripts/build-pack.mjs). For prospective students and new
+// members: first flights are booked on the website; lessons on the Flying Schedule.
+import Print from '../../layouts/Print.astro';
+import GliderThermal from '../../components/GliderThermal.astro';
+import GliderOutline from '../../components/GliderOutline.astro';
+import ScheduleMap from '../../components/ScheduleMap.astro';
+import {
+  facts, df, fees, money, num, listJoin, lessonBreakdown, soloLine, licenceCostLine, launchHeight,
+  shortDuration, facebookHandle, instagramHandle, lcfirst,
+} from '../../lib/facts';
+import { guestHours, weekdaysLine } from '../../lib/faq';
+import { qrSvg } from '../../lib/qr';
+
+const c = facts.club;
+const t = facts.training;
+const y = facts.youth;
+const m = fees.membership;
+const L = facts.links;
+const dt = facts.location.drive_times;
+const lesson = fees.typical_lesson_flight;
+const site = 'https://www.pagsc.ca';
+const host = 'pagsc.ca';
+const total = 9;
+
+const qr = {
+  flight: await qrSvg(`${site}/discovery-flight/`),
+  membership: await qrSvg(L.membership_form),
+  schedule: await qrSvg(L.flying_schedule),
+  whatsapp: await qrSvg(facts.contact.whatsapp_group),
+  site: await qrSvg(site),
+};
+
+const asOf = new Intl.DateTimeFormat('en-CA', { month: 'long', year: 'numeric', timeZone: 'America/Regina' }).format(new Date());
+const pplTotal = facts.power_pilots.table.find((r) => r.requirement === 'Total flight time')!;
+const rungs = [
+  { name: 'First solo', detail: `from age ${t.solo_age}` },
+  { name: 'An hour aloft', detail: 'your first real soaring flight' },
+  { name: 'Cross-country', detail: 'leaving the home field behind' },
+  ...facts.badges,
+];
+const outlines = ['k7', 'ka6e', 'phoebus'] as const;
+const k7 = facts.fleet[0]!;
+const ratio = Number(k7.best_glide.split(':')[0]);
+const glideKm = Math.round((ratio * df.launch_height_feet * 0.3048) / 1000);
+const priceRows = [
+  { what: 'Discovery Flight (guest)', price: money(df.price), note: `${money(df.group_price_each)} each for a group of ${df.group_minimum} or more. No membership needed.` },
+  { what: 'Membership, Regular', price: `${money(m.regular.price)} / ${m.regular.per}`, note: `For ${m.regular.who.charAt(0).toLowerCase()}${m.regular.who.slice(1)}.` },
+  { what: 'Membership, Junior', price: `${money(m.junior.price)} / ${m.junior.per}`, note: `${m.junior.who}.` },
+  { what: 'Membership, Youth / Air Cadet', price: `${money(m.youth_air_cadet.price)} / ${m.youth_air_cadet.per}`, note: `${m.youth_air_cadet.who}.` },
+  { what: 'Winch launch (members)', price: `${money(fees.winch_launch)} each`, note: `To about ${launchHeight}.` },
+  { what: 'Glider rental (members)', price: `${money(fees.glider_rental_per_hour)} / hour`, note: `Billed by the minute, at ${money(fees.glider_rental_per_minute)}.` },
+  { what: 'Instruction', price: 'Free', note: 'Taught by club members who hold an instructor rating.' },
+];
+---
+<Print title={`${c.short_name} welcome pack`}>
+
+  <!-- 1. Cover -->
+  <section class="page cover">
+    <div class="cover__band" aria-hidden="true"></div>
+    <div class="cover__art"><GliderThermal /></div>
+    <div class="top top--plain"><span>Prince Albert Gliding &amp; Soaring Club</span><span>Welcome pack</span></div>
+    <h1 class="display">Come fly<br />with us.</h1>
+    <p class="cover__lead">No engine. No experience needed. A winch launch to about {launchHeight}, and some of the quietest flying in Saskatchewan.</p>
+    <p class="label cover__label">Start in three steps</p>
+    <ol class="startsteps">
+      <li>
+        <span class="n">1</span>
+        <div><h2>Take a first flight</h2><p>Book a Discovery Flight at {host}: {money(df.price)}, no membership or experience needed. It is also your first lesson.</p></div>
+        <a class="qr" href={`${site}/discovery-flight/`}><Fragment set:html={qr.flight} /><span>Discovery Flight</span></a>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div><h2>Liked it? Join the club</h2><p>Fill in the short membership form and e-transfer your dues to {facts.contact.email}.</p></div>
+        <a class="qr" href={L.membership_form}><Fragment set:html={qr.membership} /><span>Membership form</span></a>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div><h2>Come back and learn to fly</h2><p>Put your name on the Flying Schedule whenever you want a lesson. Instruction is free; members pay only for launches and glider time.</p></div>
+        <a class="qr" href={L.flying_schedule}><Fragment set:html={qr.schedule} /><span>Flying Schedule</span></a>
+      </li>
+    </ol>
+    <ul class="tiles3">
+      <li><b>{money(df.price)}</b><span>first flight, no membership needed</span></li>
+      <li><b>Free</b><span>instruction from club instructors</span></li>
+      <li><b>{shortDuration(dt.prince_albert)}</b><span>from Prince Albert, {dt.saskatoon} from Saskatoon</span></li>
+    </ul>
+    <div class="foot"><span>A volunteer-run non-profit, founded {c.founded} · {facts.location.airfield}, Saskatchewan · {host}</span><span>1 / {total}</span></div>
+  </section>
+
+  <!-- 2. The Flying Schedule -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Booking lessons</span></div>
+    <h1>The Flying Schedule, made easy</h1>
+    <p class="intro">Members book lessons by typing their name into one cell of a shared Google Sheet. It takes about a minute.</p>
+    <div class="mapwrap"><ScheduleMap>Where you type. You only ever use one column (your day) and one block (your sign-up section).</ScheduleMap></div>
+    <ol class="grid4">
+      <li><span class="n">1</span><div><h3>Open the schedule</h3><p>On a computer, open the link in your browser. Sign in with any Google account.</p></div></li>
+      <li><span class="n">2</span><div><h3>Find your day</h3><p>Dates run across the top row. Scroll sideways until yours is on screen. Weekends are the main flying days.</p></div></li>
+      <li><span class="n">3</span><div><h3>Find your block</h3><p>For a lesson, look for the cell reading “Student/Pilots Sign-up Below”.</p></div></li>
+      <li><span class="n">4</span><div><h3>Type your name</h3><p>Use the first empty cell underneath and press Enter. It saves by itself.</p></div></li>
+    </ol>
+    <div class="box box--tint row"><b class="box__lead">On a phone?</b><span>In a phone browser the sheet is usually view-only. Install the free Google Sheets app and open the link there.</span></div>
+    <div class="foot"><span>{c.name} · {host}</span><span>2 / {total}</span></div>
+  </section>
+
+  <!-- 3. Flying day -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Flying day</span></div>
+    <h1>The morning you fly: three checks</h1>
+    <div class="cols3">
+      <div><h3>Status / Comments row</h3><p>Is flying on, delayed or cancelled? The day's arrival time is posted here too.</p></div>
+      <div><h3>Weather row</h3><p>A quick look at wind and conditions. The forecast fills in about a week ahead.</p></div>
+      <div><h3>Instructors block</h3><p>For lessons, an instructor's name under your date means instruction is on.</p></div>
+    </div>
+    <div class="box box--ink">Always check the sheet before you leave home. Gliding depends on the weather, and last-minute changes are posted there.</div>
+    <div class="cols2">
+      <div><h3>Stuck? We'll do it for you</h3><p>If the sheet won't let you type, message the WhatsApp group, email {facts.contact.email} or ask any instructor. We'll put your name down.</p></div>
+      <div><h3>Sign up early, even as a maybe</h3><p>Write “(maybe)” after your name. It helps instructors plan the day. If your plans change, delete your name.</p></div>
+    </div>
+    <h2 class="ruled">Your day at the field</h2>
+    <div class="cols2">
+      <div>
+        <p class="label">Bring</p>
+        <ul class="bul">{df.bring.map((b) => <li>{b}</li>)}</ul>
+      </div>
+      <div>
+        <p class="label">How the day runs</p>
+        <ol class="num">
+          <li>Meet the crew and get a safety briefing.</li>
+          <li>Help get the gliders out. Pitching in is part of the fun, and it keeps costs low.</li>
+          <li>Fly. A day is usually {t.flights_per_visit} instructional flights, over {t.visit_hours} hours.</li>
+          <li>Stay, watch, learn, and help others launch.</li>
+        </ol>
+      </div>
+    </div>
+    <p class="small">{guestHours}. {weekdaysLine} The main season runs {lcfirst(df.season)}.</p>
+    <div class="foot"><span>{c.name} · {host}</span><span>3 / {total}</span></div>
+  </section>
+
+  <!-- 4. Learning to fly -->
+  <section class="page compact">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Training</span></div>
+    <h1>Learning to fly</h1>
+    <ul class="tiles3 tiles3--sky">
+      <li><b>Any age</b><span>to start training, no experience needed</span></li>
+      <li><b>Age {t.solo_age}</b><span>to fly solo</span></li>
+      <li><b>Age {t.licence_age}</b><span>to hold a full Glider Pilot Licence</span></li>
+    </ul>
+    <h2 class="ruled">Your first three visits</h2>
+    <p class="intro">A day at the field is usually {t.flights_per_visit} instructional flights, taking {t.visit_hours} hours. Roughly:</p>
+    <ol class="visits">
+      {t.first_visits.map((v) => <li><h3>{v.title}</h3><p>{v.text}</p></li>)}
+    </ol>
+    <p class="small">{t.after_first_visits} A rough guide: your instructor sets the pace.</p>
+    <h2 class="ruled">Your path to a Glider Pilot Licence</h2>
+    <ol class="grid4 grid4--path">
+      {t.steps.map((s, i) => <li><span class="n">{i + 1}</span><div><h3>{s.title}</h3><p>{s.text}</p></div></li>)}
+    </ol>
+    <div class="box box--sky tight">{soloLine} {t.come_regularly}</div>
+    <div class="foot"><span>{c.name} · {host}</span><span>4 / {total}</span></div>
+  </section>
+
+  <!-- 5. Costs -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Costs</span></div>
+    <h1>What it costs</h1>
+    <div class="box box--sky row"><b class="big">{money(lesson.cost)}</b><span>is about what a typical {lesson.minutes}-minute instructional flight costs members: {lessonBreakdown}. Instruction is free.</span></div>
+    <table class="tbl">
+      <thead><tr><th>What</th><th class="r">Price (CAD)</th><th>Good to know</th></tr></thead>
+      <tbody>{priceRows.map((r) => <tr><th>{r.what}</th><td class="r">{r.price}</td><td>{r.note}</td></tr>)}</tbody>
+    </table>
+    <p class="small">{fees.membership_notes.join(' ')} Pay by e-transfer to {facts.contact.email}.</p>
+    <div class="cols2 spaced">
+      <div><h3>A licence, start to finish</h3><p>{licenceCostLine}</p></div>
+      <div><h3>Where your money goes</h3><p>{c.short_name} is run entirely by volunteers, with no paid staff. Fees and memberships pay for {listJoin(c.fees_fund)}.</p></div>
+    </div>
+    <div class="box box--tint">
+      <b class="box__lead">Youth: up to {money(y.bursary_total)} toward flying</b>
+      A {money(y.bursary_sac)} Soaring Association of Canada bursary, matched by {money(y.bursary_club_match)} from the club, for {lcfirst(y.bursary_who)}. Up to {y.bursaries_per_club} per club each year. Ask us and we'll help you apply.
+    </div>
+    <div class="foot"><span>{c.name} · {host}</span><span>5 / {total}</span></div>
+  </section>
+
+  <!-- 6. Fast tracks -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Two fast tracks</span></div>
+    <h1>Youth and cadets: learn for less</h1>
+    <div class="youth">
+      <div class="box box--tint"><b class="big">{money(y.bursary_total)}</b><span>toward {y.bursary_covers.toLowerCase()}: a {money(y.bursary_sac)} SAC bursary, matched by {money(y.bursary_club_match)} from the club</span></div>
+      <div>
+        <p>With the {money(y.membership_price)} youth membership, a glider licence can cost very little. Ask us and we'll help you apply.</p>
+        <p>{y.cadets}</p>
+      </div>
+    </div>
+    <h2 class="ruled">Already a power pilot?</h2>
+    <p>With a PPL(A) you skip ground school and the written exam, and need {pplTotal.with_ppl.replace('hours', 'flight hours')}, not {pplTotal.from_scratch.replace(' hours', '')}.</p>
+    <table class="tbl tbl--req">
+      <thead><tr><th>Requirement</th><th>From scratch</th><th>With PPL(A) credit</th></tr></thead>
+      <tbody>{facts.power_pilots.table.map((r) => <tr><th>{r.requirement}</th><td>{r.from_scratch}</td><td>{r.with_ppl === 'Waived' ? <b>Waived</b> : r.with_ppl}</td></tr>)}</tbody>
+    </table>
+    <p class="small"><b>It works the other way too.</b> Up to {facts.power_pilots.credit_back.ppl_hours} hours of glider time counts toward a PPL(A), and up to {facts.power_pilots.credit_back.cpl_hours} hours toward the {facts.power_pilots.credit_back.cpl_total_requirement_hours}-hour total for a CPL(A).</p>
+    <h2 class="ruled">Learn at home, free</h2>
+    <div class="cols3 links">
+      <div><h3><a href={L.soar_manual_pdf}>SOAR manual</a></h3><p>Free PDF from the Soaring Association of Canada, at sac.ca</p></div>
+      <div><h3><a href={L.winch_launch_videos}>Safe winch launching</a></h3><p>Videos from the British Gliding Association: members.gliding.co.uk</p></div>
+      <div><h3><a href={L.glider_flying_handbook}>Glider Flying Handbook</a></h3><p>Free from the FAA at faa.gov (search “Glider Flying Handbook”)</p></div>
+    </div>
+    <div class="foot"><span>{c.name} · {host}</span><span>6 / {total}</span></div>
+  </section>
+
+  <!-- 7. Why gliding -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>Why gliding?</span></div>
+    <p class="label">Why gliding?</p>
+    <h1 class="big-h">A sport you never finish</h1>
+    <p class="intro">Gliding is to powered flying what sailing is to motorboating. With an engine, the flying serves the trip. In a glider, the flying is the game.</p>
+    <div class="cols2">
+      <div><p class="label">The game</p><p>There is no throttle, so every flight is a puzzle: find rising air, climb in it, decide where to go next. The sky changes by the hour. Some days it gives you 10 minutes, some days 10 hours.</p></div>
+      <div><p class="label">A sport for decades</p><p>Gliding rewards judgment more than strength, so a 16-year-old and a 70-year-old fly the same sky. And nobody launches alone: it takes a crew, which is why it works as a club.</p></div>
+    </div>
+    <h2 class="ruled">Always a next rung</h2>
+    <ol class="stairs">
+      {rungs.map((r, i) => <li style={`--i:${i}`}><b>{r.name}</b><span>{r.detail}</span><i aria-hidden="true"></i></li>)}
+    </ol>
+    <ul class="tiles3">
+      <li><b>{num(facts.achievements.longest_cross_country_km)} km</b><span>the longest cross-country flight out of {c.short_name}</span></li>
+      <li><b>{facts.achievements.long_flight_hours} hours</b><span>aloft on a single flight out of {c.short_name}</span></li>
+      <li><b>{num(facts.achievements.world_distance_record_km)} km</b><span>the world distance record</span></li>
+    </ul>
+    <div class="cols2 spaced">
+      <div><p class="label">And then there's racing</p><p>Fly a set course around turnpoints; the fastest average speed wins. Any flight can be scored online against pilots around the world.</p></div>
+      <div><p class="label">It makes better pilots</p><p>Gliding builds stick-and-rudder skill and energy management like nothing else. The captains of both the “Miracle on the Hudson” and the “Gimli Glider” were glider pilots.</p></div>
+    </div>
+    <div class="foot"><span>{c.name} · {host}</span><span>7 / {total}</span></div>
+  </section>
+
+  <!-- 8. Fleet -->
+  <section class="page">
+    <div class="top"><span>{c.short_name} welcome pack</span><span>The fleet</span></div>
+    <h1>The fleet</h1>
+    <p class="intro">Three gliders: a two-seat trainer and two single-seaters.</p>
+    <div class="fleet">
+      {facts.fleet.map((g, i) => (
+        <article>
+          <div class="fleet__head">
+            <GliderOutline type={outlines[i]!} />
+            <div><h2>{g.name} <span class="role">{g.role}</span></h2><p>{g.description}</p></div>
+          </div>
+          <dl class="specs">
+            <div><dt>Seats</dt><dd>{g.seats}</dd></div>
+            <div><dt>Wingspan</dt><dd>{g.wingspan_m.toFixed(1)} m</dd></div>
+            <div><dt>Best glide</dt><dd>{g.best_glide}</dd></div>
+            <div><dt>Min. sink</dt><dd>{g.min_sink_ms.toFixed(2)} m/s</dd></div>
+            <div><dt>Empty weight</dt><dd>{g.empty_weight_kg} kg</dd></div>
+            <div><dt>Introduced</dt><dd>{g.introduced}</dd></div>
+          </dl>
+        </article>
+      ))}
+    </div>
+    <div class="box box--sky"><b>Reading the numbers.</b> A best glide of {k7.best_glide} means {ratio} metres forward for every metre of height lost: about {glideKm} km from a {num(df.launch_height_feet)} ft launch in still air. Minimum sink is how slowly the glider descends when flown for time aloft.</div>
+    <div class="foot"><span>{c.name} · {host}</span><span>8 / {total}</span></div>
+  </section>
+
+  <!-- 9. Links and contacts -->
+  <section class="page cover">
+    <div class="cover__band cover__band--short" aria-hidden="true"></div>
+    <div class="cover__art cover__art--small"><GliderThermal /></div>
+    <div class="top top--plain"><span>{c.short_name} welcome pack</span><span>Links and contacts</span></div>
+    <h1 class="display display--sm">See you at<br />the field.</h1>
+    <p class="cover__lead">Book a Discovery Flight, or come out to Birch Hills on a flying weekend and say hello.</p>
+    <ul class="qrrow">
+      <li><a class="qr qr--lg" href={site}><Fragment set:html={qr.site} /></a><h3><a href={site}>{host}</a></h3><p>First flights, the booking calendar, costs and club news</p></li>
+      <li><a class="qr qr--lg" href={L.membership_form}><Fragment set:html={qr.membership} /></a><h3><a href={L.membership_form}>Join the club</a></h3><p>The membership form</p></li>
+      <li><a class="qr qr--lg" href={facts.contact.whatsapp_group}><Fragment set:html={qr.whatsapp} /></a><h3><a href={facts.contact.whatsapp_group}>Join the conversation</a></h3><p>Club WhatsApp group, for carpooling and quick questions</p></li>
+    </ul>
+    <div class="cols2 spaced">
+      <div>
+        <p class="label">Questions</p>
+        <dl class="contacts">
+          <div><dt>Email</dt><dd><a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a></dd></div>
+          <div><dt>Phone</dt><dd>{facts.contact.phone}</dd></div>
+          <div><dt>Website</dt><dd><a href={site}>{host}</a></dd></div>
+          <div><dt>Facebook</dt><dd><a href={facts.contact.facebook}>{facebookHandle}</a></dd></div>
+          <div><dt>Instagram</dt><dd><a href={facts.contact.instagram}>@{instagramHandle}</a></dd></div>
+        </dl>
+      </div>
+      <div>
+        <p class="label">Getting there</p>
+        <p>{facts.location.airfield} is on {facts.location.highway}, about {dt.prince_albert} from Prince Albert and {dt.saskatoon} from Saskatoon.</p>
+        <p>Carpooling is often available from {listJoin(facts.location.carpool_from)}. Ask in the WhatsApp group.</p>
+      </div>
+    </div>
+    <p class="small legal">{c.mission} {c.legal_name} is a {c.incorporation} (entity no. {c.registry_entity_number}), affiliated with the {listJoin(c.affiliations)}. Prices current at {asOf}; {host} has the latest.</p>
+    <div class="foot"><span>{c.name} · {host}</span><span>9 / {total}</span></div>
+  </section>
+</Print>
+
+<style>
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+  .top--plain {
+    border: 0;
+    position: relative;
+  }
+  h1 {
+    margin: 22px 0 0;
+    font-size: 44px;
+    line-height: 1.05;
+  }
+  .big-h {
+    margin-top: 2px;
+    font-size: 54px;
+  }
+  h2 {
+    font-size: 27px;
+    margin: 0;
+  }
+  h3 {
+    font-size: 20px;
+    margin: 0 0 2px;
+    line-height: 1.2;
+  }
+  p {
+    margin: 0 0 6px;
+  }
+  .label {
+    margin: 0 0 4px;
+    font-size: 14px;
+  }
+  .intro {
+    margin: 8px 0 0;
+    font-size: 17px;
+    font-weight: 500;
+  }
+  .small {
+    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--grey);
+  }
+  .ruled {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 2px solid var(--ink);
+    font-size: 30px;
+  }
+  .compact .ruled {
+    margin-top: 14px;
+    padding-top: 10px;
+  }
+  .compact .tiles3 {
+    margin-top: 14px;
+  }
+  .compact .tiles3 li {
+    padding: 8px 16px 10px;
+  }
+  .foot {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--grey);
+  }
+  .n {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--orange);
+    line-height: 0.95;
+  }
+
+  /* cover */
+  .cover__band {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 424px;
+    background: var(--sky);
+  }
+  .cover__band--short {
+    height: 360px;
+  }
+  .cover__art {
+    position: absolute;
+    right: 24px;
+    top: 92px;
+    width: 348px;
+  }
+  .cover__art--small {
+    top: 70px;
+    width: 300px;
+  }
+  .display {
+    position: relative;
+    margin-top: 32px;
+    font-size: 104px;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .display--sm {
+    font-size: 84px;
+  }
+  .cover__lead {
+    position: relative;
+    margin: 20px 0 0;
+    max-width: 430px;
+    font-size: 20px;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .cover__label {
+    position: relative;
+    margin-top: 50px;
+    font-size: 15px;
+  }
+  .startsteps {
+    position: relative;
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+  }
+  .startsteps li {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 96px;
+    gap: 18px;
+    align-items: center;
+    padding: 9px 0;
+  }
+  .startsteps li + li {
+    border-top: 1px solid var(--rule);
+  }
+  .startsteps .n {
+    font-size: 64px;
+  }
+  .startsteps h2 {
+    font-size: 25px;
+  }
+  .startsteps p {
+    margin: 0;
+  }
+  .qr {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .qr :global(svg) {
+    width: 78px;
+    height: 78px;
+  }
+  .qr {
+    color: inherit;
+    text-decoration: none;
+  }
+  .qr span {
+    font-size: 11.5px;
+    color: var(--grey);
+    line-height: 1.2;
+    text-align: center;
+  }
+  .page a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .qr figcaption {
+    font-size: 11.5px;
+    color: var(--grey);
+    line-height: 1.2;
+    text-align: center;
+  }
+  .qr--lg :global(svg) {
+    width: 116px;
+    height: 116px;
+  }
+  .tiles3 {
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .tiles3 li {
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 16px 14px;
+  }
+  .tiles3--sky li {
+    background: var(--sky);
+    color: var(--ink);
+  }
+  .tiles3 b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 1.1;
+  }
+  .tiles3 span {
+    display: block;
+    font-size: 13.5px;
+    line-height: 1.3;
+  }
+
+  /* layout helpers */
+  .cols2,
+  .cols3 {
+    display: grid;
+    gap: 14px 28px;
+    margin-top: 16px;
+  }
+  .cols2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cols3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .cols3 > div {
+    border-top: 3px solid var(--blue);
+    padding-top: 8px;
+  }
+  .cols3.links > div {
+    border-top-color: var(--orange);
+  }
+  .spaced {
+    margin-top: 20px;
+  }
+  .box {
+    margin-top: 16px;
+    padding: 12px 16px;
+  }
+  .box--ink {
+    background: var(--ink);
+    color: #fff;
+    font-weight: 500;
+  }
+  .box--sky {
+    background: var(--sky);
+  }
+  .box--tint {
+    background: var(--orange-tint);
+  }
+  .box.row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+  }
+  .box__lead {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 21px;
+    line-height: 1.1;
+    color: var(--orange-dark);
+  }
+  .big {
+    font-family: var(--font-display);
+    font-size: 54px;
+    line-height: 1;
+    color: var(--orange);
+  }
+  .bul,
+  .num {
+    margin: 0;
+    padding-left: 20px;
+  }
+  .bul li,
+  .num li {
+    margin-bottom: 4px;
+  }
+
+  /* schedule page */
+  .mapwrap :global(.sheet-map) {
+    margin: 16px 0 0;
+  }
+  .mapwrap :global(.sheet) {
+    min-width: 0;
+    font-size: 12.5px;
+  }
+  .grid4 {
+    list-style: none;
+    padding: 0;
+    margin: 18px 0 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 28px;
+  }
+  .grid4 li {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .grid4 .n {
+    font-size: 44px;
+  }
+  .grid4 p {
+    margin: 0;
+  }
+  .grid4--path {
+    gap: 10px 28px;
+  }
+  .grid4--path li:last-child {
+    grid-column: 1 / -1;
+  }
+  .grid4--path .n {
+    font-size: 38px;
+  }
+  .grid4--path {
+    margin-top: 12px;
+  }
+  .grid4--path p {
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+  .grid4--path h3 {
+    font-size: 18px;
+  }
+
+  /* learning page */
+  .visits {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .visits li {
+    border-top: 3px solid var(--orange);
+    padding-top: 6px;
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+  .tight {
+    margin-top: 12px;
+    padding: 9px 14px;
+    font-size: 14px;
+  }
+
+  /* tables */
+  .tbl {
+    margin-top: 14px;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    font-size: 14.5px;
+  }
+  .tbl th,
+  .tbl td {
+    text-align: left;
+    vertical-align: top;
+    padding: 7px 12px 7px 0;
+  }
+  .tbl thead th {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--grey);
+    border-bottom: 1px solid var(--ink);
+  }
+  .tbl tbody tr + tr > * {
+    border-top: 1px solid var(--rule);
+  }
+  .tbl tbody th {
+    font-weight: 600;
+  }
+  .tbl .r {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .tbl--req td:last-child,
+  .tbl--req th:last-child {
+    background: var(--sky);
+    padding-left: 12px;
+  }
+
+  /* youth */
+  .youth {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .youth .box {
+    margin: 0;
+  }
+  .youth .box span {
+    display: block;
+    font-size: 14px;
+    line-height: 1.35;
+    margin-top: 4px;
+  }
+
+  /* why gliding stairs */
+  .stairs {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    align-items: end;
+  }
+  .stairs li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stairs b {
+    font-family: var(--font-display);
+    font-size: 19px;
+    line-height: 1.1;
+  }
+  .stairs span {
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: var(--grey);
+  }
+  .stairs i {
+    display: block;
+    height: calc(24px + var(--i) * 22px);
+    background: var(--sky);
+    border-top: 3px solid var(--ink);
+  }
+
+  /* fleet */
+  .fleet {
+    margin-top: 16px;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+  }
+  .fleet article {
+    padding: 14px 0;
+  }
+  .fleet article + article {
+    border-top: 1px solid var(--rule);
+  }
+  .fleet__head {
+    display: grid;
+    grid-template-columns: 224px minmax(0, 1fr);
+    gap: 24px;
+    align-items: center;
+  }
+  .fleet__head :global(svg) {
+    width: 224px;
+    height: auto;
+  }
+  .fleet h2 {
+    font-size: 28px;
+  }
+  .role {
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+    margin-left: 6px;
+  }
+  .fleet p {
+    margin: 2px 0 0;
+  }
+  .specs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    margin: 10px 0 0;
+  }
+  .specs dt {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey);
+  }
+  .specs dd {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 700;
+  }
+
+  /* contacts page */
+  .qrrow {
+    position: relative;
+    list-style: none;
+    padding: 0;
+    margin: 56px 0 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .qrrow li {
+    border-top: 4px solid var(--orange);
+    padding-top: 14px;
+  }
+  .qrrow .qr {
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .qrrow p {
+    font-size: 14px;
+  }
+  .contacts {
+    margin: 0;
+  }
+  .contacts div {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr);
+    padding: 3px 0;
+  }
+  .contacts dt {
+    font-weight: 600;
+  }
+  .contacts dd {
+    margin: 0;
+  }
+  .legal {
+    margin-top: 18px;
+  }
+</style>

@@ -26,6 +26,7 @@ Footer, every page: the button again; email, phone, Facebook; **Members**; affil
 | `/news/` | Club news (list) and `/news/<file-name>/` (one post) | Book a Discovery Flight | `content/news/*.md`, format in `CLAUDE.md` |
 | `/members/` | Members | Open the Flying Schedule | `members.md` |
 | `/404` | Not found | Go home | none |
+| `/welcome-pack/print/` | Welcome pack source (not indexed). Printed to `/welcome-pack.pdf` on every build: cover and three steps, Flying Schedule, flying day, learning to fly, costs, youth and power pilots, why gliding, fleet, links and contacts. | None | facts and `src/pages/welcome-pack/print.astro` |
 
 `/faq/` and the two audience pages are reached from other pages and the footer, not the header. `/about/` is in the header (Google Ad Grants reviewers look for mission, address and registration). `/the-club/` redirects to `/about/`.
 

@@ -1,0 +1,76 @@
+---
+// Layout for printable documents (the welcome pack). No header or footer; letter-size pages.
+import '@fontsource/barlow/latin-400.css';
+import '@fontsource/barlow/latin-500.css';
+import '@fontsource/barlow/latin-600.css';
+import '@fontsource/barlow-condensed/latin-600.css';
+import '@fontsource/barlow-condensed/latin-700.css';
+import '../styles/global.css';
+interface Props { title: string }
+const { title } = Astro.props;
+---
+<!doctype html>
+<html lang="en-CA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=816" />
+    <meta name="robots" content="noindex" />
+    <title>{title}</title>
+  </head>
+  <body class="print-doc">
+    <slot />
+  </body>
+</html>
+<style is:global>
+  @page {
+    size: 8.5in 11in;
+    margin: 0;
+  }
+  html,
+  body.print-doc {
+    margin: 0;
+    padding: 0;
+    background: #e9eef2;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 16px;
+  }
+  @media print {
+    html,
+    body.print-doc {
+      background: #fff;
+    }
+  }
+  .page {
+    position: relative;
+    width: 8.5in;
+    height: 11in;
+    box-sizing: border-box;
+    padding: 48px 64px 36px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15.5px;
+    line-height: 1.45;
+    margin: 0 auto 24px;
+    break-after: page;
+    page-break-after: always;
+  }
+  @media print {
+    .page {
+      margin: 0;
+    }
+  }
+  .page p,
+  .page li {
+    max-width: none;
+  }
+  .page h1,
+  .page h2,
+  .page h3 {
+    text-wrap: balance;
+  }
+</style>
