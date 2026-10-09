@@ -3,7 +3,7 @@ title: A new website, with online booking
 date: 2026-10-03
 summary: Book a Discovery Flight online, pick your day on the booking calendar, and see the next flying days straight from the club's schedule.
 image: ./images/2026-10-03-new-website.jpg
-image_alt: A smiling student stands beside the club's two-seat glider on the runway under a sky full of cumulus clouds
+image_alt: Two club members shake hands beside the club's two-seat glider on the ramp at Birch Hills, under a sky full of cumulus clouds
 ---
 
 The club has a new home at pagsc.ca. You can now buy a Discovery Flight online, for yourself or as a gift, and pick a day and time on the booking calendar. Weekend spots are pencilled in straight away; weekday flying is on request.
