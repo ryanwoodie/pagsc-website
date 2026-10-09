@@ -126,6 +126,7 @@ const steps = t.steps.map((s) => ({
     <h2 id="pack-h">The welcome pack</h2>
     <p class="lead">Nine pages for new students: booking lessons on the Flying Schedule, the morning you fly, costs, the path to a licence and the fleet.</p>
     <PackForm />
+    <p class="pack-direct">Or <a href={href('/welcome-pack.pdf')}>download the welcome pack (PDF)</a> now.</p>
   </Section>
 
   <Section labelledby="ready-h">
@@ -143,5 +144,8 @@ const steps = t.steps.map((s) => ({
   }
   .solo {
     margin-top: 24px;
+  }
+  .pack-direct {
+    margin-top: 14px;
   }
 </style>
