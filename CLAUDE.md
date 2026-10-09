@@ -73,19 +73,23 @@ Quote a text value with double quotes if it contains a colon, `#`, or starts wit
 
 **Photos:** `content/news/images/`, named like the post (`2026-10-12-first-solo-for-sam.jpg`; add `-2`, `-3` for extras). JPEG, PNG or WebP, at least 1200 px wide, under 5 MB, with location (GPS) data removed. The site resizes and converts them. Only photos from the club's own posts.
 
-**Example** (`content/news/2026-10-03-new-website.md`):
+**Example** (`content/news/2026-10-03-new-website.md`, abridged):
 
 ```markdown
 ---
 title: A new website, with online booking
 date: 2026-10-03
-summary: Book a Discovery Flight online, pick your day on the booking calendar, and see the next flying days straight from the club's schedule.
-image: ./images/2026-10-03-new-website.jpg
-image_alt: Two club members shake hands beside the club's two-seat glider on the ramp at Birch Hills, under a sky full of cumulus clouds
+summary: The club has a new home at pagsc.ca, with a booking calendar fed by the Flying Schedule, online flight purchases and a welcome pack that keeps itself up to date.
+image: ./images/2026-10-03-new-website.png
+image_alt: The club's drawing of a glider circling in a thermal, a dark glider inside dashed rings on a pale blue sky
 source: https://www.instagram.com/p/EXAMPLE/
 ---
 
 The club has a new home at pagsc.ca. …
+
+## A booking calendar fed by the Flying Schedule
+
+Pick a day and a start time …
 ```
 
 **Before pushing:** run `npm ci` then `SKIP_SCHEDULE=1 npm run build` (Node 22.12 or later) and push only if it succeeds. Commit only the post and its photos, with a message like `News: First solo for Sam`. Posts appear on `/news/`, and the latest three on the home page.
