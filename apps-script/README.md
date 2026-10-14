@@ -43,7 +43,7 @@ URL stays the same.
 
 The Discovery Flight page shows a calendar of the next 4 weeks from the Flying Schedule. Guests pick
 a day, a start time (11:00 to 4:30, half an hour per person, up to 4 people, finishing by 5:00) and book. Weekends are
-pencilled in straight away; weekdays are requests a member confirms. Up to 12 guest half-hours a day, less 2 for each student signed up on the Flying Schedule that day.
+pencilled in straight away; weekdays are requests a member confirms. Weekends share 8 guest flights across Saturday and Sunday; each day also has room for 12 half-hour slots, less 3 (1.5 hours) for each student on the Flying Schedule that day, so the first student has no effect and from the second students reduce guest spots (0 to 1 students: 8; 2: 6; 3: 3; 4 or more: 0). Weekdays: 12 slots less 3 per student.
 
 To set it up (once):
 
@@ -66,7 +66,7 @@ What it does with the sheets:
   Times without am/pm are read as flying hours (1:30 is 1:30 pm). A name with no time takes one spot
   that day without blocking a time; `(2)` or `+1` for more people. Leave the word `web` on the
   script's own entries: those are counted from the Bookings tab, and removing it counts them twice.
-- To change one day's guest limit, add a **Guest caps** tab with `Date` (yyyy-mm-dd) and `Cap` columns.
+- To change a weekend's guest limit (or one weekday's), add a **Guest caps** tab with `Date` (yyyy-mm-dd) and `Cap` columns; for a weekend, a date on either day sets the shared limit.
 - A day whose Status / Comments cell says it is cancelled is shown as "Not flying" and can't be booked.
 - Guests get a confirmation email with a cancel link; cancelling frees the slot, clears the schedule
   cell and emails the club.
@@ -90,7 +90,7 @@ Guest emails are HTML in the site's style, with times like "3:30 pm" and a "Chan
 Run. Approve the permission to run on a schedule. It runs `runReminders` every hour. To preview every
 email, run `sendSampleEmails`: it sends 5 samples to the club address and books nothing.
 
-The slot settings (11:00 to 16:30 starts, 30 minutes, 2 spots per student, groups of 4, 28 days) are at the top of
+The slot settings (11:00 to 16:30 starts, 30 minutes, 3 slots per student, 8 per weekend, groups of 4, 28 days) are at the top of
 `Booking.gs` and in `content/club-facts.yaml` under `booking`. Change both together; `npm test` checks
 they match.
 

@@ -45,7 +45,7 @@ test('availability: window, weekend/weekday, cancelled, cap and taken slots', ()
   const sat = a[0];
   assert.equal(sat.kind, 'weekend');
   assert.equal(sat.status, 'on');
-  assert.equal(sat.remaining, 6); // 12 slots - 5 booked - 1 typed into the schedule (Guest A, no time)
+  assert.equal(sat.remaining, 2); // weekend limit 8 - 5 booked - 1 typed into the schedule (Guest A, no time)
   assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['11:30', '12:00', '15:00', '15:30', '16:00']);
   assert.equal(a[1].status, 'cancelled');
   assert.equal(a[2].kind, 'weekday');
@@ -126,13 +126,25 @@ test('email text uses the site\'s time style and escapes names', () => {
   assert.match(statusEmail(b, true, { statusText: 'Day is a go', weather: 'Sunny', instructor: true }, links).subject, /^Flying is on/);
 });
 
-test('each student on the schedule takes 2 guest spots', () => {
+test('students take 3 half-hour slots each; weekends share 8 guest flights', () => {
   const days = scheduleDays(grid);
   assert.equal(days.find((d) => d.date === '2026-10-11').students, 1);
+  // Sunday: 1 student (room 12 - 3 = 9), Saturday has 1 guest typed in, so the weekend has 8 - 1 = 7 left
   const sun = computeAvailability(days, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11');
-  assert.equal(sun.remaining, 10); // 12 - 2
-  const busy = scheduleDays([grid[0], grid[1], grid[2], grid[3], ['', '', '', 'Student/Pilots Sign-up Below', '', ''], ['', '', '', 'A', '', ''], ['', '', '', 'B', '', ''], ['', '', '', 'C', '', ''], ['', '', '', 'D', '', '']]);
-  assert.equal(computeAvailability(busy, [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 4); // 12 - 4 x 2
+  assert.equal(sun.remaining, 7);
+  // The agreed table, for a Sunday with no guests booked that weekend
+  const withStudents = (n) => {
+    const rows = [grid[0], ['Status/Comments:', '', '', '', '', ''], grid[3], ['', '', '', 'Student/Pilots Sign-up Below', '', '']];
+    for (let k = 0; k < n; k++) rows.push(['', '', '', `S${k}`, '', '']);
+    return computeAvailability(scheduleDays(rows), [], {}, '2026-10-09').find((d) => d.date === '2026-10-11').remaining;
+  };
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map(withStudents), [8, 8, 6, 3, 0, 0]);
+  // Bookings on the other day of the weekend count toward the 8
+  const both = computeAvailability(scheduleDays([grid[0], ['Status/Comments:', '', '', '', '', ''], grid[3]]), [{ date: '2026-10-10', start: '11:00', people: 4 }], {}, '2026-10-09');
+  assert.equal(both.find((d) => d.date === '2026-10-11').remaining, 4);
+  assert.equal(both.find((d) => d.date === '2026-10-10').remaining, 4);
+  // A Guest caps entry on either day replaces the weekend limit
+  assert.equal(computeAvailability(scheduleDays([grid[0], ['Status/Comments:', '', '', '', '', ''], grid[3]]), [], { '2026-10-10': 5 }, '2026-10-09').find((d) => d.date === '2026-10-11').remaining, 5);
 });
 
 test('guests typed into the schedule by hand', () => {
@@ -151,7 +163,7 @@ test('guests typed into the schedule by hand', () => {
   const g = grid.map((r) => [...r]);
   g[4][2] = 'Jane 1:30 (2)';
   const sat = computeAvailability(scheduleDays(g), [], {}, '2026-10-09')[0];
-  assert.equal(sat.remaining, 10);
+  assert.equal(sat.remaining, 6); // weekend limit 8 - 2
   assert.deepEqual([...sat.slots.filter((s) => !s.free).map((s) => s.time)], ['13:30', '14:00']);
   assert.ok(!JSON.stringify(sat).includes('Jane'));
 });

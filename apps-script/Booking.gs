@@ -27,8 +27,10 @@ var BOOKING = {
   FIRST: '11:00',        // first start time
   LAST: '16:30',         // last start time; every booking must finish by 17:00
   STEP: 30,              // minutes per person
-  // Guest spots per day: every half-hour slot (12), less STUDENT_COST per student on the schedule.
-  STUDENT_COST: 2,       // guest spots each student signed up on the schedule takes away
+  // Capacity. A day has 12 half-hour slots; each student on the schedule takes STUDENT_COST of them.
+  // Weekends share WEEKEND_CAP guest flights across Saturday and Sunday, limited by each day's room.
+  STUDENT_COST: 3,       // half-hour slots per student (1.5 hours)
+  WEEKEND_CAP: 8,        // guest flights per weekend, Saturday and Sunday combined
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
   TZ: 'America/Regina',
@@ -196,24 +198,38 @@ function computeAvailability(days, bookings, caps, today) {
   var times = slotTimes();
   var first = addDays(today, 1), last = addDays(today, BOOKING.DAYS_AHEAD);
   var out = [];
+  // Guest flights per date (website bookings plus guests the club typed on the schedule), for weekend totals.
+  var usedByDate = {};
+  bookings.forEach(function (b) { usedByDate[b.date] = (usedByDate[b.date] || 0) + b.people; });
+  days.forEach(function (d) {
+    (d.manual || []).forEach(function (e) { usedByDate[d.date] = (usedByDate[d.date] || 0) + e.people; });
+  });
+  var capFor = function (date) { return caps && caps[date] != null && caps[date] !== '' ? Number(caps[date]) : null; };
   days.forEach(function (d) {
     if (d.date < first || d.date > last) return;
     var wd = weekdayOf(d.date);
-    var taken = {}, used = 0;
+    var taken = {};
     bookings.concat((d.manual || []).map(function (e) { return { date: d.date, start: e.start, people: e.people }; })).forEach(function (b) {
       if (b.date !== d.date) return;
       var i = times.indexOf(b.start);
       for (var k = 0; k < b.people; k++) if (i + k >= 0 && i + k < times.length) taken[i + k] = true;
-      used += b.people;
     });
-    var cap = (caps && caps[d.date] != null ? Number(caps[d.date]) : times.length) - BOOKING.STUDENT_COST * (d.students || 0);
-    var status = classifyStatus(d.statusText);
+    var used = usedByDate[d.date] || 0;
+    var room = times.length - BOOKING.STUDENT_COST * (d.students || 0) - used;
+    var remaining;
+    if (wd === 0 || wd === 6) {
+      var partner = weekendPartner(d.date);
+      var weekendCap = capFor(d.date) != null ? capFor(d.date) : capFor(partner) != null ? capFor(partner) : BOOKING.WEEKEND_CAP;
+      remaining = Math.min(weekendCap - used - (usedByDate[partner] || 0), room);
+    } else {
+      remaining = (capFor(d.date) != null ? capFor(d.date) : times.length) - BOOKING.STUDENT_COST * (d.students || 0) - used;
+    }
     out.push({
       date: d.date,
       kind: wd === 0 || wd === 6 ? 'weekend' : 'weekday',
-      status: status,
+      status: classifyStatus(d.statusText),
       statusText: d.statusText,
-      remaining: Math.max(0, cap - used),
+      remaining: Math.max(0, remaining),
       slots: times.map(function (t, i) { return { time: t, free: !taken[i] }; })
     });
   });
