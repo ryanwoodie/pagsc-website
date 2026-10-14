@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -168,4 +168,28 @@ test('upcoming days for the home page: today on, weekends and status days, live 
   assert.equal(up[1].status, 'cancelled');
   assert.equal(typeof up[1].remaining, 'number');
   assert.equal(up[2].remaining, null);
+});
+
+test('flexible weekend: partner day, move planning and schedule note', () => {
+  assert.equal(weekendPartner('2026-10-10'), '2026-10-11'); // Sat -> Sun
+  assert.equal(weekendPartner('2026-10-11'), '2026-10-10'); // Sun -> Sat
+  assert.equal(weekendPartner('2026-10-13'), null);
+  assert.equal(scheduleText('Held', 'Jane', '13:30', 2, '2026-10-11'), 'Jane 13:30 (2) web (or Sun)');
+  assert.equal(scheduleText('Held', 'Jane', '13:30', 1, null), 'Jane 13:30 web');
+
+  const sat = { date: '2026-10-17', status: '', remaining: 12, slots: ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'].map((t) => ({ time: t, free: true })) };
+  const sun = { ...sat, date: '2026-10-18', slots: sat.slots.map((x) => ({ ...x, free: x.time !== '13:30' })) };
+  // Sunday cancelled, guest booked Sunday 13:30: moves to Saturday 13:30
+  assert.deepEqual({ ...planWeekendMove({ date: '2026-10-18', start: '13:30', people: 1 }, { '2026-10-17': sat }) }, { date: '2026-10-17', start: '13:30' });
+  // Saturday cancelled, Sunday 13:30 taken: nearest free time (13:00 before 14:00)
+  assert.deepEqual({ ...planWeekendMove({ date: '2026-10-17', start: '13:30', people: 1 }, { '2026-10-18': sun }) }, { date: '2026-10-18', start: '13:00' });
+  // other day cancelled, missing or full: no move
+  assert.equal(planWeekendMove({ date: '2026-10-17', start: '13:30', people: 1 }, { '2026-10-18': { ...sun, status: 'cancelled' } }), null);
+  assert.equal(planWeekendMove({ date: '2026-10-17', start: '13:30', people: 1 }, {}), null);
+  assert.equal(planWeekendMove({ date: '2026-10-17', start: '13:30', people: 2 }, { '2026-10-18': { ...sun, remaining: 1 } }), null);
+
+  const links = { cancel: 'https://x/c', confirm: 'https://x/ok', calendar: 'https://x/cal', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684' };
+  const m = moveEmail({ name: 'Jane Doe', date: '2026-10-18', start: '13:00', people: 1 }, '2026-10-17', links);
+  assert.match(m.subject, /^Flying moved to Sunday: you're pencilled in for 1 pm$/);
+  assert.ok(m.html.includes('https://x/ok') && m.html.includes('Pick another day'));
 });

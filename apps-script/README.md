@@ -122,6 +122,21 @@ Charges and Refunds. Then in the editor pick `installVouchers` and Run: Google a
 external service (Stripe); approve as the club account. It checks the key works and installs the hourly job.
 Do this before deploying a version that includes Vouchers.gs, or the web app stops until it is approved.
 
+## One flying day per weekend (Booking.gs, Reminders.gs)
+
+The club usually flies one day each weekend. A weekend booking asks, required and with nothing
+pre-selected: "If we only fly one day that weekend, could you come on <the other day> instead?"
+"Yes" adds "(or Sun)" / "(or Sat)" to the schedule cell and "Yes" in the Bookings tab's
+"Either weekend day" column.
+
+When the hourly check sees the booked day's Status / Comments marked cancelled (and only then;
+two-day weekends are left alone), a "Yes" booking moves to the other day: same start time if free,
+otherwise the nearest time that fits. The schedule cell moves, the row's Date, Start and "Moved from"
+update, certificates follow, the club is told, and the guest gets "Flying moved to Sunday" with
+"Yes, see you Sunday" (sets "Move confirmed" to Yes) and "Pick another day" (cancel and rebook).
+Without a reply they stay pencilled in. If the other day is cancelled or full, the guest gets the
+usual "flying is off" email instead. A booking moves at most once.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

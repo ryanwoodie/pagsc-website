@@ -38,7 +38,8 @@ var BOOKING = {
   STATUS_DAYS: 7,        // status-change emails for bookings this many days out or fewer
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
-    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates']
+    'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates',
+    'Either weekend day', 'Moved from', 'Move confirmed']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -250,6 +251,32 @@ function upcomingDays(days, avail, today, limit) {
     });
 }
 
+/** The other day of the same weekend: Saturday -> Sunday, Sunday -> Saturday; null on weekdays. */
+function weekendPartner(iso) {
+  var wd = weekdayOf(iso);
+  return wd === 6 ? addDays(iso, 1) : wd === 0 ? addDays(iso, -1) : null;
+}
+
+/**
+ * Where a flexible weekend booking goes when its day is cancelled: the other day of the weekend,
+ * at the same start time if free, otherwise the nearest time that fits. Null if the other day is
+ * not bookable (past, outside the window, cancelled or full).
+ * @param b {date, start, people}  @param availByDate {date: availability day}
+ */
+function planWeekendMove(b, availByDate) {
+  var partner = weekendPartner(b.date);
+  var a = partner && availByDate[partner];
+  if (!a || a.status === 'cancelled') return null;
+  var want = toMinutes(b.start);
+  var times = a.slots.map(function (s) { return s.time; }).sort(function (x, y) {
+    return Math.abs(toMinutes(x) - want) - Math.abs(toMinutes(y) - want) || toMinutes(x) - toMinutes(y);
+  });
+  for (var i = 0; i < times.length; i++) {
+    if (canBook(a, times[i], b.people) === '') return { date: partner, start: times[i] };
+  }
+  return null;
+}
+
 /** Can a group of `people` start at `start` on this availability day? */
 function canBook(day, start, people) {
   if (!day || day.status === 'cancelled') return 'That day is not running.';
@@ -309,6 +336,7 @@ function doGet(e) {
   if (p.action === 'availability') return json(availabilityResponse());
   if (p.action === 'days') return json(daysResponse());
   if (p.action === 'cancel') return cancelBooking(p.token);
+  if (p.action === 'confirm') return confirmMove(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
 }
@@ -399,7 +427,8 @@ function bookingPost(p) {
     payment: clean(p.payment) || 'Not stated',
     message: clean(p.message),
     weightOk: p.weight_ok === 'yes',
-    codes: []
+    codes: [],
+    flexible: p.flexible === 'yes' ? 'Yes' : p.flexible === 'no' ? 'No' : ''
   };
   var prepaid = b.payment === 'Paid online' || b.payment === 'Gift';
   var problems = [];
@@ -429,15 +458,22 @@ function bookingPost(p) {
     var codeCheck = checkCodes(b.codes, b.people);
     if (codeCheck.error) return json({ ok: false, error: codeCheck.error });
 
+    var partner = weekendPartner(b.date);
+    var partnerDay = null;
+    days.forEach(function (d) { if (d.date === partner) partnerDay = d; });
+    if (partnerDay && classifyStatus(partnerDay.statusText) !== 'cancelled' && !b.flexible) {
+      return json({ ok: false, error: 'Please tell us whether the other day of that weekend would also work.' });
+    }
     var kind = day.kind === 'weekend' ? 'Held' : 'Requested';
     var token = Utilities.getUuid();
     var first = b.name.split(/\s+/)[0];
-    var text = (kind === 'Requested' ? 'Request: ' : '') + first + ' ' + b.start + (b.people > 1 ? ' (' + b.people + ')' : '') + ' web';
+    var text = scheduleText(kind, first, b.start, b.people, b.flexible === 'Yes' ? partner : null);
     var cell = writeToSchedule(sched, grid, days, b.date, text);
 
     bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
-      b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', ')
+      b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', '),
+      b.flexible, '', ''
     ]);
     markCodesBooked(codeCheck.rows, token, b.date);
     clearAvailabilityCache();
@@ -448,6 +484,12 @@ function bookingPost(p) {
 
   sendBookingEmails(b, result);
   return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people });
+}
+
+/** "Jane 13:30 (2) web (or Sun)": first name and time only; the note shows the other weekend day works. */
+function scheduleText(kind, first, start, people, orDate) {
+  var or = orDate ? ' (or ' + DAY_NAMES[weekdayOf(orDate)].slice(0, 3) + ')' : '';
+  return (kind === 'Requested' ? 'Request: ' : '') + first + ' ' + start + (people > 1 ? ' (' + people + ')' : '') + ' web' + or;
 }
 
 /** Put the booking in the first empty cell of that day's intro-flight block. Returns its A1 address, or ''. */
@@ -476,6 +518,7 @@ function emailLinks(token) {
   var site = siteOrigin();
   return {
     cancel: ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(token),
+    confirm: ScriptApp.getService().getUrl() + '?action=confirm&token=' + encodeURIComponent(token),
     calendar: site + '/discovery-flight/#request',
     site: site,
     email: prop('CLUB_EMAIL'),
@@ -524,6 +567,68 @@ function bookingsSheet() {
   var sh = sheet(BOOKING.TAB, BOOKING.HEADERS);
   if (sh.getLastColumn() < BOOKING.HEADERS.length) sh.getRange(1, 1, 1, BOOKING.HEADERS.length).setValues([BOOKING.HEADERS]);
   return sh;
+}
+
+/**
+ * Move a flexible weekend booking (sheet row index i) to the other day of the weekend.
+ * Clears its schedule cell, writes the new one, updates the row and certificates, emails the guest
+ * to confirm and tells the club. Returns true if it moved.
+ */
+function moveBookingRow(sh, rows, i, availByDate) {
+  var r = rows[i];
+  var b = { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1, name: String(r[6]), email: String(r[7]) };
+  var to = planWeekendMove(b, availByDate);
+  if (!to) return false;
+  var sched = scheduleSheet();
+  var a1 = r[13], oldText = r[14];
+  if (a1) {
+    var cell = sched.getRange(a1);
+    if (String(cell.getDisplayValue()) === String(oldText)) cell.clearContent();
+  }
+  var grid = sched.getDataRange().getDisplayValues();
+  var days = scheduleDays(grid);
+  var text = scheduleText('Held', b.name.split(/\s+/)[0], to.start, b.people, null);
+  var newCell = writeToSchedule(sched, grid, days, to.date, text);
+  var newStatus = '';
+  days.forEach(function (d) { if (d.date === to.date) newStatus = d.statusText; });
+  var col = function (name) { return BOOKING.HEADERS.indexOf(name) + 1; };
+  sh.getRange(i + 1, col('Date')).setValue(to.date);
+  sh.getRange(i + 1, col('Start')).setValue("'" + to.start);
+  sh.getRange(i + 1, col('Schedule cell')).setValue(newCell);
+  sh.getRange(i + 1, col('Schedule text')).setValue(text);
+  sh.getRange(i + 1, col('Last status')).setValue(newStatus);
+  sh.getRange(i + 1, col('Moved from')).setValue(b.date + ' ' + b.start);
+  sh.getRange(i + 1, col('Move confirmed')).setValue('Waiting');
+  moveCodesDate(String(r[12]), to.date);
+  clearAvailabilityCache();
+  var moved = { name: b.name, date: to.date, start: to.start, people: b.people };
+  sendGuestEmail(b.email, moveEmail(moved, b.date, emailLinks(String(r[12]))));
+  MailApp.sendEmail({
+    to: prop('CLUB_EMAIL'),
+    replyTo: b.email,
+    subject: 'Guest moved to ' + longDate(to.date) + ': ' + b.name,
+    body: b.name + ' was booked for ' + whenText(b) + ', which is now cancelled. They said either weekend day works, so they are now pencilled in for ' +
+      whenText(moved) + ' and have been asked to confirm. The Bookings tab shows "Move confirmed".'
+  });
+  return true;
+}
+
+/** The guest's "Yes, see you then" link after a move. */
+function confirmMove(token) {
+  token = String(token || '');
+  var calendar = siteOrigin() + '/discovery-flight/#request';
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return HtmlService.createHtmlOutput(cancelPageHtml('Booking not found', 'That link is not valid.', calendar));
+  var sh = bookingsSheet();
+  var rows = sh.getDataRange().getValues();
+  var col = function (name) { return BOOKING.HEADERS.indexOf(name) + 1; };
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][12] !== token) continue;
+    if (rows[i][5] === 'Cancelled') return HtmlService.createHtmlOutput(cancelPageHtml('This booking was cancelled', 'Pick another day whenever it suits you.', calendar));
+    sh.getRange(i + 1, col('Move confirmed')).setValue('Yes');
+    var b = { date: isoOf(rows[i][1]), start: hhmmOf(rows[i][2]), people: Number(rows[i][3]) || 1 };
+    return HtmlService.createHtmlOutput(cancelPageHtml('Thanks, see you ' + DAY_NAMES[weekdayOf(b.date)], 'You are pencilled in for ' + whenText(b) + '. We will send a reminder the day before with the latest from the field.', ''));
+  }
+  return HtmlService.createHtmlOutput(cancelPageHtml('Booking not found', 'We could not find that booking.', calendar));
 }
 
 function cancelBooking(token) {

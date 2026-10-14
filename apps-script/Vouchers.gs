@@ -471,6 +471,16 @@ function markCodesBooked(sheetRows, token, date) {
   });
 }
 
+/** When a booking moves to the other weekend day, its certificates follow it. */
+function moveCodesDate(token, date) {
+  if (!token) return;
+  var sh = vouchersSheet();
+  var rows = sh.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][VC['Booking token'] - 1] === token && rows[i][VC['Status'] - 1] === 'Booked') sh.getRange(i + 1, VC['Booked date']).setValue(date);
+  }
+}
+
 /** When a booking is cancelled, its certificates can be used again. */
 function releaseCodes(token) {
   if (!token) return;

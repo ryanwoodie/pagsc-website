@@ -183,7 +183,7 @@ const config = {
       // 2. Day
       const dayStep = el('fieldset', { class: 'bk-step' }, el('legend', {}, '2. Pick a day'));
       const legend = el('ul', { class: 'bk-legend' },
-        el('li', {}, el('span', { class: 'bk-key bk-key--weekend' }), 'Weekends: we pencil you in'),
+        el('li', {}, el('span', { class: 'bk-key bk-key--weekend' }), 'Weekends: we pencil you in. We usually fly one day each weekend, depending on the weather.'),
         el('li', {}, el('span', { class: 'bk-key bk-key--weekday' }), 'Weekdays: a request we confirm by email'));
       const grid = el('div', { class: 'bk-days' });
       for (const d of state.days) {
@@ -237,6 +237,7 @@ const config = {
         field('bk-name', 'Name', el('input', { id: 'bk-name', name: 'name', type: 'text', autocomplete: 'name', required: '' })),
         field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
         field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' })),
+        ...flexQuestion(day),
         radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
         radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
         codeField,
@@ -259,6 +260,18 @@ const config = {
 
     function field(id: string, label: string, input: HTMLElement) {
       return el('div', { class: 'field' }, el('label', { for: id }, label), input);
+    }
+
+    /** For a weekend booking: could they come on the other day of the weekend instead? Required, nothing preselected. */
+    function flexQuestion(day: Day): HTMLElement[] {
+      if (day.kind !== 'weekend') return [];
+      const wd = asDate(day.date).getUTCDay();
+      const other = new Date(asDate(day.date).getTime() + (wd === 6 ? 1 : -1) * 86400000).toISOString().slice(0, 10);
+      const otherDay = state.days.find((d) => d.date === other);
+      if (!otherDay || otherDay.status === 'cancelled') return [];
+      const thisName = new Intl.DateTimeFormat('en-CA', { weekday: 'long', timeZone: 'UTC' }).format(asDate(day.date));
+      return [radios('flexible', `If we only fly one day that weekend, could you come on ${fmtLong.format(asDate(other))} instead?`,
+        [['yes', 'Yes, either day works'], ['no', `No, only ${thisName}`]], '')];
     }
 
     function radios(name: string, legend: string, options: [string, string][], checked: string) {

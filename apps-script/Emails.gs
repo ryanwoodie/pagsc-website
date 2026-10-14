@@ -198,6 +198,25 @@ function statusEmail(b, held, day, links) {
   };
 }
 
+/** Sent when a flexible weekend booking moves to the other day because its day was cancelled. */
+function moveEmail(b, fromDate, links) {
+  var first = String(b.name).split(/\s+/)[0];
+  var dayName = DAY_NAMES[weekdayOf(b.date)];
+  var body = heading('Flying moved to ' + dayName) +
+    para('Hi ' + esc(first) + ', the club is not flying on ' + esc(longDate(fromDate)) + '. You said either day of the weekend works, so we have pencilled you in for ' + esc(dayName) + ' instead.') +
+    whenPanel(b, 'Your new pencilled-in time') +
+    para('Is ' + esc(dayName) + ' still good?') +
+    button('Yes, see you ' + dayName, links.confirm) +
+    button('Pick another day', links.cancel, true) +
+    para('<span style="font-size:14px;color:' + EMAIL.GREY + '">If we do not hear from you, you stay pencilled in for ' + esc(dayName) + '. Flying still depends on the weather and volunteers; we will send a reminder the day before.</span>');
+  return {
+    subject: 'Flying moved to ' + dayName + ": you're pencilled in for " + clock12(b.start),
+    html: layout('Flying moved to ' + whenText(b), body, links),
+    text: ['Hi ' + first + ',', '', 'The club is not flying on ' + longDate(fromDate) + '. You said either day works, so you are now pencilled in for ' + whenText(b) + '.', '',
+      'Still good? ' + links.confirm, 'Pick another day: ' + links.cancel, '', 'If we do not hear from you, you stay pencilled in.', '', EMAIL.CLUB].join('\n')
+  };
+}
+
 /** The page a guest sees after using the cancel link. */
 function cancelPageHtml(title, message, calendarUrl) {
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + '</title></head>' +

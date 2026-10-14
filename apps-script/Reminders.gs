@@ -31,6 +31,8 @@ function runReminders() {
 
     var sh = bookingsSheet();
     var rows = sh.getDataRange().getValues();
+    var flexCol = BOOKING.HEADERS.indexOf('Either weekend day'), movedCol = BOOKING.HEADERS.indexOf('Moved from');
+    var availByDate = null;
     for (var i = 1; i < rows.length; i++) {
       var r = rows[i];
       if (!r[1] || r[5] === 'Cancelled') continue;
@@ -39,6 +41,19 @@ function runReminders() {
       if (daysUntil < 0) continue;
       var day = byDate[b.date] || { statusText: '', weather: '', instructor: false };
       var held = r[5] === 'Held';
+
+      // Flexible weekend guests move to the other day when theirs is cancelled (not on two-day weekends).
+      if (held && r[flexCol] === 'Yes' && !r[movedCol] && classifyStatus(day.statusText) === 'cancelled') {
+        if (!availByDate) {
+          availByDate = {};
+          computeAvailability(scheduleDays(scheduleSheet().getDataRange().getDisplayValues()), activeBookings(), guestCaps(), today)
+            .forEach(function (a) { availByDate[a.date] = a; });
+        }
+        if (moveBookingRow(sh, rows, i, availByDate)) {
+          availByDate = null; // spots changed; recompute for the next guest
+          continue;
+        }
+      }
       var links = emailLinks(String(r[12]));
       var lead = daysBetween(isoOf(r[0]), b.date);
       var sent = String(r[15] || '');
