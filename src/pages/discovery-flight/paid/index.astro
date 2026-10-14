@@ -30,6 +30,7 @@ import { facts } from '../../../lib/facts';
 </Base>
 
 <script>
+  import { adsPurchase } from '../../../scripts/track';
   const box = document.querySelector<HTMLElement>('.certs');
   const session = new URLSearchParams(location.search).get('session_id') || '';
   if (box && box.dataset.endpoint && /^cs_(live|test)_\w+$/.test(session)) {
@@ -46,6 +47,7 @@ import { facts } from '../../../lib/facts';
         const data = await res.json();
         if (data.ok) {
           const codes: string[] = data.codes;
+          adsPurchase(session, codes.length > 1 ? codes.length * 40 : 50);
           const many = codes.length > 1;
           status.textContent = `We've emailed ${many ? 'the certificates' : 'your certificate'} to ${data.email}.`;
           list.replaceChildren(

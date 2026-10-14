@@ -57,6 +57,15 @@ const ld = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
     <!-- GoatCounter: cookie-free page views, plus a few events (see src/scripts/track.ts) -->
     <script is:inline data-goatcounter="https://pagsc.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+
+    <!-- Google tag: Ad Grants conversion tracking (account AW-18512596409). Conversion events fire from src/scripts/track.ts -->
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=AW-18512596409"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-18512596409');
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
