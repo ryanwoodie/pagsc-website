@@ -61,7 +61,7 @@ export function classifyStatus(text) {
   if (!t.trim()) return '';
   if (/\b(cancel+ed|cancel+ing|cancel|scrubbed|no fly(ing)?|not flying|grounded|day is off|is off|off today)\b/.test(t)) return 'cancelled';
   if (/\b(delay(ed)?|postpon\w*|later start|on hold|tbd|wait(ing)? (and|&) see)\b/.test(t)) return 'delayed';
-  if (/\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed)\b/.test(t)) return 'on';
+  if (/\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed|discovery flights? (are )?(now )?(available|open))\b/.test(t)) return 'on';
   return 'unknown';
 }
 

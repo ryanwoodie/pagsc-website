@@ -33,7 +33,7 @@ var BOOKING = {
   WEEKEND_CAP: 8,        // guest flights per weekend, Saturday and Sunday combined
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
-  SAME_DAY_LEAD: 60,     // on a confirmed day, book the same day up to this many minutes before a start time
+  SAME_DAY_LEAD: 60,     // on a day opened to guests, book the same day up to this many minutes before a start time
   TZ: 'America/Regina',
   TAB: 'Bookings',
   REMIND_HOUR: 9,        // week and 3-day reminders go out from this hour (field time)
@@ -83,8 +83,25 @@ function classifyStatus(text) {
   if (!t.trim()) return '';
   if (/\b(cancel+ed|cancel+ing|cancel|scrubbed|no fly(ing)?|not flying|grounded|day is off|is off|off today)\b/.test(t)) return 'cancelled';
   if (/\b(delay(ed)?|postpon\w*|later start|on hold|tbd)\b/.test(t)) return 'delayed';
-  if (/\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed)\b/.test(t)) return 'on';
+  if (/\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed|discovery flights? (are )?(now )?(available|open))\b/.test(t)) return 'on';
   return 'unknown';
+}
+
+/**
+ * Has the club opened the day to Discovery Flight guests? The Status / Comments text says so with
+ * "Discovery flights available" (or "open"), optionally with the number of guest flights that day in
+ * total, counting those already booked: "Discovery flights available: 4". A cancellation overrides it.
+ * Opening a day lets guests paying at the field book it and emails the standby list.
+ * @returns null if not open, else {spots: number or null}
+ */
+function guestOpening(text) {
+  var t = String(text || '').toLowerCase();
+  if (classifyStatus(t) === 'cancelled') return null;
+  var m = /discovery flights?\s*(?:are\s+)?(?:now\s+)?(?:available|open)\b(?:\s*[:(,\-–—]?\s*(\d{1,2})\b)?/.exec(t);
+  if (!m) return null;
+  var before = /(\d{1,2})\s+discovery flights?\s*(?:are\s+)?(?:now\s+)?(?:available|open)/.exec(t);
+  var n = m[1] || (before && before[1]);
+  return { spots: n ? Number(n) : null };
 }
 
 function weekdayOf(iso) {
@@ -194,8 +211,8 @@ function scheduleDays(grid) {
  * @param bookings [{date, start, people}] that are not cancelled
  * @param caps {date: cap} overrides
  * @param today ISO date on the field
- * @param nowMin minutes since midnight on the field. When given, today is included if flying is
- *   confirmed, with start times less than SAME_DAY_LEAD minutes away taken.
+ * @param nowMin minutes since midnight on the field. When given, today is included if it is open to
+ *   guests (guestOpening), with start times less than SAME_DAY_LEAD minutes away taken.
  */
 function computeAvailability(days, bookings, caps, today, nowMin) {
   var times = slotTimes();
@@ -211,7 +228,8 @@ function computeAvailability(days, bookings, caps, today, nowMin) {
   var capFor = function (date) { return caps && caps[date] != null && caps[date] !== '' ? Number(caps[date]) : null; };
   days.forEach(function (d) {
     var isToday = d.date === today;
-    if (isToday ? !(sameDay && classifyStatus(d.statusText) === 'on') : d.date < first || d.date > last) return;
+    var opening = guestOpening(d.statusText);
+    if (isToday ? !(sameDay && opening) : d.date < first || d.date > last) return;
     var wd = weekdayOf(d.date);
     var taken = {};
     if (isToday) times.forEach(function (t, i) { if (toMinutes(t) < nowMin + BOOKING.SAME_DAY_LEAD) taken[i] = true; });
@@ -230,11 +248,13 @@ function computeAvailability(days, bookings, caps, today, nowMin) {
     } else {
       remaining = (capFor(d.date) != null ? capFor(d.date) : times.length) - BOOKING.STUDENT_COST * (d.students || 0) - used;
     }
+    if (opening && opening.spots != null) remaining = Math.min(remaining, opening.spots - used);
     if (isToday) remaining = Math.min(remaining, times.filter(function (t, i) { return !taken[i]; }).length);
     out.push({
       date: d.date,
       kind: wd === 0 || wd === 6 ? 'weekend' : 'weekday',
       status: classifyStatus(d.statusText),
+      open: !!opening,
       statusText: d.statusText,
       remaining: Math.max(0, remaining),
       slots: times.map(function (t, i) { return { time: t, free: !taken[i] }; })
@@ -485,9 +505,10 @@ function bookingPost(p) {
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
     if (why) return json({ ok: false, error: why, refresh: true });
-    // Weekend spots are held only for paid flights until the club confirms the day; then it opens to everyone.
-    if (day.kind === 'weekend' && !prepaid && day.status !== 'on') {
-      return json({ ok: false, error: 'Weekend spots are for paid flights until the day is confirmed. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
+    // Weekend spots are held only for paid flights until the club opens the day to guests
+    // ("Discovery flights available" in the Status row); then anyone can book.
+    if (day.kind === 'weekend' && !prepaid && !day.open) {
+      return json({ ok: false, error: 'Weekend spots are for paid flights until the club opens the day to guests. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
     }
     var codeCheck = checkCodes(b.codes, b.people);
     if (codeCheck.error) return json({ ok: false, error: codeCheck.error });

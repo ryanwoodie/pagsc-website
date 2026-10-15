@@ -47,7 +47,7 @@ const config = {
 <script>
   import { track, adsBooking } from '../scripts/track';
   type Slot = { time: string; free: boolean };
-  type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; statusText: string; remaining: number; slots: Slot[] };
+  type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; open?: boolean; statusText: string; remaining: number; slots: Slot[] };
   type Snapshot = { updated: string | null; days: Day[] };
   type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string };
   const CACHE_KEY = 'pagsc-availability';
@@ -282,9 +282,9 @@ const config = {
       return el('div', { class: 'field' }, el('label', { for: id }, label, ...(note ? [note] : [])), input);
     }
 
-    /** Weekend days not yet confirmed by the club: unpaid guests join the standby list instead of booking. */
+    /** Weekend days the club has not opened to guests yet: unpaid guests join the standby list instead of booking. */
     function isStandbyDay(day: Day) {
-      return day.kind === 'weekend' && day.status !== 'on';
+      return day.kind === 'weekend' && !day.open;
     }
 
     /** For a weekend booking: could they come on the other day of the weekend instead? Required, nothing preselected. */

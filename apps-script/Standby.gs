@@ -6,9 +6,10 @@
  *   Day      one weekend day
  *   Weekend  either day of one weekend
  *   Any      any weekend we fly (the general list)
- * Nothing is held. Once the club marks a day as on in the Status / Comments row, the hourly check emails
- * everyone waiting for it, all at once: "Flying is on, spots are open", first come, first served. That
- * includes the day itself: a day confirmed that morning opens for same-day booking (Booking.gs).
+ * Nothing is held. Once the club opens a day to guests ("Discovery flights available" in the Status /
+ * Comments row; see guestOpening in Booking.gs), the hourly check emails everyone waiting for it, all at
+ * once: "Flying is on, spots are open", first come, first served. That includes the day itself: a day
+ * opened that morning can be booked the same day.
  * Day and Weekend sign-ups get one email and are done. Any-weekend sign-ups get an email for each day that
  * opens and stay on the list until they book or take themselves off (a link in every email). Every
  * ASK_EVERY emails, the email asks whether they would like to come off the list.
@@ -48,10 +49,10 @@ function standbyScope(scope, either) {
  */
 function standbyOpenDay(s, availByDate) {
   var own = availByDate[s.date];
-  if (own && own.status === 'on' && own.remaining > 0) return own;
+  if (own && own.open && own.remaining > 0) return own;
   if (s.flexible) {
     var other = availByDate[weekendPartner(s.date)];
-    if (other && other.status === 'on' && other.remaining > 0) return other;
+    if (other && other.open && other.remaining > 0) return other;
   }
   return null;
 }
@@ -59,7 +60,7 @@ function standbyOpenDay(s, availByDate) {
 /** Any-weekend sign-ups: confirmed weekend days with room for their group that they have not heard about yet. */
 function standbyAnyOpenDays(s, avail, notified) {
   return avail.filter(function (d) {
-    return d.kind === 'weekend' && d.status === 'on' && d.remaining >= s.people && notified.indexOf(d.date) < 0;
+    return d.kind === 'weekend' && d.open && d.remaining >= s.people && notified.indexOf(d.date) < 0;
   });
 }
 

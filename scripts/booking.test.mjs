@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { guestOpening, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -207,7 +207,7 @@ test('flexible weekend: partner day, move planning and schedule note', () => {
 });
 
 test('standby: opens when the day is on (or the other weekend day, if either works)', () => {
-  const day = (date, status, remaining) => ({ date, status, remaining });
+  const day = (date, status, remaining) => ({ date, status, open: status === 'on', remaining });
   const avail = { '2026-10-17': day('2026-10-17', '', 8), '2026-10-18': day('2026-10-18', 'on', 5) };
   assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: false }, avail), null); // Saturday not confirmed yet
   assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: true }, avail).date, '2026-10-18'); // either day: Sunday is on
@@ -229,9 +229,9 @@ test('standby: any weekend we fly', () => {
   assert.equal(standbyScope('', 'No'), 'Day');
   assert.equal(standbyScope('Any', 'No'), 'Any');
   const avail = [
-    { date: '2026-10-16', kind: 'weekday', status: 'on', remaining: 12 },
-    { date: '2026-10-17', kind: 'weekend', status: 'on', remaining: 3 },
-    { date: '2026-10-18', kind: 'weekend', status: 'on', remaining: 1 },
+    { date: '2026-10-16', kind: 'weekday', open: true, remaining: 12 },
+    { date: '2026-10-17', kind: 'weekend', open: true, remaining: 3 },
+    { date: '2026-10-18', kind: 'weekend', open: true, remaining: 1 },
     { date: '2026-10-24', kind: 'weekend', status: '', remaining: 8 },
   ];
   // Weekend days only, with room for the group, not already emailed about.
@@ -256,10 +256,10 @@ test('standby: any weekend we fly', () => {
   assert.ok(tenth.html.includes('Still want these emails?') && tenth.html.includes('email number 10') && tenth.html.includes('https://x/off'));
 });
 
-test('same day: a confirmed day opens today, from an hour ahead', () => {
+test('same day: a day opened to guests opens today, from an hour ahead', () => {
   const rows = [
     ['', 'Sat Oct 10,2026', 'Sun Oct 11,2026'],
-    ['Status/Comments:', 'Day is a go', ''],
+    ['Status/Comments:', 'Day is a go. Discovery flights available', ''],
     ['Intro', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below'],
   ];
   const days = scheduleDays(rows);
@@ -270,10 +270,32 @@ test('same day: a confirmed day opens today, from an hour ahead', () => {
   assert.equal(sat.date, '2026-10-10');
   assert.equal(sat.slots.find((x) => x.free).time, '13:30');
   assert.equal(sat.remaining, 7);
-  // Not confirmed: today stays closed even with the time.
-  rows[1][1] = 'Watching the wind';
+  // Flying but not opened to guests: today stays closed.
+  rows[1][1] = 'Day is a go';
   assert.equal(computeAvailability(scheduleDays(rows), [], {}, '2026-10-10', 9 * 60)[0].date, '2026-10-11');
   // Late in the day there is nothing left to book.
-  rows[1][1] = 'Day is a go';
+  rows[1][1] = 'Discovery flights available';
   assert.equal(computeAvailability(scheduleDays(rows), [], {}, '2026-10-10', 16 * 60)[0].remaining, 0);
+});
+
+test('guest opening: "Discovery flights available", with optional total spots', () => {
+  assert.deepEqual({ ...guestOpening('Day is a go. Discovery flights available') }, { spots: null });
+  assert.deepEqual({ ...guestOpening('Discovery flights available: 4') }, { spots: 4 });
+  assert.deepEqual({ ...guestOpening('Discovery Flights Open (3)') }, { spots: 3 });
+  assert.deepEqual({ ...guestOpening('Confirmed, 2 discovery flights available') }, { spots: 2 });
+  assert.equal(guestOpening('Day is a go'), null);
+  assert.equal(guestOpening('Confirmed'), null);
+  assert.equal(guestOpening('Cancelled: wind. Discovery flights available next weekend'), null);
+
+  // The number is guest flights that day in total: 4, with 1 already booked, leaves 3.
+  const rows = [
+    ['', 'Sat Oct 10,2026', 'Sun Oct 11,2026'],
+    ['Status/Comments:', 'Discovery flights available: 4', 'Day is a go'],
+    ['Intro', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below'],
+  ];
+  const [sat, sun] = computeAvailability(scheduleDays(rows), [{ date: '2026-10-10', start: '11:00', people: 1 }], {}, '2026-10-09');
+  assert.equal(sat.open, true);
+  assert.equal(sat.remaining, 3);
+  assert.equal(sun.open, false); // flying, but not open to guests yet
+  assert.equal(sun.status, 'on');
 });
