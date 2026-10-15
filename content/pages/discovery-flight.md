@@ -51,7 +51,7 @@ Button: Send request
 
 Join the standby list. When the club confirms a flying day, we email everyone on the list, and any spots left are open to book, first come, first served.
 
-Form fields: number of people, name, email, phone, what you are after (Discovery Flight / first lesson), certificate code if you have bought a flight, weight confirmation, message.
+Form fields: number of people, name, email, phone (optional), what you are after (Discovery Flight / first lesson), certificate code if you have bought a flight, message.
 
 Hint under certificate code: Without one, you pay at the field (e-transfer or cash).
 

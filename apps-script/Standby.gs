@@ -93,14 +93,13 @@ function standbyPost(p) {
     interest: clean(p.interest) || 'Discovery flight',
     message: clean(p.message),
     flexible: scope === 'Weekend',
-    weightOk: p.weight_ok === 'yes',
     codes: []
   };
   var problems = [];
   if (!s.name) problems.push('your name');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email)) problems.push('a valid email address');
-  if (!/\d{3}.*\d{4}/.test(s.phone)) problems.push('a phone number');
-  if (!s.weightOk) problems.push('the weight confirmation');
+  // Phone and the weight check are asked for when they book, not to join the list.
+  if (s.phone && !/\d{3}.*\d{4}/.test(s.phone)) problems.push('a full phone number (or leave it blank)');
   if (!(s.people >= 1 && s.people <= BOOKING.MAX_GROUP)) problems.push('the number of people');
   if (problems.length) return json({ ok: false, error: 'We still need ' + problems.join(', ') + '.' });
   if (scope !== 'Any' && (!weekendPartner(s.date) || s.date <= todayOnField())) return json({ ok: false, error: 'The standby list is for weekend days.' });
@@ -142,7 +141,7 @@ function standbyPost(p) {
       'People: ' + s.people,
       s.codes.length ? 'Certificates: ' + s.codes.join(', ') : null,
       'Email: ' + s.email,
-      'Phone: ' + s.phone,
+      'Phone: ' + (s.phone || '(not given)'),
       'Interest: ' + s.interest,
       'Message: ' + (s.message || '(none)'),
       '',

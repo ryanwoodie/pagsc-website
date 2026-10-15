@@ -4,7 +4,7 @@
 // certificate codes (from ?code= or the paid page) so the email links fill them in.
 // Needs JavaScript (the script answers with JSON); without it the form stays hidden.
 import { FORM_ENDPOINT } from '../config';
-import { facts, df, telHref } from '../lib/facts';
+import { facts, telHref } from '../lib/facts';
 
 const max = facts.booking.max_group;
 const payAtField = facts.fees.guest_payment.toLowerCase();
@@ -34,8 +34,8 @@ const payAtField = facts.fees.guest_payment.toLowerCase();
       <input id="sb-email" name="email" type="email" autocomplete="email" required />
     </div>
     <div class="field">
-      <label for="sb-phone">Phone</label>
-      <input id="sb-phone" name="phone" type="tel" autocomplete="tel" required />
+      <label for="sb-phone">Phone <span class="optional">(optional)</span></label>
+      <input id="sb-phone" name="phone" type="tel" autocomplete="tel" />
     </div>
     <fieldset class="field field--choice">
       <legend>What are you after?</legend>
@@ -46,10 +46,6 @@ const payAtField = facts.fees.guest_payment.toLowerCase();
       <label for="sb-codes">Certificate code <span class="optional">(if you've bought a flight)</span></label>
       <input id="sb-codes" name="codes" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PAGSC-XXXX-XXXX" aria-describedby="sb-codes-hint" />
       <p class="hint" id="sb-codes-hint">Without one, you pay at the field ({payAtField}).</p>
-    </div>
-    <div class="field field--check">
-      <input id="sb-weight" name="weight_ok" type="checkbox" value="yes" required />
-      <label for="sb-weight">Everyone flying weighs {df.max_weight_lbs} lbs or less.</label>
     </div>
     <div class="field">
       <label for="sb-message">Message <span class="optional">(optional)</span></label>
