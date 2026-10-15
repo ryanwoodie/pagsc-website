@@ -211,7 +211,7 @@ const config = {
       if (day.statusText) timeStep.append(el('p', { class: 'bk-status' }, 'From the club: ', el('q', {}, day.statusText)));
       if (day.kind === 'weekday') timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekday flying happens when volunteers are free. Choose a time and a club member will email you to confirm or suggest another day.'));
       if (isStandbyDay(day)) timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekend spots are held for flights paid in advance. ',
-        el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms the day, we email you and any spots left are open to book.'));
+        el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms the day, we email you and any spots left are open to book. Happy with any weekend? ', el('a', { href: '#standby' }, 'Join the standby list for any weekend we fly'), '.'));
       const times = el('div', { class: 'bk-times' });
       for (const s of day.slots) {
         const ok = canBook(day, s.time, state.people);

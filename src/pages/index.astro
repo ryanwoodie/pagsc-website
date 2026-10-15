@@ -59,7 +59,7 @@ const latestNews = (await newsPosts()).slice(0, 3);
       row
       items={[
         { title: 'Buy your flight', text: `${money(df.price)} online, for yourself or as a gift.` },
-        { title: 'Book your flying day', text: `Pick a day and time on our <a href="${href('/discovery-flight/#request')}">booking calendar</a>.` },
+        { title: 'Pick your day', text: `Book ahead on our <a href="${href('/discovery-flight/#request')}">booking calendar</a>, or join the <a href="${href('/discovery-flight/#standby')}">standby list</a> and we email you when the weather is good and flying is confirmed.` },
         { title: 'Come out and fly', text: `Meet the crew at ${facts.location.airfield}, get a safety briefing, and launch.` },
       ]}
     />

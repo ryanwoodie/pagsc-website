@@ -203,6 +203,7 @@ function voucherEmail(order, codes, links) {
   var first = String(order.name || '').split(/\s+/)[0];
   var many = codes.length > 1;
   var book = bookingLink(links.site, codes);
+  var standby = links.site + '/discovery-flight/?code=' + codes.join(',') + '#standby';
   var codeList = codes.map(function (c) {
     return '<div style="font-family:\'Courier New\',Courier,monospace;font-size:22px;font-weight:700;letter-spacing:1px;color:' + EMAIL.INK + '">' + esc(c) + '</div>';
   }).join('');
@@ -214,6 +215,7 @@ function voucherEmail(order, codes, links) {
     panel(label(many ? 'Certificate codes' : 'Certificate code') + codeList) +
     para('To book, pick a day and a time on the calendar and enter the code' + (many ? 's, one for each person flying' : '') + '. Certificates never expire, and if a day is cancelled you rebook at no charge.') +
     button('Book your flying day', book) +
+    para('Rather wait for a good day? <a href="' + esc(standby) + '" style="color:#1F5F8F">Join the standby list</a> and we email you when the weather is good and flying is confirmed, then you book with your code.') +
     para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Questions? Just reply to this email.</span>');
   return {
     subject: many ? 'Your ' + codes.length + ' Discovery Flight certificates' : 'Your Discovery Flight certificate',
@@ -223,6 +225,7 @@ function voucherEmail(order, codes, links) {
       many ? 'Thanks for buying ' + codes.length + ' Discovery Flights. The certificates are attached.' : 'Thanks for buying a Discovery Flight. Your certificate is attached.', '',
       (many ? 'Certificate codes: ' : 'Certificate code: ') + codes.join(', '), '',
       'Book your flying day: ' + book, '',
+      'Or join the standby list and book when flying is confirmed: ' + standby, '',
       'Certificates never expire, and if a day is cancelled you rebook at no charge.', '',
       EMAIL.CLUB
     ].join('\n')

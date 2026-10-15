@@ -29,8 +29,8 @@ The winch pulls the glider into the air in seconds. At about 1,500 feet your pil
 ### 1. Buy your flight
 $50 online, for yourself or as a gift.
 
-### 2. Book your flying day
-Pick a day and time on the booking calendar below.
+### 2. Pick your day
+Book ahead on the booking calendar below, or join the standby list and we email you when the weather is good and flying is confirmed.
 
 ### 3. Come out and fly
 Check the day is on before you leave home, then meet us at the field.
@@ -46,6 +46,16 @@ Hint under preferred dates: Weekends are the main flying days.
 Checkbox: Everyone flying weighs 230 lbs or less.
 
 Button: Send request
+
+## Or wait for a good day
+
+Join the standby list. When the club confirms a flying day, we email everyone on the list, and any spots left are open to book, first come, first served.
+
+Form fields: number of people, name, email, phone, what you are after (Discovery Flight / first lesson), certificate code if you have bought a flight, weight confirmation, message.
+
+Hint under certificate code: Without one, you pay at the field (e-transfer or cash).
+
+Button: Join the standby list
 
 ## Your first day
 

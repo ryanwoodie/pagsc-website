@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { standbyOpenDay, standbyEmail, standbyOpenEmail, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { standbyOpenDay, standbyEmail, standbyOpenEmail, standbyCheckEmail, standbyAnyOpenDays, standbyCheckDue, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -214,9 +214,46 @@ test('standby: opens when the day is on (or the other weekend day, if either wor
   assert.equal(standbyOpenDay({ date: '2026-10-18', flexible: false }, avail).date, '2026-10-18');
   assert.equal(standbyOpenDay({ date: '2026-10-18', flexible: false }, { '2026-10-18': day('2026-10-18', 'on', 0) }), null); // full
   assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: true }, { '2026-10-18': day('2026-10-18', 'cancelled', 8) }), null);
-  const links = { cancel: '', confirm: '', calendar: '', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684' };
-  assert.match(standbyEmail({ name: 'Sam Lee', date: '2026-10-17', people: 2, flexible: true }, links).subject, /standby list: Saturday, October 17/);
-  const o = standbyOpenEmail({ name: 'Sam Lee' }, '2026-10-18', 5, 'https://www.pagsc.ca/discovery-flight/?date=2026-10-18#request', links);
+  const links = { cancel: '', confirm: '', calendar: '', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684', off: 'https://x/off', keep: 'https://x/keep' };
+  const e = standbyEmail({ scope: 'Weekend', name: 'Sam Lee', date: '2026-10-17', people: 2, flexible: true, codes: [] }, links);
+  assert.match(e.subject, /standby list: Saturday, October 17/);
+  assert.ok(e.html.includes('https://x/off') && e.html.includes('Buy a Discovery Flight'));
+  const link = standbyLink('https://www.pagsc.ca', '2026-10-18', []);
+  const o = standbyOpenEmail({ name: 'Sam Lee', codes: [] }, [{ date: '2026-10-18', remaining: 5, link }], links);
   assert.equal(o.subject, 'Flying is on Sunday, October 18: spots are open');
-  assert.ok(o.html.includes('?date=2026-10-18#request'));
+  assert.ok(o.html.includes('?date=2026-10-18#request') && o.html.includes('pay at the field'));
+});
+
+test('standby: any weekend we fly', () => {
+  assert.equal(standbyScope('', 'Yes'), 'Weekend');
+  assert.equal(standbyScope('', 'No'), 'Day');
+  assert.equal(standbyScope('Any', 'No'), 'Any');
+  const avail = [
+    { date: '2026-10-16', kind: 'weekday', status: 'on', remaining: 12 },
+    { date: '2026-10-17', kind: 'weekend', status: 'on', remaining: 3 },
+    { date: '2026-10-18', kind: 'weekend', status: 'on', remaining: 1 },
+    { date: '2026-10-24', kind: 'weekend', status: '', remaining: 8 },
+  ];
+  // Weekend days only, with room for the group, not already emailed about.
+  assert.deepEqual(standbyAnyOpenDays({ people: 2 }, avail, []).map((d) => d.date), ['2026-10-17']);
+  assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17']).map((d) => d.date), ['2026-10-18']);
+  assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17', '2026-10-18']), []);
+
+  // "Still interested?" after 8 weeks; off the list a week after that with no answer.
+  assert.equal(standbyCheckDue('2026-10-01', '', '2026-11-25'), '');
+  assert.equal(standbyCheckDue('2026-10-01', '', '2026-11-26'), 'check');
+  assert.equal(standbyCheckDue('2026-10-01', '2026-11-26', '2026-12-02'), '');
+  assert.equal(standbyCheckDue('2026-10-01', '2026-11-26', '2026-12-03'), 'expire');
+
+  const links = { site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684', off: 'https://x/off', keep: 'https://x/keep' };
+  const codes = ['PAGSC-7KQ2-XM9D'];
+  const e = standbyEmail({ scope: 'Any', name: 'Sam Lee', date: '', people: 1, codes }, links);
+  assert.equal(e.subject, "You're on the standby list");
+  assert.ok(e.html.includes('Any weekend we fly') && e.html.includes('?code=PAGSC-7KQ2-XM9D') && !e.html.includes('Buy a Discovery Flight'));
+  const days = ['2026-10-17', '2026-10-18'].map((date) => ({ date, remaining: 3, link: standbyLink(links.site, date, codes) }));
+  const o = standbyOpenEmail({ name: 'Sam Lee', codes }, days, links);
+  assert.equal(o.subject, 'Flying is on Saturday, October 17 and Sunday, October 18: spots are open');
+  assert.ok(o.html.includes('?date=2026-10-18&amp;code=PAGSC-7KQ2-XM9D#request') && o.html.includes('Book a spot on Saturday'));
+  const c = standbyCheckEmail({ name: 'Sam Lee' }, links);
+  assert.ok(c.html.includes('https://x/keep') && c.html.includes('https://x/off'));
 });

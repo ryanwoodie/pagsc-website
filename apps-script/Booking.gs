@@ -354,6 +354,8 @@ function doGet(e) {
   if (p.action === 'cancel') return cancelBooking(p.token);
   if (p.action === 'confirm') return confirmMove(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
+  if (p.action === 'standby-off') return standbyAction(p.token, false);
+  if (p.action === 'standby-keep') return standbyAction(p.token, true);
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
 }
 
@@ -503,6 +505,7 @@ function bookingPost(p) {
   }
 
   sendBookingEmails(b, result);
+  try { standbyBooked(b.email); } catch (err) { /* the booking stands; the standby row can be tidied by hand */ }
   return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people });
 }
 

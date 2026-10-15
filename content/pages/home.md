@@ -25,8 +25,8 @@ No engine. No experience needed. A winch launch to about 1,500 feet, and some of
 ### 1. Buy your flight
 $50 online, for yourself or as a gift.
 
-### 2. Book your flying day
-Pick a day and time on our booking calendar.
+### 2. Pick your day
+Book ahead on our booking calendar, or join the standby list and we email you when the weather is good and flying is confirmed.
 
 ### 3. Come out and fly
 Meet the crew at Birch Hills Airport, get a safety briefing, and launch.

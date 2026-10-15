@@ -1,20 +1,27 @@
 /**
- * Standby list for weekend guests who want to pay at the field.
+ * Standby list: guests who would rather wait for a good flying day than book ahead.
  *
- * Weekend spots are held only for paid flights (a certificate code). A guest who wants to pay at
- * the field joins the standby list for a day (and, if they say so, either day of that weekend).
- * Nothing is held. Once the club marks that day as on in the Status / Comments row, the day opens
- * to pay-at-the-field bookings, and the hourly check emails everyone waiting for it: "Flying is on,
- * spots are open", first come, first served, up to the spots left.
+ * Weekend spots are held only for paid flights (a certificate code) until the club confirms the day.
+ * Anyone can join the standby list instead, paid or paying at the field, for:
+ *   Day      one weekend day
+ *   Weekend  either day of one weekend
+ *   Any      any weekend we fly (the general list)
+ * Nothing is held. Once the club marks a day as on in the Status / Comments row, the hourly check emails
+ * everyone waiting for it, all at once: "Flying is on, spots are open", first come, first served.
+ * Day and Weekend sign-ups get one email and are done. Any-weekend sign-ups get an email for each day that
+ * opens and stay on the list until they book, take themselves off (a link in every email), or do not
+ * answer a "Still interested?" email sent every 8 weeks.
  *
- * Standby tab (requests sheet): one row per sign-up. Status: Waiting -> Notified, or Expired once
- * the day has passed.
+ * Standby tab (requests sheet): one row per sign-up. Status: Waiting -> Notified (Day, Weekend),
+ * Booked, Removed, Replaced (signed up again), or Expired.
  */
 
 var STANDBY = {
   TAB: 'Standby',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Either weekend day', 'Name', 'Email', 'Phone', 'Interest',
-    'Message', 'Status', 'Notified', 'Opened date']
+    'Message', 'Status', 'Notified', 'Opened date', 'Scope', 'Codes', 'Token', 'Days notified', 'Check sent', 'Kept'],
+  CHECK_DAYS: 56,   // ask any-weekend guests whether they are still interested this often
+  ANSWER_DAYS: 7    // and take them off if they do not answer within this many days
 };
 
 function standbySheet() {
@@ -23,8 +30,18 @@ function standbySheet() {
   return sh;
 }
 
+function standbyCol(name) {
+  return STANDBY.HEADERS.indexOf(name) + 1;
+}
+
+/** 'Day', 'Weekend' or 'Any'. Rows from before the Scope column use the either-day answer. */
+function standbyScope(scope, either) {
+  if (scope === 'Any' || scope === 'Weekend' || scope === 'Day') return scope;
+  return either === 'Yes' ? 'Weekend' : 'Day';
+}
+
 /**
- * Which day, if any, has opened for a standby sign-up: its own date if flying is on, otherwise the
+ * Which day, if any, has opened for a one-weekend sign-up: its own date if flying is on, otherwise the
  * other weekend day if they said either works and that day is on. Only days still bookable online.
  * @param s {date, flexible}  @param availByDate {date: availability day}
  */
@@ -38,18 +55,51 @@ function standbyOpenDay(s, availByDate) {
   return null;
 }
 
+/** Any-weekend sign-ups: confirmed weekend days with room for their group that they have not heard about yet. */
+function standbyAnyOpenDays(s, avail, notified) {
+  return avail.filter(function (d) {
+    return d.kind === 'weekend' && d.status === 'on' && d.remaining >= s.people && notified.indexOf(d.date) < 0;
+  });
+}
+
+/**
+ * Any-weekend sign-ups: 'check' when the "Still interested?" email is due, 'expire' when it went
+ * unanswered, otherwise ''. Dates are yyyy-MM-dd; since is when they joined or last said keep me on.
+ */
+function standbyCheckDue(since, checkSent, today) {
+  if (checkSent) return daysBetween(checkSent, today) >= STANDBY.ANSWER_DAYS ? 'expire' : '';
+  return daysBetween(since, today) >= STANDBY.CHECK_DAYS ? 'check' : '';
+}
+
+/** Where a standby email sends them: the calendar on that day, with their certificate codes filled in. */
+function standbyLink(site, date, codes) {
+  return site + '/discovery-flight/?date=' + date + (codes && codes.length ? '&code=' + codes.join(',') : '') + '#request';
+}
+
+/** Email links plus the standby leave and keep links for one sign-up. */
+function standbyLinks(token) {
+  var links = emailLinks('');
+  var base = ScriptApp.getService().getUrl() + '?token=' + encodeURIComponent(token) + '&action=';
+  links.off = base + 'standby-off';
+  links.keep = base + 'standby-keep';
+  return links;
+}
+
 function standbyPost(p) {
+  var scope = p.scope === 'any' ? 'Any' : p.scope === 'weekend' || p.flexible === 'yes' ? 'Weekend' : 'Day';
   var s = {
-    date: clean(p.date),
-    start: clean(p.start),
+    scope: scope,
+    date: scope === 'Any' ? '' : clean(p.date),
+    start: scope === 'Any' ? '' : clean(p.start),
     people: parseInt(p.people, 10),
     name: clean(p.name),
     email: clean(p.email),
     phone: clean(p.phone),
     interest: clean(p.interest) || 'Discovery flight',
     message: clean(p.message),
-    flexible: p.flexible === 'yes',
-    weightOk: p.weight_ok === 'yes'
+    flexible: scope === 'Weekend',
+    weightOk: p.weight_ok === 'yes',
+    codes: []
   };
   var problems = [];
   if (!s.name) problems.push('your name');
@@ -58,64 +108,147 @@ function standbyPost(p) {
   if (!s.weightOk) problems.push('the weight confirmation');
   if (!(s.people >= 1 && s.people <= BOOKING.MAX_GROUP)) problems.push('the number of people');
   if (problems.length) return json({ ok: false, error: 'We still need ' + problems.join(', ') + '.' });
-  if (!weekendPartner(s.date) || s.date <= todayOnField()) return json({ ok: false, error: 'The standby list is for weekend days.' });
+  if (scope !== 'Any' && (!weekendPartner(s.date) || s.date <= todayOnField())) return json({ ok: false, error: 'The standby list is for weekend days.' });
+  var parsed = parseCodes(p.codes);
+  if (parsed.bad.length) return json({ ok: false, error: '"' + clean(parsed.bad[0]) + '" is not a certificate code. Codes look like PAGSC-7KQ2-XM9D.' });
+  s.codes = parsed.codes.slice(0, BOOKING.MAX_GROUP);
 
+  var token = Utilities.getUuid();
   var lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
-    standbySheet().appendRow([new Date(), s.date, "'" + s.start, s.people, s.flexible ? 'Yes' : 'No', s.name, s.email, s.phone,
-      s.interest, s.message, 'Waiting', '', '']);
+    var sh = standbySheet();
+    // Signing up for any weekend replaces their earlier sign-ups that are still waiting.
+    if (scope === 'Any') {
+      var rows = sh.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        if (rows[i][standbyCol('Status') - 1] === 'Waiting' && String(rows[i][standbyCol('Email') - 1]).toLowerCase() === s.email.toLowerCase()) {
+          sh.getRange(i + 1, standbyCol('Status')).setValue('Replaced');
+        }
+      }
+    }
+    sh.appendRow([new Date(), s.date, s.start ? "'" + s.start : '', s.people, s.flexible ? 'Yes' : 'No', s.name, s.email, s.phone,
+      s.interest, s.message, 'Waiting', '', '', scope, s.codes.join(', '), token, '', '', '']);
   } finally {
     lock.releaseLock();
   }
 
-  var links = emailLinks('');
-  sendGuestEmail(s.email, standbyEmail(s, links));
+  sendGuestEmail(s.email, standbyEmail(s, standbyLinks(token)));
+  var forWhat = scope === 'Any' ? 'any weekend we fly' : longDate(s.date) + (s.flexible ? ' (or the other day of that weekend)' : '');
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
     replyTo: s.email,
-    subject: 'Standby: ' + s.name + ', ' + longDate(s.date) + (s.flexible ? ' (either day)' : '') + ', ' + s.people + (s.people === 1 ? ' person' : ' people'),
+    subject: 'Standby: ' + s.name + ', ' + (scope === 'Any' ? 'any weekend' : longDate(s.date) + (s.flexible ? ' (either day)' : '')) + ', ' + s.people + (s.people === 1 ? ' person' : ' people'),
     body: [
-      s.name + ' joined the standby list to pay at the field.',
+      s.name + ' joined the standby list' + (s.codes.length ? ' (paid online).' : ' to pay at the field.'),
       '',
-      'Day: ' + longDate(s.date) + (s.flexible ? ' (or the other day of that weekend)' : ''),
-      'Preferred time: ' + clock12(s.start),
+      'For: ' + forWhat,
+      s.start ? 'Preferred time: ' + clock12(s.start) : null,
       'People: ' + s.people,
+      s.codes.length ? 'Certificates: ' + s.codes.join(', ') : null,
       'Email: ' + s.email,
       'Phone: ' + s.phone,
       'Interest: ' + s.interest,
       'Message: ' + (s.message || '(none)'),
       '',
-      'When you mark the day as on in the Status row, they get an email within the hour that spots are open.'
-    ].join('\n')
+      'When you mark a day as on in the Status row, they get an email within the hour that spots are open.'
+    ].filter(function (line) { return line !== null; }).join('\n')
   });
-  return json({ ok: true, kind: 'Standby', date: s.date, people: s.people });
+  return json({ ok: true, kind: 'Standby', scope: scope, date: s.date, people: s.people });
 }
 
-/** Hourly (from runReminders): tell waiting standby guests when their day is confirmed. */
+/** After a booking: anyone with that email still waiting on the standby list comes off it. */
+function standbyBooked(email) {
+  var sh = standbySheet();
+  var rows = sh.getDataRange().getValues();
+  email = String(email).toLowerCase();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][standbyCol('Status') - 1] === 'Waiting' && String(rows[i][standbyCol('Email') - 1]).toLowerCase() === email) {
+      sh.getRange(i + 1, standbyCol('Status')).setValue('Booked');
+    }
+  }
+}
+
+/** The leave and keep links in standby emails. */
+function standbyAction(token, keep) {
+  token = String(token || '');
+  var calendar = siteOrigin() + '/discovery-flight/#request';
+  var page = function (title, message, showCalendar) {
+    return HtmlService.createHtmlOutput(cancelPageHtml(title, message, showCalendar ? calendar : '', 'Book a flight'));
+  };
+  if (!/^[0-9a-f-]{36}$/i.test(token)) return page('Not found', 'That link is not valid.', true);
+  var sh = standbySheet();
+  var rows = sh.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][standbyCol('Token') - 1] !== token) continue;
+    var status = rows[i][standbyCol('Status') - 1];
+    if (keep) {
+      if (status !== 'Waiting') return page('You are off the standby list', 'This sign-up has ended. You can join the list again, or book a flight, on the website.', true);
+      sh.getRange(i + 1, standbyCol('Kept')).setValue(new Date());
+      sh.getRange(i + 1, standbyCol('Check sent')).setValue('');
+      return page("You're still on the standby list", 'Thanks. We will email you when the club confirms a flying day.', false);
+    }
+    if (status === 'Waiting') {
+      sh.getRange(i + 1, standbyCol('Status')).setValue('Removed');
+      MailApp.sendEmail({ to: prop('CLUB_EMAIL'), subject: 'Standby: ' + rows[i][standbyCol('Name') - 1] + ' left the list', body: rows[i][standbyCol('Name') - 1] + ' took themselves off the standby list.' });
+    }
+    return page("You're off the standby list", 'We will not email you about flying days. You can book a flight on the website any time.', true);
+  }
+  return page('Not found', 'That link is not valid.', true);
+}
+
+/** Hourly (from runReminders): tell waiting standby guests when a day they want is confirmed. */
 function openStandby(today) {
   var sh = standbySheet();
   var rows = sh.getDataRange().getValues();
   if (rows.length < 2) return;
+  var avail = computeAvailability(scheduleDays(scheduleSheet().getDataRange().getDisplayValues()), activeBookings(), guestCaps(), today);
   var availByDate = {};
-  computeAvailability(scheduleDays(scheduleSheet().getDataRange().getDisplayValues()), activeBookings(), guestCaps(), today)
-    .forEach(function (a) { availByDate[a.date] = a; });
-  var col = function (name) { return STANDBY.HEADERS.indexOf(name) + 1; };
+  avail.forEach(function (a) { availByDate[a.date] = a; });
+  var col = standbyCol, site = siteOrigin();
+  var set = function (i, name, value) { sh.getRange(i + 1, col(name)).setValue(value); };
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
-    if (r[col('Status') - 1] !== 'Waiting' || !r[1]) continue;
-    var s = { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1, flexible: r[col('Either weekend day') - 1] === 'Yes', name: String(r[5]), email: String(r[6]) };
-    var lastDay = s.flexible && weekdayOf(s.date) === 6 ? addDays(s.date, 1) : s.date;
-    if (lastDay < today) {
-      sh.getRange(i + 1, col('Status')).setValue('Expired');
+    if (r[col('Status') - 1] !== 'Waiting') continue;
+    var s = {
+      scope: standbyScope(r[col('Scope') - 1], r[col('Either weekend day') - 1]),
+      date: r[1] ? isoOf(r[1]) : '', start: r[2] ? hhmmOf(r[2]) : '', people: Number(r[3]) || 1,
+      name: String(r[col('Name') - 1]), email: String(r[col('Email') - 1]),
+      codes: String(r[col('Codes') - 1] || '').split(/,\s*/).filter(String)
+    };
+    s.flexible = s.scope === 'Weekend';
+    var token = String(r[col('Token') - 1] || '');
+    if (!token) {
+      token = Utilities.getUuid();
+      set(i, 'Token', token);
+    }
+    var links = standbyLinks(token);
+
+    if (s.scope === 'Any') {
+      var since = isoOf(r[col('Kept') - 1] || r[0]);
+      var checkSent = r[col('Check sent') - 1] ? isoOf(r[col('Check sent') - 1]) : '';
+      var due = standbyCheckDue(since, checkSent, today);
+      if (due === 'expire') { set(i, 'Status', 'Expired'); continue; }
+      if (due === 'check') { sendGuestEmail(s.email, standbyCheckEmail(s, links)); set(i, 'Check sent', new Date()); }
+      var notified = String(r[col('Days notified') - 1] || '').split(/,\s*/).filter(String);
+      var open = standbyAnyOpenDays(s, avail, notified);
+      if (!open.length) continue;
+      sendGuestEmail(s.email, standbyOpenEmail(s, open.map(function (d) {
+        return { date: d.date, remaining: d.remaining, link: standbyLink(site, d.date, s.codes) };
+      }), links));
+      set(i, 'Days notified', notified.concat(open.map(function (d) { return d.date; })).join(', '));
+      set(i, 'Notified', new Date());
       continue;
     }
-    var open = standbyOpenDay(s, availByDate);
-    if (!open || open.remaining < s.people) continue;
-    var link = siteOrigin() + '/discovery-flight/?date=' + open.date + '#request';
-    sendGuestEmail(s.email, standbyOpenEmail(s, open.date, open.remaining, link, emailLinks('')));
-    sh.getRange(i + 1, col('Status')).setValue('Notified');
-    sh.getRange(i + 1, col('Notified')).setValue(new Date());
-    sh.getRange(i + 1, col('Opened date')).setValue(open.date);
+
+    if (!s.date) continue;
+    var lastDay = s.flexible && weekdayOf(s.date) === 6 ? addDays(s.date, 1) : s.date;
+    if (lastDay < today) { set(i, 'Status', 'Expired'); continue; }
+    var day = standbyOpenDay(s, availByDate);
+    if (!day || day.remaining < s.people) continue;
+    sendGuestEmail(s.email, standbyOpenEmail(s, [{ date: day.date, remaining: day.remaining, link: standbyLink(site, day.date, s.codes) }], links));
+    set(i, 'Status', 'Notified');
+    set(i, 'Notified', new Date());
+    set(i, 'Opened date', day.date);
   }
 }

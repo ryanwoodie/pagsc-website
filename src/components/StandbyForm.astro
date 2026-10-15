@@ -1,0 +1,224 @@
+---
+// The general standby list: "any weekend we fly". Posts to the Apps Script (apps-script/Standby.gs),
+// which emails everyone on the list when the club confirms a flying day. Paid guests add their
+// certificate codes (from ?code= or the paid page) so the email links fill them in.
+// Needs JavaScript (the script answers with JSON); without it the form stays hidden.
+import { FORM_ENDPOINT } from '../config';
+import { facts, df, telHref } from '../lib/facts';
+
+const max = facts.booking.max_group;
+const payAtField = facts.fees.guest_payment.toLowerCase();
+---
+<div class="standby" data-endpoint={FORM_ENDPOINT} data-email={facts.contact.email} data-phone={facts.contact.phone} data-tel={telHref} hidden>
+  <form class="standby__form" novalidate>
+    <input type="hidden" name="form" value="standby" />
+    <input type="hidden" name="scope" value="any" />
+    <input type="hidden" name="format" value="json" />
+    <div class="hp" aria-hidden="true">
+      <label for="sb-website">Leave this empty</label>
+      <input id="sb-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <div class="field field--short">
+      <label for="sb-people">How many people?</label>
+      <select id="sb-people" name="people">
+        {Array.from({ length: max }, (_, i) => <option value={i + 1}>{i + 1}</option>)}
+      </select>
+    </div>
+    <div class="field">
+      <label for="sb-name">Name</label>
+      <input id="sb-name" name="name" type="text" autocomplete="name" required />
+    </div>
+    <div class="field">
+      <label for="sb-email">Email</label>
+      <input id="sb-email" name="email" type="email" autocomplete="email" required />
+    </div>
+    <div class="field">
+      <label for="sb-phone">Phone</label>
+      <input id="sb-phone" name="phone" type="tel" autocomplete="tel" required />
+    </div>
+    <fieldset class="field field--choice">
+      <legend>What are you after?</legend>
+      <label><input type="radio" name="interest" value="Discovery flight" checked required /> A Discovery Flight</label>
+      <label><input type="radio" name="interest" value="First lesson" /> A first lesson: I'm interested in learning to fly</label>
+    </fieldset>
+    <div class="field">
+      <label for="sb-codes">Certificate code <span class="optional">(if you've bought a flight)</span></label>
+      <input id="sb-codes" name="codes" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PAGSC-XXXX-XXXX" aria-describedby="sb-codes-hint" />
+      <p class="hint" id="sb-codes-hint">Without one, you pay at the field ({payAtField}).</p>
+    </div>
+    <div class="field field--check">
+      <input id="sb-weight" name="weight_ok" type="checkbox" value="yes" required />
+      <label for="sb-weight">Everyone flying weighs {df.max_weight_lbs} lbs or less.</label>
+    </div>
+    <div class="field">
+      <label for="sb-message">Message <span class="optional">(optional)</span></label>
+      <textarea id="sb-message" name="message" rows="3"></textarea>
+    </div>
+
+    <div class="standby__error" role="alert" tabindex="-1" hidden></div>
+    <button class="btn btn--ghost" type="submit">Join the standby list</button>
+  </form>
+
+  <div class="standby__done" tabindex="-1" hidden>
+    <h3>You're on the standby list.</h3>
+    <p>We've emailed you the details. When the club confirms a flying day, we'll email you, and any spots left are open to book, first come, first served. Every email has a link to take you off the list.</p>
+  </div>
+</div>
+
+<script>
+  import { track } from '../scripts/track';
+  for (const root of document.querySelectorAll<HTMLElement>('.standby')) {
+    const endpoint = root.dataset.endpoint;
+    if (!endpoint) continue;
+    root.hidden = false;
+    const form = root.querySelector<HTMLFormElement>('form')!;
+    const err = root.querySelector<HTMLElement>('.standby__error')!;
+    const done = root.querySelector<HTMLElement>('.standby__done')!;
+    const submit = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const codes = form.querySelector<HTMLInputElement>('[name=codes]')!;
+    const people = form.querySelector<HTMLSelectElement>('[name=people]')!;
+    const fill = (list: string[]) => {
+      if (!list.length) return;
+      codes.value = list.join(', ');
+      people.value = String(Math.min(list.length, people.options.length));
+    };
+    fill((new URLSearchParams(location.search).get('code') || '').split(',').map((c) => c.trim()).filter(Boolean));
+    document.addEventListener('pagsc:codes', (e) => fill((e as CustomEvent<string[]>).detail));
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
+      submit.disabled = true;
+      err.hidden = true;
+      try {
+        const res = await fetch(endpoint, { method: 'POST', body, signal: AbortSignal.timeout(30000) });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Something went wrong.');
+        track('booking/standby-any', `x${body.get('people')}${body.get('codes') ? ' paid' : ''}`);
+        form.hidden = true;
+        done.hidden = false;
+        done.focus();
+      } catch (x) {
+        const message = x instanceof Error && x.name === 'Error' && x.message ? x.message + ' ' : 'That did not go through. ';
+        err.replaceChildren(message, 'Or email us at ', Object.assign(document.createElement('a'), { href: `mailto:${root.dataset.email}`, textContent: root.dataset.email }),
+          ' or call ', Object.assign(document.createElement('a'), { href: root.dataset.tel, textContent: root.dataset.phone }), '.');
+        err.hidden = false;
+        submit.disabled = false;
+        err.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .standby {
+    max-width: 36rem;
+  }
+  .standby [hidden] {
+    display: none !important;
+  }
+  .standby__form {
+    display: grid;
+    gap: 18px;
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 600;
+  }
+  .optional {
+    font-weight: 400;
+    color: var(--grey);
+  }
+  .field input[type='text'],
+  .field input[type='email'],
+  .field input[type='tel'],
+  .field select,
+  .field textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: inherit;
+  }
+  .field--short select {
+    max-width: 8rem;
+  }
+  .field--choice {
+    border: 0;
+    padding: 0;
+    margin: 0;
+    gap: 4px;
+  }
+  .field--choice legend {
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  .field--choice label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    font-weight: 500;
+  }
+  .field--choice input {
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    accent-color: var(--orange);
+  }
+  .field--check {
+    grid-template-columns: 28px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+  }
+  .field--check input {
+    width: 24px;
+    height: 24px;
+    margin: 2px 0 0;
+    accent-color: var(--orange);
+  }
+  .field--check label {
+    font-weight: 500;
+  }
+  .hint {
+    margin: 0;
+    color: var(--grey);
+    font-size: 0.95rem;
+  }
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .standby .btn {
+    justify-self: start;
+    min-width: 12rem;
+  }
+  .standby__error {
+    background: var(--orange-tint);
+    padding: 12px 16px;
+    font-weight: 600;
+  }
+  .standby__done {
+    background: var(--sky);
+    padding: 20px;
+  }
+  .standby__done h3 {
+    font-size: 1.8rem;
+    margin-top: 0;
+  }
+  .standby__done p {
+    margin-bottom: 0;
+  }
+</style>

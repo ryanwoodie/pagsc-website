@@ -7,6 +7,7 @@ import PageHero from '../../../components/PageHero.astro';
 import Section from '../../../components/Section.astro';
 import Button from '../../../components/Button.astro';
 import BookingCalendar from '../../../components/BookingCalendar.astro';
+import StandbyForm from '../../../components/StandbyForm.astro';
 import { FORM_ENDPOINT } from '../../../config';
 import { facts } from '../../../lib/facts';
 ---
@@ -16,16 +17,21 @@ import { facts } from '../../../lib/facts';
   noindex
 >
   <PageHero title="Thanks. Your flight is paid.">
-    <p class="lead">Now pick a day and a time. If it's a gift, pass the certificate on to the person flying.</p>
+    <p class="lead">Now pick a day and a time, or join the standby list and book when a good flying day is confirmed. If it's a gift, pass the certificate on to the person flying.</p>
     <div class="certs" data-endpoint={FORM_ENDPOINT} data-email={facts.contact.email} hidden>
       <p class="certs__status" role="status">Getting your certificate…</p>
       <div class="certs__codes" hidden></div>
     </div>
-    <div class="actions"><Button href="#request">Book your flying day</Button></div>
+    <div class="actions"><Button href="#request">Book your flying day</Button><a class="more" href="#standby">or wait for a good day</a></div>
   </PageHero>
   <Section id="request" variant="plain" labelledby="req-h">
     <h2 id="req-h">Book your flying day</h2>
     <BookingCalendar paid />
+  </Section>
+  <Section id="standby" labelledby="standby-h">
+    <h2 id="standby-h">Or wait for a good day</h2>
+    <p>Join the standby list. When the club confirms a flying day, we email you, and you book any spot left with your certificate code. Your certificate never expires.</p>
+    <StandbyForm />
   </Section>
 </Base>
 

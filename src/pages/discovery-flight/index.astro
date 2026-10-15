@@ -7,6 +7,7 @@ import Callout from '../../components/Callout.astro';
 import BookButton from '../../components/BookButton.astro';
 import Qa from '../../components/Qa.astro';
 import BookingCalendar from '../../components/BookingCalendar.astro';
+import StandbyForm from '../../components/StandbyForm.astro';
 import Photo from '../../components/Photo.astro';
 import guestPhoto from '../../assets/photos/guest-front-seat.jpg';
 import cockpitPhoto from '../../assets/photos/cockpit-view.jpg';
@@ -59,7 +60,7 @@ const weekdays = lcfirst(df.weekdays);
       row
       items={[
         { title: 'Buy your flight', text: `<a href="${facts.links.discovery_flight_payment}" rel="noopener">${money(df.price)} online</a>, for yourself or as a gift.` },
-        { title: 'Book your flying day', text: 'Pick a day and time on the <a href="#request">booking calendar</a> below.' },
+        { title: 'Pick your day', text: 'Book ahead on the <a href="#request">booking calendar</a> below, or join the <a href="#standby">standby list</a> and we email you when the weather is good and flying is confirmed.' },
         { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
       ]}
     />
@@ -69,6 +70,12 @@ const weekdays = lcfirst(df.weekdays);
     <h2 id="req-h">Book your flying day</h2>
     <p>Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.</p>
     <BookingCalendar />
+  </Section>
+
+  <Section id="standby" variant="plain" labelledby="standby-h">
+    <h2 id="standby-h">Or wait for a good day</h2>
+    <p>Join the standby list. When the club confirms a flying day, we email everyone on the list, and any spots left are open to book, first come, first served.</p>
+    <StandbyForm />
   </Section>
 
   <Section labelledby="day-h">

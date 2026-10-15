@@ -149,6 +149,20 @@ Saturday: spots are open", with a link to that day, first come, first served. Th
 `Notified`; rows for past days become `Expired`. Weekdays and bookings made before this change are
 unaffected.
 
+**Any weekend we fly.** Anyone, paid or not, can join the general standby list with the form under
+"Or wait for a good day" on the Discovery Flight page (`#standby`), on the paid page after buying, or
+from the link in the certificate email. Those rows have Scope `Any` and no date. Every time a weekend
+day is confirmed with room for their group, they get an email listing the open days (one email per
+day, never repeated; `Days notified` records which), and everyone on the list is emailed at once. If
+they gave certificate codes, the links fill them in. They stay `Waiting` until:
+
+- they book (any booking with the same email marks their waiting rows `Booked`);
+- they use "Take me off the standby list", in every standby email (`?action=standby-off`, row `Removed`);
+- they do not answer the "Still interested?" email sent 8 weeks after joining (or after they last
+  said keep me on, `?action=standby-keep`) within 7 days (row `Expired`).
+
+Signing up for any weekend again replaces their earlier waiting rows (`Replaced`).
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then
