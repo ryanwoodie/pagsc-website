@@ -44,7 +44,7 @@ export const firstFlights: QA[] = [
   {
     id: 'pay-at-field',
     q: 'Can I pay at the field instead?',
-    a: `Yes. Weekend spots are held for flights paid online until the club opens a day to guests. Join the <a href="${href('/discovery-flight/#standby')}">standby list</a> and we email you when that happens; then book any spot left and pay at the field (${fees.guest_payment.toLowerCase()}).`,
+    a: `Yes. Weekend spots are held for flights paid online until the club opens a day to the standby list. Join the <a href="${href('/discovery-flight/#standby')}">standby list</a> and we email you when that happens; then book any spot left and pay at the field (${fees.guest_payment.toLowerCase()}).`,
   },
   {
     id: 'weather',

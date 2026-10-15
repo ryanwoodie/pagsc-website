@@ -33,7 +33,7 @@ var BOOKING = {
   WEEKEND_CAP: 8,        // guest flights per weekend, Saturday and Sunday combined
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
-  SAME_DAY_LEAD: 60,     // on a day opened to guests, book the same day up to this many minutes before a start time
+  SAME_DAY_LEAD: 60,     // on a day opened to the standby list, book the same day up to this many minutes before a start time
   TZ: 'America/Regina',
   TAB: 'Bookings',
   REMIND_HOUR: 9,        // week and 3-day reminders go out from this hour (field time)
@@ -505,10 +505,10 @@ function bookingPost(p) {
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
     if (why) return json({ ok: false, error: why, refresh: true });
-    // Weekend spots are held only for paid flights until the club opens the day to guests
+    // Weekend spots are held only for paid flights until the club opens the day to the standby list
     // ("Discovery flights available" in the Status row); then anyone can book.
     if (day.kind === 'weekend' && !prepaid && !day.open) {
-      return json({ ok: false, error: 'Weekend spots are for paid flights until the club opens the day to guests. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
+      return json({ ok: false, error: 'Weekend spots are for paid flights until the club opens the day to the standby list. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
     }
     var codeCheck = checkCodes(b.codes, b.people);
     if (codeCheck.error) return json({ ok: false, error: codeCheck.error });

@@ -6,7 +6,7 @@
  *   Day      one weekend day
  *   Weekend  either day of one weekend
  *   Any      any weekend we fly (the general list)
- * Nothing is held. Once the club opens a day to guests ("Discovery flights available" in the Status /
+ * Nothing is held. Once the club opens a day to the standby list ("Discovery flights available" in the Status /
  * Comments row; see guestOpening in Booking.gs), the hourly check emails everyone waiting for it, all at
  * once: "Flying is on, spots are open", first come, first served. That includes the day itself: a day
  * opened that morning can be booked the same day.

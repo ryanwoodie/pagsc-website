@@ -140,7 +140,7 @@ usual "flying is off" email instead. A booking moves at most once.
 ## Weekend standby list (Standby.gs)
 
 **The trigger.** Only the words "Discovery flights available" in a day's Status / Comments row open
-the day to guests and email the standby list. Other "on" wording ("Day is a go", "Confirmed") still
+the day to the standby list and email the standby list. Other "on" wording ("Day is a go", "Confirmed") still
 shows as flying is on in reminders and on the home page, but opens nothing. Add a number to limit
 guests: "Discovery flights available: 4" allows 4 guest flights that day **in total, counting those
 already booked** (the weekend's shared limit of 8 still applies). A cancellation in the same text
@@ -159,7 +159,7 @@ unaffected.
 **Any weekend we fly.** Anyone, paid or not, can join the general standby list with the form under
 "Or wait for a good day" on the Discovery Flight page (`#standby`), on the paid page after buying, or
 from the link in the certificate email. Those rows have Scope `Any` and no date. Every time a weekend
-day is opened to guests with room for their group, they get an email listing the open days (one email per
+day is opened to the standby list with room for their group, they get an email listing the open days (one email per
 day, never repeated; `Days notified` records which), and everyone on the list is emailed at once. If
 they gave certificate codes, the links fill them in. They stay `Waiting` until:
 
@@ -169,7 +169,7 @@ they gave certificate codes, the links fill them in. They stay `Waiting` until:
 Nobody is removed for being quiet. `Emails sent` counts their flying-day emails; every 10th one
 (`STANDBY.ASK_EVERY`) asks whether they would like to come off the list, with the link.
 
-**Same day.** A day opened to guests on the morning itself can be booked that day, from start times at
+**Same day.** A day opened to the standby list on the morning itself can be booked that day, from start times at
 least an hour away (`BOOKING.SAME_DAY_LEAD`), and the hourly check emails the standby list about it.
 
 Signing up for any weekend again replaces their earlier waiting rows (`Replaced`).

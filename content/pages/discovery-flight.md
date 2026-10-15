@@ -37,7 +37,7 @@ Check the day is on before you leave home, then meet us at the field.
 
 ## Book your flying day
 
-Bought a flight or been given one? Choose a day and a time, and enter the code on your certificate. Weekend spots are held for paid flights until the club opens a day to guests; then anyone can book the spots left and pay at the field.
+Bought a flight or been given one? Choose a day and a time, and enter the code on your certificate. Weekend spots are held for paid flights until the club opens a day to the standby list; then anyone can book the spots left and pay at the field.
 
 Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
 
@@ -49,7 +49,7 @@ Button: Send request
 
 ## Or wait for a good day
 
-Join the standby list. When the club opens a flying day to guests, we email everyone on the list, and any spots left are open to book, first come, first served. Pay online or at the field.
+Join the standby list. When the club opens a flying day to the standby list, we email everyone on the list, and any spots left are open to book, first come, first served. Pay online or at the field.
 
 Form fields: number of people, name, email, phone (optional), what you are after (Discovery Flight / first lesson), certificate code if you have bought a flight, message.
 
@@ -107,6 +107,6 @@ Buy it online and we email you a printable certificate with its own code. Gift f
 
 **What if the weather cancels my day?** It happens. We rebook you, and there is no charge for a flight that didn't happen.
 
-**Can I pay at the field instead?** Yes. Weekend spots are held for flights paid online until the club opens a day to guests. Join the standby list and we email you when that happens; then book any spot left and pay at the field (e-transfer or cash).
+**Can I pay at the field instead?** Yes. Weekend spots are held for flights paid online until the club opens a day to the standby list. Join the standby list and we email you when that happens; then book any spot left and pay at the field (e-transfer or cash).
 
 **Do I need my own gear?** No. The club provides the glider, the winch and free instruction.

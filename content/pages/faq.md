@@ -24,7 +24,7 @@ About 5 to 30 minutes, depending on the day's conditions. The winch launch takes
 Yes. The maximum weight for an introductory flight is 230 lbs.
 
 ### Can I pay at the field instead?
-Yes. Weekend spots are held for flights paid online until the club opens a day to guests. Join the standby list and we email you when that happens; then book any spot left and pay at the field (e-transfer or cash).
+Yes. Weekend spots are held for flights paid online until the club opens a day to the standby list. Join the standby list and we email you when that happens; then book any spot left and pay at the field (e-transfer or cash).
 
 ### What if the weather cancels my day?
 It happens. We rebook you, and there is no charge for a flight that didn't happen.
