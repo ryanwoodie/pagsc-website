@@ -211,7 +211,7 @@ const config = {
       if (day.statusText) timeStep.append(el('p', { class: 'bk-status' }, 'From the club: ', el('q', {}, day.statusText)));
       if (day.kind === 'weekday') timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekday flying happens when volunteers are free. Choose a time and a club member will email you to confirm or suggest another day.'));
       if (isStandbyDay(day)) timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekend spots are held for flights paid in advance. ',
-        el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms the day, we email you and any spots left are open to book. Happy with any weekend? ', el('a', { href: '#standby' }, 'Join the standby list for any weekend we fly'), '.'));
+        el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms a flying day, we email you and any spots left are open to book.'));
       const times = el('div', { class: 'bk-times' });
       for (const s of day.slots) {
         const ok = canBook(day, s.time, state.people);
@@ -251,6 +251,12 @@ const config = {
       const showCode = () => {
         const p = (form.elements.namedItem('payment') as RadioNodeList).value;
         codeField.hidden = p !== 'Paid online' && p !== 'Gift';
+        // "Any weekend we fly" is a standby answer: offered only when joining the standby list.
+        const standbyNow = isStandbyDay(day) && p === 'Pay at the field';
+        for (const opt of form.querySelectorAll<HTMLElement>('.bk-standby-only')) {
+          opt.hidden = !standbyNow;
+          opt.querySelectorAll('input').forEach((i) => { i.disabled = !standbyNow; if (!standbyNow) i.checked = false; });
+        }
         submit.textContent = isStandbyDay(day) && p === 'Pay at the field' ? 'Join the standby list' : held ? 'Pencil me in' : 'Send my request';
       };
       const err = el('div', { class: 'bk-error', role: 'alert', tabindex: '-1' });
@@ -278,10 +284,20 @@ const config = {
       const wd = asDate(day.date).getUTCDay();
       const other = new Date(asDate(day.date).getTime() + (wd === 6 ? 1 : -1) * 86400000).toISOString().slice(0, 10);
       const otherDay = state.days.find((d) => d.date === other);
-      if (!otherDay || otherDay.status === 'cancelled') return [];
       const thisName = new Intl.DateTimeFormat('en-CA', { weekday: 'long', timeZone: 'UTC' }).format(asDate(day.date));
-      return [radios('flexible', `If we only fly one day that weekend, could you come on ${fmtLong.format(asDate(other))} instead?`,
-        [['yes', 'Yes, either day works'], ['no', `No, only ${thisName}`]], '')];
+      const any = el('label', { class: 'bk-standby-only' }, el('input', { type: 'radio', name: 'flexible', value: 'any' }), ' Any weekend we fly');
+      if (!otherDay || otherDay.status === 'cancelled') {
+        if (!isStandbyDay(day)) return [];
+        // No other day that weekend: the only choice is this day or any weekend, and only when joining the standby list.
+        const fs = radios('flexible', 'Which days work for you?', [['no', `Only ${thisName}`]], '');
+        fs.classList.add('bk-standby-only');
+        fs.append(any);
+        return [fs];
+      }
+      const fs = radios('flexible', `If we only fly one day that weekend, could you come on ${fmtLong.format(asDate(other))} instead?`,
+        [['yes', 'Yes, either day works'], ['no', `No, only ${thisName}`]], '');
+      if (isStandbyDay(day)) fs.append(any);
+      return [fs];
     }
 
     function radios(name: string, legend: string, options: [string, string][], checked: string) {
@@ -300,6 +316,7 @@ const config = {
       const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
       const standby = isStandbyDay(day) && body.get('payment') === 'Pay at the field';
       body.set('form', standby ? 'standby' : 'booking');
+      if (standby && body.get('flexible') === 'any') body.set('scope', 'any');
       body.set('format', 'json');
       body.set('date', day.date);
       body.set('start', state.start);
@@ -315,8 +332,9 @@ const config = {
           return;
         }
         if (standby) {
-          track('booking/standby', `${day.date} x${state.people}`);
-          return standbyDone(day);
+          const anyWeekend = body.get('scope') === 'any';
+          track(anyWeekend ? 'booking/standby-any' : 'booking/standby', `${anyWeekend ? 'any' : day.date} x${state.people}`);
+          return standbyDone(day, anyWeekend);
         }
         track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         adsBooking();
@@ -329,11 +347,11 @@ const config = {
       }
     }
 
-    function standbyDone(day: Day) {
+    function standbyDone(day: Day, anyWeekend: boolean) {
       const box = el('div', { class: 'bk-done', tabindex: '-1' },
         el('h3', {}, "You're on the standby list."),
-        el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
-        el('p', {}, "We've emailed you the details. As soon as the club confirms the day, we'll email you, and any spots left are open to book, first come, first served. You pay at the field."));
+        el('p', { class: 'bk-summary' }, `${anyWeekend ? 'Any weekend we fly' : fmtLong.format(asDate(day.date))}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
+        el('p', {}, `We've emailed you the details. As soon as the club confirms ${anyWeekend ? 'a flying day' : 'the day'}, we'll email you, and any spots left are open to book, first come, first served. You pay at the field.`));
       app.replaceChildren(box);
       box.focus();
     }
