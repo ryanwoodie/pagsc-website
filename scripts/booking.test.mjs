@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { standbyOpenDay, standbyEmail, standbyOpenEmail, standbyCheckEmail, standbyAnyOpenDays, standbyCheckDue, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -239,13 +239,10 @@ test('standby: any weekend we fly', () => {
   assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17']).map((d) => d.date), ['2026-10-18']);
   assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17', '2026-10-18']), []);
 
-  // "Still interested?" after 8 weeks; off the list a week after that with no answer.
-  assert.equal(standbyCheckDue('2026-10-01', '', '2026-11-25'), '');
-  assert.equal(standbyCheckDue('2026-10-01', '', '2026-11-26'), 'check');
-  assert.equal(standbyCheckDue('2026-10-01', '2026-11-26', '2026-12-02'), '');
-  assert.equal(standbyCheckDue('2026-10-01', '2026-11-26', '2026-12-03'), 'expire');
+  // Every 10th email asks whether they would like to come off the list; nobody is removed.
+  assert.deepEqual([1, 9, 10, 11, 20].map(standbyAskToStay), [false, false, true, false, true]);
 
-  const links = { site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684', off: 'https://x/off', keep: 'https://x/keep' };
+  const links = { site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684', off: 'https://x/off' };
   const codes = ['PAGSC-7KQ2-XM9D'];
   const e = standbyEmail({ scope: 'Any', name: 'Sam Lee', date: '', people: 1, codes }, links);
   assert.equal(e.subject, "You're on the standby list");
@@ -254,6 +251,29 @@ test('standby: any weekend we fly', () => {
   const o = standbyOpenEmail({ name: 'Sam Lee', codes }, days, links);
   assert.equal(o.subject, 'Flying is on Saturday, October 17 and Sunday, October 18: spots are open');
   assert.ok(o.html.includes('?date=2026-10-18&amp;code=PAGSC-7KQ2-XM9D#request') && o.html.includes('Book a spot on Saturday'));
-  const c = standbyCheckEmail({ name: 'Sam Lee' }, links);
-  assert.ok(c.html.includes('https://x/keep') && c.html.includes('https://x/off'));
+  assert.ok(!o.html.includes('Still want these emails?'));
+  const tenth = standbyOpenEmail({ name: 'Sam Lee', codes }, days, links, 10);
+  assert.ok(tenth.html.includes('Still want these emails?') && tenth.html.includes('email number 10') && tenth.html.includes('https://x/off'));
+});
+
+test('same day: a confirmed day opens today, from an hour ahead', () => {
+  const rows = [
+    ['', 'Sat Oct 10,2026', 'Sun Oct 11,2026'],
+    ['Status/Comments:', 'Day is a go', ''],
+    ['Intro', 'Intro Fam Flight Sign-up Below', 'Intro Fam Flight Sign-up Below'],
+  ];
+  const days = scheduleDays(rows);
+  // Without the time of day (the reminder job's weekend moves), today stays closed.
+  assert.equal(computeAvailability(days, [], {}, '2026-10-10')[0].date, '2026-10-11');
+  // At 12:10 the first open start is 13:30 (an hour's notice): 13:30 to 16:30 is 7 starts.
+  const sat = computeAvailability(days, [], {}, '2026-10-10', 12 * 60 + 10)[0];
+  assert.equal(sat.date, '2026-10-10');
+  assert.equal(sat.slots.find((x) => x.free).time, '13:30');
+  assert.equal(sat.remaining, 7);
+  // Not confirmed: today stays closed even with the time.
+  rows[1][1] = 'Watching the wind';
+  assert.equal(computeAvailability(scheduleDays(rows), [], {}, '2026-10-10', 9 * 60)[0].date, '2026-10-11');
+  // Late in the day there is nothing left to book.
+  rows[1][1] = 'Day is a go';
+  assert.equal(computeAvailability(scheduleDays(rows), [], {}, '2026-10-10', 16 * 60)[0].remaining, 0);
 });

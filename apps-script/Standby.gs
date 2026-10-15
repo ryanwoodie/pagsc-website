@@ -7,26 +7,27 @@
  *   Weekend  either day of one weekend
  *   Any      any weekend we fly (the general list)
  * Nothing is held. Once the club marks a day as on in the Status / Comments row, the hourly check emails
- * everyone waiting for it, all at once: "Flying is on, spots are open", first come, first served.
+ * everyone waiting for it, all at once: "Flying is on, spots are open", first come, first served. That
+ * includes the day itself: a day confirmed that morning opens for same-day booking (Booking.gs).
  * Day and Weekend sign-ups get one email and are done. Any-weekend sign-ups get an email for each day that
- * opens and stay on the list until they book, take themselves off (a link in every email), or do not
- * answer a "Still interested?" email sent every 8 weeks.
+ * opens and stay on the list until they book or take themselves off (a link in every email). Every
+ * ASK_EVERY emails, the email asks whether they would like to come off the list.
  *
  * Standby tab (requests sheet): one row per sign-up. Status: Waiting -> Notified (Day, Weekend),
- * Booked, Removed, Replaced (signed up again), or Expired.
+ * Booked, Removed, Replaced (signed up again), or Expired (Day, Weekend: the weekend passed).
  */
 
 var STANDBY = {
   TAB: 'Standby',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Either weekend day', 'Name', 'Email', 'Phone', 'Interest',
-    'Message', 'Status', 'Notified', 'Opened date', 'Scope', 'Codes', 'Token', 'Days notified', 'Check sent', 'Kept'],
-  CHECK_DAYS: 56,   // ask any-weekend guests whether they are still interested this often
-  ANSWER_DAYS: 7    // and take them off if they do not answer within this many days
+    'Message', 'Status', 'Notified', 'Opened date', 'Scope', 'Codes', 'Token', 'Days notified', 'Emails sent'],
+  ASK_EVERY: 10     // any-weekend guests: every 10th flying-day email asks if they would like to come off the list
 };
 
 function standbySheet() {
   var sh = sheet(STANDBY.TAB, STANDBY.HEADERS);
-  if (sh.getLastColumn() < STANDBY.HEADERS.length) sh.getRange(1, 1, 1, STANDBY.HEADERS.length).setValues([STANDBY.HEADERS]);
+  var head = sh.getRange(1, 1, 1, STANDBY.HEADERS.length).getValues()[0];
+  if (head.join('|') !== STANDBY.HEADERS.join('|')) sh.getRange(1, 1, 1, STANDBY.HEADERS.length).setValues([STANDBY.HEADERS]);
   return sh;
 }
 
@@ -62,13 +63,9 @@ function standbyAnyOpenDays(s, avail, notified) {
   });
 }
 
-/**
- * Any-weekend sign-ups: 'check' when the "Still interested?" email is due, 'expire' when it went
- * unanswered, otherwise ''. Dates are yyyy-MM-dd; since is when they joined or last said keep me on.
- */
-function standbyCheckDue(since, checkSent, today) {
-  if (checkSent) return daysBetween(checkSent, today) >= STANDBY.ANSWER_DAYS ? 'expire' : '';
-  return daysBetween(since, today) >= STANDBY.CHECK_DAYS ? 'check' : '';
+/** Any-weekend sign-ups: does the nth flying-day email ask whether they would like to come off the list? */
+function standbyAskToStay(n) {
+  return n > 0 && n % STANDBY.ASK_EVERY === 0;
 }
 
 /** Where a standby email sends them: the calendar on that day, with their certificate codes filled in. */
@@ -76,12 +73,10 @@ function standbyLink(site, date, codes) {
   return site + '/discovery-flight/?date=' + date + (codes && codes.length ? '&code=' + codes.join(',') : '') + '#request';
 }
 
-/** Email links plus the standby leave and keep links for one sign-up. */
+/** Email links plus the link to leave the standby list for one sign-up. */
 function standbyLinks(token) {
   var links = emailLinks('');
-  var base = ScriptApp.getService().getUrl() + '?token=' + encodeURIComponent(token) + '&action=';
-  links.off = base + 'standby-off';
-  links.keep = base + 'standby-keep';
+  links.off = ScriptApp.getService().getUrl() + '?action=standby-off&token=' + encodeURIComponent(token);
   return links;
 }
 
@@ -128,7 +123,7 @@ function standbyPost(p) {
       }
     }
     sh.appendRow([new Date(), s.date, s.start ? "'" + s.start : '', s.people, s.flexible ? 'Yes' : 'No', s.name, s.email, s.phone,
-      s.interest, s.message, 'Waiting', '', '', scope, s.codes.join(', '), token, '', '', '']);
+      s.interest, s.message, 'Waiting', '', '', scope, s.codes.join(', '), token, '', 0]);
   } finally {
     lock.releaseLock();
   }
@@ -169,8 +164,8 @@ function standbyBooked(email) {
   }
 }
 
-/** The leave and keep links in standby emails. */
-function standbyAction(token, keep) {
+/** The "Take me off the standby list" link in standby emails. */
+function standbyOff(token) {
   token = String(token || '');
   var calendar = siteOrigin() + '/discovery-flight/#request';
   var page = function (title, message, showCalendar) {
@@ -181,14 +176,7 @@ function standbyAction(token, keep) {
   var rows = sh.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][standbyCol('Token') - 1] !== token) continue;
-    var status = rows[i][standbyCol('Status') - 1];
-    if (keep) {
-      if (status !== 'Waiting') return page('You are off the standby list', 'This sign-up has ended. You can join the list again, or book a flight, on the website.', true);
-      sh.getRange(i + 1, standbyCol('Kept')).setValue(new Date());
-      sh.getRange(i + 1, standbyCol('Check sent')).setValue('');
-      return page("You're still on the standby list", 'Thanks. We will email you when the club confirms a flying day.', false);
-    }
-    if (status === 'Waiting') {
+    if (rows[i][standbyCol('Status') - 1] === 'Waiting') {
       sh.getRange(i + 1, standbyCol('Status')).setValue('Removed');
       MailApp.sendEmail({ to: prop('CLUB_EMAIL'), subject: 'Standby: ' + rows[i][standbyCol('Name') - 1] + ' left the list', body: rows[i][standbyCol('Name') - 1] + ' took themselves off the standby list.' });
     }
@@ -202,7 +190,7 @@ function openStandby(today) {
   var sh = standbySheet();
   var rows = sh.getDataRange().getValues();
   if (rows.length < 2) return;
-  var avail = computeAvailability(scheduleDays(scheduleSheet().getDataRange().getDisplayValues()), activeBookings(), guestCaps(), today);
+  var avail = computeAvailability(scheduleDays(scheduleSheet().getDataRange().getDisplayValues()), activeBookings(), guestCaps(), today, nowOnField());
   var availByDate = {};
   avail.forEach(function (a) { availByDate[a.date] = a; });
   var col = standbyCol, site = siteOrigin();
@@ -225,17 +213,14 @@ function openStandby(today) {
     var links = standbyLinks(token);
 
     if (s.scope === 'Any') {
-      var since = isoOf(r[col('Kept') - 1] || r[0]);
-      var checkSent = r[col('Check sent') - 1] ? isoOf(r[col('Check sent') - 1]) : '';
-      var due = standbyCheckDue(since, checkSent, today);
-      if (due === 'expire') { set(i, 'Status', 'Expired'); continue; }
-      if (due === 'check') { sendGuestEmail(s.email, standbyCheckEmail(s, links)); set(i, 'Check sent', new Date()); }
       var notified = String(r[col('Days notified') - 1] || '').split(/,\s*/).filter(String);
       var open = standbyAnyOpenDays(s, avail, notified);
       if (!open.length) continue;
+      var sent = (Number(r[col('Emails sent') - 1]) || 0) + 1;
       sendGuestEmail(s.email, standbyOpenEmail(s, open.map(function (d) {
         return { date: d.date, remaining: d.remaining, link: standbyLink(site, d.date, s.codes) };
-      }), links));
+      }), links, standbyAskToStay(sent) ? sent : 0));
+      set(i, 'Emails sent', sent);
       set(i, 'Days notified', notified.concat(open.map(function (d) { return d.date; })).join(', '));
       set(i, 'Notified', new Date());
       continue;

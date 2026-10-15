@@ -230,7 +230,7 @@ function standbyFor(s) {
 /**
  * Standby sign-up confirmation.
  * @param s {scope: 'Day'|'Weekend'|'Any', name, date, people, flexible, codes}
- * @param links emailLinks plus {off, keep}
+ * @param links emailLinks plus {off}
  */
 function standbyEmail(s, links) {
   var first = String(s.name).split(/\s+/)[0];
@@ -244,7 +244,7 @@ function standbyEmail(s, links) {
       '<div style="font-family:' + EMAIL.DISPLAY + ';font-size:22px;line-height:1.2;font-weight:700;color:' + EMAIL.INK + '">' + esc(standbyFor(s)) + '</div>' +
       '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.INK + '">' + esc(s.people + (s.people === 1 ? ' person' : ' people')) + '</div>') +
     para('As soon as the club confirms ' + esc(when) + ' is on, we will email you, and any spots left are open to book, first come, first served. ' + esc(how)) +
-    (any ? para('You stay on the list until you book. Every couple of months we will check you still want to hear from us.') : '') +
+    (any ? para('You stay on the list until you book or take yourself off.') : '') +
     (paid
       ? para('Your certificate never expires, and you can book ahead any time.') + button('Book a day now', links.site + '/discovery-flight/?code=' + s.codes.join(',') + '#request', true)
       : para('Would you rather have a spot held now? Buy your flight online and book with the code on your certificate.') + button('Buy a Discovery Flight', links.site + '/discovery-flight/')) +
@@ -263,8 +263,9 @@ function standbyEmail(s, links) {
  * Sent when a day a standby guest is waiting for is confirmed and has spots open.
  * @param s {name, codes}
  * @param days [{date, remaining, link}]: one, or more for an any-weekend guest when several open at once
+ * @param asked the number of these emails they have had, when this one asks whether to stay on the list; else 0
  */
-function standbyOpenEmail(s, days, links) {
+function standbyOpenEmail(s, days, links, asked) {
   var first = String(s.name).split(/\s+/)[0];
   var paid = s.codes && s.codes.length;
   var names = days.map(function (d) { return DAY_NAMES[weekdayOf(d.date)]; });
@@ -278,32 +279,18 @@ function standbyOpenEmail(s, days, links) {
       '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.INK + ';margin:0 0 10px">' + esc(how) + '</div>' +
       button('Book a spot on ' + DAY_NAMES[weekdayOf(d.date)], d.link));
   });
-  body += para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Flying still depends on the weather and volunteers. Once you book, you get a confirmation and a reminder the day before.</span>') +
-    standbyFoot(links);
+  body += para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Flying still depends on the weather and volunteers. Once you book, you get a confirmation and a reminder the day before.</span>');
+  body += asked
+    ? panel(label('Still want these emails?') +
+        para('This is email number ' + asked + ' from the standby list. We will keep emailing you when flying days are confirmed. If you would rather we stopped, take yourself off the list.') +
+        button('Take me off the list', links.off, true), true)
+    : standbyFoot(links);
   return {
     subject: 'Flying is on ' + days.map(function (d) { return DAY_NAMES[weekdayOf(d.date)] + ', ' + longDate(d.date).replace(/^\w+, /, ''); }).join(' and ') + ': spots are open',
     html: layout('Spots are open on ' + days.map(function (d) { return longDate(d.date); }).join(' and '), body, links),
     text: ['Hi ' + first + ',', ''].concat(days.map(function (d) {
       return longDate(d.date) + ' is a flying day. ' + d.remaining + (d.remaining === 1 ? ' spot is' : ' spots are') + ' open right now. Book: ' + d.link;
-    }), ['', how, '', 'Take me off the standby list: ' + links.off, '', EMAIL.CLUB]).join('\n')
-  };
-}
-
-/** Every 8 weeks to any-weekend standby guests: do they still want flying-day emails? */
-function standbyCheckEmail(s, links) {
-  var first = String(s.name).split(/\s+/)[0];
-  var body = heading('Still want a Discovery Flight?') +
-    para('Hi ' + esc(first) + ', you are on the club\'s standby list, so we email you when a flying day is confirmed and spots are open.') +
-    para('Would you like to stay on the list?') +
-    button('Yes, keep me on the list', links.keep) +
-    button('Take me off', links.off, true) +
-    para('<span style="font-size:14px;color:' + EMAIL.GREY + '">If we do not hear from you within a week, we will take you off the list. You can join again on the website any time.</span>');
-  return {
-    subject: 'Still want a Discovery Flight?',
-    html: layout('Stay on the standby list?', body, links),
-    text: ['Hi ' + first + ',', '', 'You are on the club\'s standby list for Discovery Flights. Would you like to stay on it?', '',
-      'Keep me on the list: ' + links.keep, 'Take me off: ' + links.off, '',
-      'If we do not hear from you within a week, we will take you off the list.', '', EMAIL.CLUB].join('\n')
+    }), ['', how, '', (asked ? 'This is email number ' + asked + ' from the standby list. We will keep emailing you when flying days are confirmed. If you would rather we stopped, take yourself off: ' : 'Take me off the standby list: ') + links.off, '', EMAIL.CLUB]).join('\n')
   };
 }
 

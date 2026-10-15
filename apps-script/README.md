@@ -157,9 +157,13 @@ day, never repeated; `Days notified` records which), and everyone on the list is
 they gave certificate codes, the links fill them in. They stay `Waiting` until:
 
 - they book (any booking with the same email marks their waiting rows `Booked`);
-- they use "Take me off the standby list", in every standby email (`?action=standby-off`, row `Removed`);
-- they do not answer the "Still interested?" email sent 8 weeks after joining (or after they last
-  said keep me on, `?action=standby-keep`) within 7 days (row `Expired`).
+- they use "Take me off the standby list", in every standby email (`?action=standby-off`, row `Removed`).
+
+Nobody is removed for being quiet. `Emails sent` counts their flying-day emails; every 10th one
+(`STANDBY.ASK_EVERY`) asks whether they would like to come off the list, with the link.
+
+**Same day.** A day confirmed on the morning itself opens for booking that day, from start times at
+least an hour away (`BOOKING.SAME_DAY_LEAD`), and the hourly check emails the standby list about it.
 
 Signing up for any weekend again replaces their earlier waiting rows (`Replaced`).
 

@@ -33,6 +33,7 @@ var BOOKING = {
   WEEKEND_CAP: 8,        // guest flights per weekend, Saturday and Sunday combined
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
+  SAME_DAY_LEAD: 60,     // on a confirmed day, book the same day up to this many minutes before a start time
   TZ: 'America/Regina',
   TAB: 'Bookings',
   REMIND_HOUR: 9,        // week and 3-day reminders go out from this hour (field time)
@@ -193,10 +194,13 @@ function scheduleDays(grid) {
  * @param bookings [{date, start, people}] that are not cancelled
  * @param caps {date: cap} overrides
  * @param today ISO date on the field
+ * @param nowMin minutes since midnight on the field. When given, today is included if flying is
+ *   confirmed, with start times less than SAME_DAY_LEAD minutes away taken.
  */
-function computeAvailability(days, bookings, caps, today) {
+function computeAvailability(days, bookings, caps, today, nowMin) {
   var times = slotTimes();
   var first = addDays(today, 1), last = addDays(today, BOOKING.DAYS_AHEAD);
+  var sameDay = nowMin != null;
   var out = [];
   // Guest flights per date (website bookings plus guests the club typed on the schedule), for weekend totals.
   var usedByDate = {};
@@ -206,9 +210,11 @@ function computeAvailability(days, bookings, caps, today) {
   });
   var capFor = function (date) { return caps && caps[date] != null && caps[date] !== '' ? Number(caps[date]) : null; };
   days.forEach(function (d) {
-    if (d.date < first || d.date > last) return;
+    var isToday = d.date === today;
+    if (isToday ? !(sameDay && classifyStatus(d.statusText) === 'on') : d.date < first || d.date > last) return;
     var wd = weekdayOf(d.date);
     var taken = {};
+    if (isToday) times.forEach(function (t, i) { if (toMinutes(t) < nowMin + BOOKING.SAME_DAY_LEAD) taken[i] = true; });
     bookings.concat((d.manual || []).map(function (e) { return { date: d.date, start: e.start, people: e.people }; })).forEach(function (b) {
       if (b.date !== d.date) return;
       var i = times.indexOf(b.start);
@@ -224,6 +230,7 @@ function computeAvailability(days, bookings, caps, today) {
     } else {
       remaining = (capFor(d.date) != null ? capFor(d.date) : times.length) - BOOKING.STUDENT_COST * (d.students || 0) - used;
     }
+    if (isToday) remaining = Math.min(remaining, times.filter(function (t, i) { return !taken[i]; }).length);
     out.push({
       date: d.date,
       kind: wd === 0 || wd === 6 ? 'weekend' : 'weekday',
@@ -354,8 +361,7 @@ function doGet(e) {
   if (p.action === 'cancel') return cancelBooking(p.token);
   if (p.action === 'confirm') return confirmMove(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
-  if (p.action === 'standby-off') return standbyAction(p.token, false);
-  if (p.action === 'standby-keep') return standbyAction(p.token, true);
+  if (p.action === 'standby-off') return standbyOff(p.token);
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
 }
 
@@ -365,6 +371,12 @@ function json(obj) {
 
 function todayOnField() {
   return Utilities.formatDate(new Date(), BOOKING.TZ, 'yyyy-MM-dd');
+}
+
+/** Minutes since midnight on the field. */
+function nowOnField() {
+  var now = new Date();
+  return Number(Utilities.formatDate(now, BOOKING.TZ, 'H')) * 60 + Number(Utilities.formatDate(now, BOOKING.TZ, 'm'));
 }
 
 // The Flying Schedule (public). A SCHEDULE_ID Script Property overrides it.
@@ -408,7 +420,7 @@ function daysResponse() {
   try {
     var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
     var today = todayOnField();
-    var avail = computeAvailability(days, activeBookings(), guestCaps(), today);
+    var avail = computeAvailability(days, activeBookings(), guestCaps(), today, nowOnField());
     return { ok: true, updated: new Date().toISOString(), days: upcomingDays(days, avail, today, 4) };
   } catch (err) {
     return { ok: false, error: 'unavailable' };
@@ -421,7 +433,7 @@ function availabilityResponse() {
   if (hit) return JSON.parse(hit);
   try {
     var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
-    var out = { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField()) };
+    var out = { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField(), nowOnField()) };
     try { cache.put(AVAILABILITY_CACHE, JSON.stringify(out), AVAILABILITY_SECONDS); } catch (e) { /* too big to cache */ }
     return out;
   } catch (err) {
@@ -468,7 +480,7 @@ function bookingPost(p) {
     var sched = scheduleSheet();
     var grid = sched.getDataRange().getDisplayValues();
     var days = scheduleDays(grid);
-    var avail = computeAvailability(days, activeBookings(), guestCaps(), todayOnField());
+    var avail = computeAvailability(days, activeBookings(), guestCaps(), todayOnField(), nowOnField());
     var day = null;
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
