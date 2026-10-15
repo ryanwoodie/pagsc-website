@@ -1,14 +1,14 @@
 ---
 title: Discovery Flight in a glider, $50
-description: Your first flight in a glider, with a club pilot, from Birch Hills Airport near Prince Albert. $50, no experience or membership needed. Request a date.
-primary_action: Request a date
+description: Your first flight in a glider, with a club pilot, from Birch Hills Airport near Prince Albert. $50, no experience or membership needed. Buy online and book your day, or join the standby list.
+primary_action: Buy a Discovery Flight
 ---
 
 # Your first flight in a glider
 
 A winch launch to about 1,500 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
 
-[Buy a Discovery Flight, $50] · or pick a day first
+[Buy a Discovery Flight, $50] · or join the standby list
 
 For yourself or as a gift. Groups of 4 or more: $40 each (group checkout link).
 
@@ -37,7 +37,7 @@ Check the day is on before you leave home, then meet us at the field.
 
 ## Book your flying day
 
-Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.
+Bought a flight or been given one? Choose a day and a time, and enter the code on your certificate. Weekend spots are held for paid flights until the club opens a day to guests; then anyone can book the spots left and pay at the field.
 
 Form fields: name, email, phone, number of flyers, preferred dates, weight confirmation, how you are paying (paid online / it's a gift / pay at the field), message.
 
@@ -49,7 +49,7 @@ Button: Send request
 
 ## Or wait for a good day
 
-Join the standby list. When the club confirms a flying day, we email everyone on the list, and any spots left are open to book, first come, first served.
+Join the standby list. When the club opens a flying day to guests, we email everyone on the list, and any spots left are open to book, first come, first served. Pay online or at the field.
 
 Form fields: number of people, name, email, phone (optional), what you are after (Discovery Flight / first lesson), certificate code if you have bought a flight, message.
 
@@ -106,5 +106,7 @@ Buy it online and we email you a printable certificate with its own code. Gift f
 **Is it safe to just try once?** An experienced club pilot or instructor is in command. Gliding carries risk similar to other small-aircraft flying, and safety is the club's first priority.
 
 **What if the weather cancels my day?** It happens. We rebook you, and there is no charge for a flight that didn't happen.
+
+**Can I pay at the field instead?** Yes. Weekend spots are held for flights paid online until the club opens a day to guests. Join the standby list and we email you when that happens; then book any spot left and pay at the field (e-transfer or cash).
 
 **Do I need my own gear?** No. The club provides the glider, the winch and free instruction.

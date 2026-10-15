@@ -42,6 +42,11 @@ export const firstFlights: QA[] = [
     a: `Yes. The maximum weight for an introductory flight is ${df.max_weight_lbs} lbs.`,
   },
   {
+    id: 'pay-at-field',
+    q: 'Can I pay at the field instead?',
+    a: `Yes. Weekend spots are held for flights paid online until the club opens a day to guests. Join the <a href="${href('/discovery-flight/#standby')}">standby list</a> and we email you when that happens; then book any spot left and pay at the field (${fees.guest_payment.toLowerCase()}).`,
+  },
+  {
     id: 'weather',
     q: 'What if the weather cancels my day?',
     a: "It happens. We rebook you at no charge, and a flight you've paid for carries over to the new date.",
@@ -129,6 +134,7 @@ export const beforeFirstFlight: QA[] = [
   { ...firstFlights.find((x) => x.id === 'join-first')!, q: 'Do I have to join first?', id: 'df-join-first' },
   { ...firstFlights.find((x) => x.id === 'safe')!, id: 'df-safe' },
   { ...firstFlights.find((x) => x.id === 'weather')!, id: 'df-weather' },
+  { ...firstFlights.find((x) => x.id === 'pay-at-field')!, id: 'df-pay-at-field' },
   {
     id: 'df-gear',
     q: 'Do I need my own gear?',

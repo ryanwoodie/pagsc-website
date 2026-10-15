@@ -21,14 +21,14 @@ const weekdays = lcfirst(df.weekdays);
 ---
 <Base
   title={`Discovery Flight in a glider, ${money(df.price)}`}
-  description={`Your first flight in a glider, with a club pilot, from ${facts.location.airfield} near Prince Albert. ${money(df.price)}, no experience or membership needed. Request a date.`}
+  description={`Your first flight in a glider, with a club pilot, from ${facts.location.airfield} near Prince Albert. ${money(df.price)}, no experience or membership needed. Buy online and book your day, or join the standby list.`}
   jsonLd={clubJsonLd(Astro.site!, import.meta.env.BASE_URL)}
 >
   <PageHero label="Discovery Flight" title="Your first flight in a glider">
     <p class="lead">A winch launch to about {launchHeight} in a two-seat glider, with a club pilot beside you the whole time. <strong class="inline-price">{money(df.price)}.</strong></p>
     <div class="actions">
       <BookButton showPrice />
-      <a class="more" href="#request">or pick a day first</a>
+      <a class="more" href="#standby">or join the standby list</a>
     </div>
     <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
@@ -68,13 +68,13 @@ const weekdays = lcfirst(df.weekdays);
 
   <Section id="request" labelledby="req-h">
     <h2 id="req-h">Book your flying day</h2>
-    <p>Bought a flight, been given one, or want to pick a day before you buy? Choose a day and a time.</p>
+    <p>Bought a flight or been given one? Choose a day and a time, and enter the code on your certificate. Weekend spots are held for paid flights until the club opens a day to guests; then anyone can book the spots left and pay at the field.</p>
     <BookingCalendar />
   </Section>
 
   <Section id="standby" variant="plain" labelledby="standby-h">
     <h2 id="standby-h">Or wait for a good day</h2>
-    <p>Join the standby list. When the club confirms a flying day, we email everyone on the list, and any spots left are open to book, first come, first served.</p>
+    <p>Join the standby list. When the club opens a flying day to guests, we email everyone on the list, and any spots left are open to book, first come, first served. Pay online or at the field.</p>
     <StandbyForm />
   </Section>
 

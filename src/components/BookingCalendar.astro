@@ -185,7 +185,7 @@ const config = {
       // 2. Day
       const dayStep = el('fieldset', { class: 'bk-step' }, el('legend', {}, '2. Pick a day'));
       const legend = el('ul', { class: 'bk-legend' },
-        el('li', {}, el('span', { class: 'bk-key bk-key--weekend' }), 'Weekends: we pencil you in. We usually fly one day each weekend, depending on the weather.'),
+        el('li', {}, el('span', { class: 'bk-key bk-key--weekend' }), 'Weekends: for paid flights, and open to everyone once the club opens the day to guests. We usually fly one day each weekend, depending on the weather.'),
         el('li', {}, el('span', { class: 'bk-key bk-key--weekday' }), 'Weekdays: a request we confirm by email'));
       const grid = el('div', { class: 'bk-days' });
       for (const d of state.days) {
