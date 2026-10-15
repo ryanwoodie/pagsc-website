@@ -471,6 +471,10 @@ function bookingPost(p) {
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
     if (why) return json({ ok: false, error: why, refresh: true });
+    // Weekend spots are held only for paid flights until the club confirms the day; then it opens to everyone.
+    if (day.kind === 'weekend' && !prepaid && day.status !== 'on') {
+      return json({ ok: false, error: 'Weekend spots are for paid flights until the day is confirmed. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
+    }
     var codeCheck = checkCodes(b.codes, b.people);
     if (codeCheck.error) return json({ ok: false, error: codeCheck.error });
 

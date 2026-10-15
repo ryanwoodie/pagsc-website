@@ -70,6 +70,7 @@ function runReminders() {
         sh.getRange(i + 1, 17).setValue(day.statusText);
       }
     }
+    openStandby(today);
   } finally {
     lock.releaseLock();
   }

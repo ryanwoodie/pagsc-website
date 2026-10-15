@@ -7,8 +7,8 @@ import { parse } from 'yaml';
 
 const ctx = {};
 vm.createContext(ctx);
-for (const f of ['Booking.gs', 'Emails.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
+const { standbyOpenDay, standbyEmail, standbyOpenEmail, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -204,4 +204,19 @@ test('flexible weekend: partner day, move planning and schedule note', () => {
   const m = moveEmail({ name: 'Jane Doe', date: '2026-10-18', start: '13:00', people: 1 }, '2026-10-17', links);
   assert.match(m.subject, /^Flying moved to Sunday: you're pencilled in for 1 pm$/);
   assert.ok(m.html.includes('https://x/ok') && m.html.includes('Pick another day'));
+});
+
+test('standby: opens when the day is on (or the other weekend day, if either works)', () => {
+  const day = (date, status, remaining) => ({ date, status, remaining });
+  const avail = { '2026-10-17': day('2026-10-17', '', 8), '2026-10-18': day('2026-10-18', 'on', 5) };
+  assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: false }, avail), null); // Saturday not confirmed yet
+  assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: true }, avail).date, '2026-10-18'); // either day: Sunday is on
+  assert.equal(standbyOpenDay({ date: '2026-10-18', flexible: false }, avail).date, '2026-10-18');
+  assert.equal(standbyOpenDay({ date: '2026-10-18', flexible: false }, { '2026-10-18': day('2026-10-18', 'on', 0) }), null); // full
+  assert.equal(standbyOpenDay({ date: '2026-10-17', flexible: true }, { '2026-10-18': day('2026-10-18', 'cancelled', 8) }), null);
+  const links = { cancel: '', confirm: '', calendar: '', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684' };
+  assert.match(standbyEmail({ name: 'Sam Lee', date: '2026-10-17', people: 2, flexible: true }, links).subject, /standby list: Saturday, October 17/);
+  const o = standbyOpenEmail({ name: 'Sam Lee' }, '2026-10-18', 5, 'https://www.pagsc.ca/discovery-flight/?date=2026-10-18#request', links);
+  assert.equal(o.subject, 'Flying is on Sunday, October 18: spots are open');
+  assert.ok(o.html.includes('?date=2026-10-18#request'));
 });

@@ -137,6 +137,18 @@ update, certificates follow, the club is told, and the guest gets "Flying moved 
 Without a reply they stay pencilled in. If the other day is cancelled or full, the guest gets the
 usual "flying is off" email instead. A booking moves at most once.
 
+## Weekend standby list (Standby.gs)
+
+Weekend spots are held only for paid flights (a certificate code) until the club confirms the day.
+On an unconfirmed weekend day, "I'll pay at the field" becomes "put me on the standby list": the
+guest's details go to the **Standby** tab (Status `Waiting`), nothing is held, and they and the club
+get an email. When the day's Status / Comments row is marked as on ("Day is a go", "Confirmed",
+"Flying is on"...), that day opens to pay-at-the-field bookings for anyone, and the hourly check
+emails everyone waiting for it (or for that weekend, if they said either day works): "Flying is on
+Saturday: spots are open", with a link to that day, first come, first served. Their row becomes
+`Notified`; rows for past days become `Expired`. Weekdays and bookings made before this change are
+unaffected.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

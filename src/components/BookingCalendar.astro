@@ -8,6 +8,7 @@
 // the plain booking form shows instead.
 import { FORM_ENDPOINT } from '../config';
 import { facts, df, telHref } from '../lib/facts';
+import { href } from '../lib/url';
 import RequestForm from './RequestForm.astro';
 
 interface Props { paid?: boolean }
@@ -26,6 +27,7 @@ const config = {
   tel: telHref,
   paid,
   snapshot,
+  buyUrl: href('/discovery-flight/'),
 };
 ---
 <div class="booking" data-config={JSON.stringify(config)}>
@@ -47,7 +49,7 @@ const config = {
   type Slot = { time: string; free: boolean };
   type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; statusText: string; remaining: number; slots: Slot[] };
   type Snapshot = { updated: string | null; days: Day[] };
-  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot };
+  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string };
   const CACHE_KEY = 'pagsc-availability';
   const MAX_AGE = 24 * 3600 * 1000;
   const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Regina' }).format(new Date());
@@ -208,6 +210,8 @@ const config = {
       const timeStep = el('fieldset', { class: 'bk-step' }, el('legend', {}, `3. Pick a start time on ${fmtLong.format(asDate(day.date))}`));
       if (day.statusText) timeStep.append(el('p', { class: 'bk-status' }, 'From the club: ', el('q', {}, day.statusText)));
       if (day.kind === 'weekday') timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekday flying happens when volunteers are free. Choose a time and a club member will email you to confirm or suggest another day.'));
+      if (isStandbyDay(day)) timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekend spots are held for flights paid in advance. ',
+        el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms the day, we email you and any spots left are open to book.'));
       const times = el('div', { class: 'bk-times' });
       for (const s of day.slots) {
         const ok = canBook(day, s.time, state.people);
@@ -239,7 +243,7 @@ const config = {
         field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' })),
         ...flexQuestion(day),
         radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
-        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
+        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', isStandbyDay(day) ? `I'll pay at the field (${cfg.guestPayment}): put me on the standby list` : `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
         codeField,
         el('div', { class: 'field field--check' }, el('input', { id: 'bk-weight', name: 'weight_ok', type: 'checkbox', value: 'yes', required: '' }), el('label', { for: 'bk-weight' }, `Everyone flying weighs ${cfg.maxWeight} lbs or less.`)),
         field('bk-message', 'Message (optional)', el('textarea', { id: 'bk-message', name: 'message', rows: '3' })),
@@ -247,12 +251,13 @@ const config = {
       const showCode = () => {
         const p = (form.elements.namedItem('payment') as RadioNodeList).value;
         codeField.hidden = p !== 'Paid online' && p !== 'Gift';
+        submit.textContent = isStandbyDay(day) && p === 'Pay at the field' ? 'Join the standby list' : held ? 'Pencil me in' : 'Send my request';
       };
-      form.addEventListener('change', showCode);
-      showCode();
       const err = el('div', { class: 'bk-error', role: 'alert', tabindex: '-1' });
       if (message) err.textContent = message; else err.hidden = true;
       const submit = el('button', { class: 'btn', type: 'submit' }, held ? 'Pencil me in' : 'Send my request');
+      form.addEventListener('change', showCode);
+      showCode();
       form.append(err, submit);
       form.addEventListener('submit', (e) => send(e, form, err, submit, day, end));
       app.append(form);
@@ -260,6 +265,11 @@ const config = {
 
     function field(id: string, label: string, input: HTMLElement) {
       return el('div', { class: 'field' }, el('label', { for: id }, label), input);
+    }
+
+    /** Weekend days not yet confirmed by the club: unpaid guests join the standby list instead of booking. */
+    function isStandbyDay(day: Day) {
+      return day.kind === 'weekend' && day.status !== 'on';
     }
 
     /** For a weekend booking: could they come on the other day of the weekend instead? Required, nothing preselected. */
@@ -288,7 +298,8 @@ const config = {
       e.preventDefault();
       if (!form.reportValidity()) return;
       const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
-      body.set('form', 'booking');
+      const standby = isStandbyDay(day) && body.get('payment') === 'Pay at the field';
+      body.set('form', standby ? 'standby' : 'booking');
       body.set('format', 'json');
       body.set('date', day.date);
       body.set('start', state.start);
@@ -303,6 +314,10 @@ const config = {
           else { err.textContent = data.error || 'Something went wrong.'; err.hidden = false; submit.disabled = false; err.focus(); }
           return;
         }
+        if (standby) {
+          track('booking/standby', `${day.date} x${state.people}`);
+          return standbyDone(day);
+        }
         track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         adsBooking();
         done(data.kind === 'Held', day, end);
@@ -312,6 +327,15 @@ const config = {
         submit.disabled = false;
         err.focus();
       }
+    }
+
+    function standbyDone(day: Day) {
+      const box = el('div', { class: 'bk-done', tabindex: '-1' },
+        el('h3', {}, "You're on the standby list."),
+        el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
+        el('p', {}, "We've emailed you the details. As soon as the club confirms the day, we'll email you, and any spots left are open to book, first come, first served. You pay at the field."));
+      app.replaceChildren(box);
+      box.focus();
     }
 
     function done(held: boolean, day: Day, end: string) {
@@ -333,6 +357,9 @@ const config = {
 <style>
   .booking {
     max-width: 44rem;
+  }
+  .booking :global([hidden]) {
+    display: none !important;
   }
   .booking__notice {
     background: var(--orange-tint);

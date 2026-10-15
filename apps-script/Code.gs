@@ -28,9 +28,10 @@ function doPost(e) {
   var next = safeNext(p.next);
 
   // Honeypot: people never see this field; bots fill it. Drop silently.
-  if (p.website) return p.form === 'booking' ? json({ ok: true, kind: 'Held' }) : redirect(next);
+  if (p.website) return p.form === 'booking' ? json({ ok: true, kind: 'Held' }) : p.form === 'standby' ? json({ ok: true, kind: 'Standby' }) : redirect(next);
 
   if (p.form === 'booking') return bookingPost(p);
+  if (p.form === 'standby') return standbyPost(p);
 
   if (p.form === 'pack') return packRequest(p, next);
 

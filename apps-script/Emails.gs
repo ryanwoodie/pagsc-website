@@ -217,6 +217,47 @@ function moveEmail(b, fromDate, links) {
   };
 }
 
+/** Standby sign-up confirmation (weekend, paying at the field). */
+function standbyEmail(s, links) {
+  var first = String(s.name).split(/\s+/)[0];
+  var dayName = DAY_NAMES[weekdayOf(s.date)];
+  var either = s.flexible ? ' (or the other day of that weekend)' : '';
+  var body = heading("You're on the standby list") +
+    para('Hi ' + esc(first) + ', thanks for your interest in a Discovery Flight.') +
+    panel(label('Standby for') +
+      '<div style="font-family:' + EMAIL.DISPLAY + ';font-size:22px;line-height:1.2;font-weight:700;color:' + EMAIL.INK + '">' + esc(longDate(s.date)) + '</div>' +
+      '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.INK + '">' + esc(s.people + (s.people === 1 ? ' person' : ' people') + either) + '</div>') +
+    para('Weekend spots are held for flights paid in advance. As soon as the club confirms ' + esc(dayName) + ' is a flying day, we will email you, and any spots left are open to book, first come, first served. You pay at the field.') +
+    para('Would you rather have a spot held now? Buy your flight online and book with the code on your certificate.') +
+    button('Buy a Discovery Flight', links.site + '/discovery-flight/');
+  return {
+    subject: "You're on the standby list: " + longDate(s.date),
+    html: layout('Standby for ' + longDate(s.date), body, links),
+    text: ['Hi ' + first + ',', '', "You're on the standby list for " + longDate(s.date) + either + '.', '',
+      'Weekend spots are held for flights paid in advance. As soon as the club confirms the day, we will email you, and any spots left are open to book, first come, first served. You pay at the field.', '',
+      'Buy a flight to hold a spot now: ' + links.site + '/discovery-flight/', '', EMAIL.CLUB].join('\n')
+  };
+}
+
+/** Sent when a standby guest's day is confirmed and spots are open. */
+function standbyOpenEmail(s, date, remaining, link, links) {
+  var first = String(s.name).split(/\s+/)[0];
+  var dayName = DAY_NAMES[weekdayOf(date)];
+  var body = heading('Flying is on ' + dayName + ': spots are open') +
+    para('Hi ' + esc(first) + ', the club has confirmed ' + esc(longDate(date)) + ' as a flying day.') +
+    panel(label('Spots left right now') +
+      '<div style="font-family:' + EMAIL.DISPLAY + ';font-size:26px;line-height:1.2;font-weight:700;color:' + EMAIL.INK + '">' + remaining + '</div>' +
+      '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.INK + '">First come, first served. You pay at the field.</div>') +
+    button('Book a spot on ' + dayName, link) +
+    para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Flying still depends on the weather and volunteers. Once you book, you get a confirmation and a reminder the day before.</span>');
+  return {
+    subject: 'Flying is on ' + dayName + ', ' + longDate(date).replace(/^\w+, /, '') + ': spots are open',
+    html: layout('Spots are open on ' + longDate(date), body, links),
+    text: ['Hi ' + first + ',', '', 'The club has confirmed ' + longDate(date) + ' as a flying day. ' + remaining + ' spots are open right now, first come, first served. You pay at the field.', '',
+      'Book a spot: ' + link, '', EMAIL.CLUB].join('\n')
+  };
+}
+
 /** The page a guest sees after using the cancel link. */
 function cancelPageHtml(title, message, calendarUrl) {
   return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + '</title></head>' +
