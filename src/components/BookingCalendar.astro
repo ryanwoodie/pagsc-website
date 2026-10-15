@@ -241,10 +241,11 @@ const config = {
         field('bk-name', 'Name', el('input', { id: 'bk-name', name: 'name', type: 'text', autocomplete: 'name', required: '' })),
         field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
         field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' })),
-        ...flexQuestion(day),
-        radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
         radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', isStandbyDay(day) ? `I'll pay at the field (${cfg.guestPayment}): put me on the standby list` : `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
         codeField,
+        // After payment: paying at the field on an unconfirmed weekend adds "Any weekend we fly" here.
+        ...flexQuestion(day),
+        radios('interest', 'What are you after?', [['Discovery flight', 'A Discovery Flight'], ['First lesson', "A first lesson: I'm interested in learning to fly"]], 'Discovery flight'),
         el('div', { class: 'field field--check' }, el('input', { id: 'bk-weight', name: 'weight_ok', type: 'checkbox', value: 'yes', required: '' }), el('label', { for: 'bk-weight' }, `Everyone flying weighs ${cfg.maxWeight} lbs or less.`)),
         field('bk-message', 'Message (optional)', el('textarea', { id: 'bk-message', name: 'message', rows: '3' })),
       );
