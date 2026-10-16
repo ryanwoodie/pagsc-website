@@ -65,6 +65,17 @@ function standbyAnyOpenDays(s, avail, notified) {
   });
 }
 
+/**
+ * The 'Days notified' cell as a list of ISO dates, whatever Sheets made of what was written.
+ * A lone '2026-10-17' entry can be stored as a date value and read back as a Date object instead
+ * of the string, which used to make the day look never-notified and re-email it every hour.
+ */
+function standbyNotifiedList(v) {
+  if (!v) return [];
+  if (Object.prototype.toString.call(v) === '[object Date]') return [isoOf(v)];
+  return String(v).split(/,\s*/).filter(String);
+}
+
 /** Any-weekend sign-ups: does the nth flying-day email ask whether they would like to come off the list? */
 function standbyAskToStay(n) {
   return n > 0 && n % STANDBY.ASK_EVERY === 0;
@@ -214,7 +225,7 @@ function openStandby(today) {
     var links = standbyLinks(token);
 
     if (s.scope === 'Any') {
-      var notified = String(r[col('Days notified') - 1] || '').split(/,\s*/).filter(String);
+      var notified = standbyNotifiedList(r[col('Days notified') - 1]);
       var open = standbyAnyOpenDays(s, avail, notified);
       if (!open.length) continue;
       var sent = (Number(r[col('Emails sent') - 1]) || 0) + 1;
@@ -222,6 +233,7 @@ function openStandby(today) {
         return { date: d.date, remaining: d.remaining, statusText: d.statusText, link: standbyLink(site, d.date, s.codes) };
       }), links, standbyAskToStay(sent) ? sent : 0));
       set(i, 'Emails sent', sent);
+      sh.getRange(i + 1, col('Days notified')).setNumberFormat('@');
       set(i, 'Days notified', notified.concat(open.map(function (d) { return d.date; })).join(', '));
       set(i, 'Notified', new Date());
       continue;
