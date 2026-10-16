@@ -8,8 +8,9 @@
  *   Any      any weekend we fly (the general list)
  * Nothing is held. Once the club opens a day to the standby list ("Discovery flights available" in the Status /
  * Comments row; see guestOpening in Booking.gs), the hourly check emails everyone waiting for it, all at
- * once: "Flying is on, spots are open", first come, first served. That includes the day itself: a day
- * opened that morning can be booked the same day.
+ * once: "Spots are open" (or "Flying is on" when the status text explicitly confirms the day), first
+ * come, first served. The email quotes the day's Status / Comments text. That includes the day itself:
+ * a day opened that morning can be booked the same day.
  * Day and Weekend sign-ups get one email and are done. Any-weekend sign-ups get an email for each day that
  * opens and stay on the list until they book or take themselves off (a link in every email). Every
  * ASK_EVERY emails, the email asks whether they would like to come off the list.
@@ -218,7 +219,7 @@ function openStandby(today) {
       if (!open.length) continue;
       var sent = (Number(r[col('Emails sent') - 1]) || 0) + 1;
       sendGuestEmail(s.email, standbyOpenEmail(s, open.map(function (d) {
-        return { date: d.date, remaining: d.remaining, link: standbyLink(site, d.date, s.codes) };
+        return { date: d.date, remaining: d.remaining, statusText: d.statusText, link: standbyLink(site, d.date, s.codes) };
       }), links, standbyAskToStay(sent) ? sent : 0));
       set(i, 'Emails sent', sent);
       set(i, 'Days notified', notified.concat(open.map(function (d) { return d.date; })).join(', '));
@@ -231,7 +232,7 @@ function openStandby(today) {
     if (lastDay < today) { set(i, 'Status', 'Expired'); continue; }
     var day = standbyOpenDay(s, availByDate);
     if (!day || day.remaining < s.people) continue;
-    sendGuestEmail(s.email, standbyOpenEmail(s, [{ date: day.date, remaining: day.remaining, link: standbyLink(site, day.date, s.codes) }], links));
+    sendGuestEmail(s.email, standbyOpenEmail(s, [{ date: day.date, remaining: day.remaining, statusText: day.statusText, link: standbyLink(site, day.date, s.codes) }], links));
     set(i, 'Status', 'Notified');
     set(i, 'Notified', new Date());
     set(i, 'Opened date', day.date);

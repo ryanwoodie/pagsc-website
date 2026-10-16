@@ -260,37 +260,57 @@ function standbyEmail(s, links) {
 }
 
 /**
- * Sent when a day a standby guest is waiting for is confirmed and has spots open.
+ * Does a day's Status / Comments text explicitly confirm flying? The "Discovery flights available"
+ * opening phrase alone does not count: it opens spots, it does not confirm the day.
+ */
+function standbyDayConfirmed(statusText) {
+  var t = String(statusText || '').toLowerCase();
+  if (classifyStatus(t) === 'cancelled' || classifyStatus(t) === 'delayed') return false;
+  return /\b(a go|is go|go for|good to go|flying (is )?on|day is on|we('re| are) flying|on for|confirmed)\b/.test(t);
+}
+
+/**
+ * Sent when a day a standby guest is waiting for opens and has spots. The email quotes the day's
+ * Status / Comments text, and only calls the day confirmed when that text explicitly says so.
  * @param s {name, codes}
- * @param days [{date, remaining, link}]: one, or more for an any-weekend guest when several open at once
+ * @param days [{date, remaining, statusText, link}]: one, or more for an any-weekend guest when several open at once
  * @param asked the number of these emails they have had, when this one asks whether to stay on the list; else 0
  */
 function standbyOpenEmail(s, days, links, asked) {
   var first = String(s.name).split(/\s+/)[0];
   var paid = s.codes && s.codes.length;
   var names = days.map(function (d) { return DAY_NAMES[weekdayOf(d.date)]; });
-  var title = 'Flying is on ' + names.join(' and ') + ': spots are open';
+  var confirmed = days.some(function (d) { return standbyDayConfirmed(d.statusText); });
+  var title = confirmed ? 'Flying is on ' + names.join(' and ') + ': spots are open' : 'Spots are open ' + names.join(' and ');
   var how = paid ? 'First come, first served. The link fills in your certificate code.' : 'First come, first served. You pay at the field.';
+  var dates = esc(days.map(function (d) { return longDate(d.date); }).join(' and '));
   var body = heading(title) +
-    para('Hi ' + esc(first) + ', the club has confirmed ' + esc(days.map(function (d) { return longDate(d.date); }).join(' and ')) + (days.length > 1 ? ' as flying days.' : ' as a flying day.'));
+    para(confirmed
+      ? 'Hi ' + esc(first) + ', the club has confirmed ' + dates + (days.length > 1 ? ' as flying days.' : ' as a flying day.')
+      : 'Hi ' + esc(first) + ', spots have opened up for ' + dates + '.');
   days.forEach(function (d) {
     body += panel(label(longDate(d.date)) +
       '<div style="font-family:' + EMAIL.DISPLAY + ';font-size:26px;line-height:1.2;font-weight:700;color:' + EMAIL.INK + '">' + d.remaining + (d.remaining === 1 ? ' spot left' : ' spots left') + '</div>' +
+      (d.statusText ? '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.GREY + ';margin:0 0 10px">Club update: &ldquo;' + esc(d.statusText) + '&rdquo;</div>' : '') +
       '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;color:' + EMAIL.INK + ';margin:0 0 10px">' + esc(how) + '</div>' +
       button('Book a spot on ' + DAY_NAMES[weekdayOf(d.date)], d.link));
   });
   body += para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Flying still depends on the weather and volunteers. Once you book, you get a confirmation and a reminder the day before.</span>');
   body += asked
     ? panel(label('Still want these emails?') +
-        para('This is email number ' + asked + ' from the standby list. We will keep emailing you when flying days are confirmed. If you would rather we stopped, take yourself off the list.') +
+        para('This is email number ' + asked + ' from the standby list. We will keep emailing you when spots open up. If you would rather we stopped, take yourself off the list.') +
         button('Take me off the list', links.off, true), true)
     : standbyFoot(links);
+  var dayList = days.map(function (d) { return DAY_NAMES[weekdayOf(d.date)] + ', ' + longDate(d.date).replace(/^\w+, /, ''); }).join(' and ');
   return {
-    subject: 'Flying is on ' + days.map(function (d) { return DAY_NAMES[weekdayOf(d.date)] + ', ' + longDate(d.date).replace(/^\w+, /, ''); }).join(' and ') + ': spots are open',
+    subject: confirmed ? 'Flying is on ' + dayList + ': spots are open' : 'Spots are open: ' + dayList,
     html: layout('Spots are open on ' + days.map(function (d) { return longDate(d.date); }).join(' and '), body, links),
     text: ['Hi ' + first + ',', ''].concat(days.map(function (d) {
-      return longDate(d.date) + ' is a flying day. ' + d.remaining + (d.remaining === 1 ? ' spot is' : ' spots are') + ' open right now. Book: ' + d.link;
-    }), ['', how, '', (asked ? 'This is email number ' + asked + ' from the standby list. We will keep emailing you when flying days are confirmed. If you would rather we stopped, take yourself off: ' : 'Take me off the standby list: ') + links.off, '', EMAIL.CLUB]).join('\n')
+      var line = standbyDayConfirmed(d.statusText)
+        ? longDate(d.date) + ' is a flying day. ' + d.remaining + (d.remaining === 1 ? ' spot is' : ' spots are') + ' open right now. Book: ' + d.link
+        : longDate(d.date) + ': ' + d.remaining + (d.remaining === 1 ? ' spot is' : ' spots are') + ' open right now. Book: ' + d.link;
+      return d.statusText ? line + '\nClub update: "' + d.statusText + '"' : line;
+    }), ['', how, '', (asked ? 'This is email number ' + asked + ' from the standby list. We will keep emailing you when spots open up. If you would rather we stopped, take yourself off: ' : 'Take me off the standby list: ') + links.off, '', EMAIL.CLUB]).join('\n')
   };
 }
 
