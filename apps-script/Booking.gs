@@ -121,7 +121,8 @@ function addDays(iso, n) {
  */
 function manualEntry(text) {
   var t = String(text || '').trim();
-  if (!t || /\bweb\s*$/i.test(t)) return null;
+  // Website bookings are counted from the Bookings tab: skip their cells, with or without the either-day note.
+  if (!t || /\bweb(\s*\(or (sat|sun)\))?\s*$/i.test(t)) return null;
   var people = 1, m;
   if ((m = /\((\d{1,2})\)/.exec(t))) people = Number(m[1]);
   else if ((m = /\bx\s*(\d{1,2})\b/i.exec(t))) people = Number(m[1]);

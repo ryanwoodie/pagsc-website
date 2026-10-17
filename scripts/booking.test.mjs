@@ -308,3 +308,11 @@ test('guest opening: "Discovery flights available", with optional total spots', 
   assert.equal(sun.open, false); // flying, but not open to guests yet
   assert.equal(sun.status, 'on');
 });
+
+test('website booking cells are not counted twice, with or without the either-day note', () => {
+  assert.equal(manualEntry('Morgan 11:00 (2) web'), null);
+  assert.equal(manualEntry('Morgan 12:00 (2) web (or Sat)'), null);
+  assert.equal(manualEntry('Morgan 12:00 web (or Sun)'), null);
+  assert.equal(manualEntry(scheduleText('Held', 'Morgan', '12:00', 2, '2026-10-24')), null);
+  assert.equal(manualEntry("Pratham's friend").people, 1);
+});
