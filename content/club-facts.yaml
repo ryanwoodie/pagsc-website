@@ -37,6 +37,7 @@ contact:
   # Do not publish any other address or phone number, including ones on the old site.
 
 links:
+  airfield_entrance: https://maps.app.goo.gl/3zZhLGZPkqVYxQw58   # Google Maps pin at the airfield entrance (Find us, booking emails)
   flying_schedule: https://docs.google.com/spreadsheets/d/18n3c3T0eJh9exZWXCKhG1IhYb_GXY45IwfDZP-xshwc/   # Members page only
   membership_form: https://forms.gle/ZrPrU5r4kEfuRdu39
   discovery_flight_payment: https://buy.stripe.com/28EaEW5PZ0QQ6hY55KbV600   # Stripe Payment Link, 1 to 10 flights

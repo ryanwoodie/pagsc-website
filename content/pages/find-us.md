@@ -15,6 +15,22 @@ Map: Birch Hills Airport, Saskatchewan
 
 [Directions from Prince Albert] · [Directions from Saskatoon]
 
+## Arriving at the airfield
+
+Follow the gravel road in, then turn right to park.
+
+Image: the club's arrival map (tap to open it full size)
+
+1. **Enter.** Birch Hills Airport here.
+2. **Park here.** When we're launching from the other end of the runway (east wind), call us and we'll escort you there.
+3. **Spectator area.** Waiting area for guests while people fly.
+4. **Club hangar.** We might be here if you arrive early.
+5. **Glider launch.** From here in a west wind. In an east wind we launch from the other end of the runway.
+
+**No entry** past the red line without permission. Planes and gliders are landing.
+
+[Open the entrance in Google Maps]
+
 ## Carpooling
 
 Carpooling is often available from Saskatoon, Martensville and Warman. Ask when you request your flight.

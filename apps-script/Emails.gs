@@ -102,6 +102,34 @@ function layout(preheader, body, links) {
     '</td></tr></table></td></tr></table></body></html>';
 }
 
+// The club's arrival map (public/images on the site) and the Google Maps pin at the airfield entrance
+// (links.airfield_entrance in content/club-facts.yaml).
+var ARRIVAL = { MAP: '/images/airfield-arrival.jpg', ENTRANCE: 'https://maps.app.goo.gl/3zZhLGZPkqVYxQw58' };
+
+/** The arrival map, linked to the full-size image, with the entrance pin. */
+function arrivalPanel(links) {
+  var map = links.site + ARRIVAL.MAP;
+  return panel(label('Arriving at the airfield') +
+    '<a href="' + esc(map) + '"><img src="' + esc(map) + '" width="476" alt="The club\'s arrival map: the gravel road into Birch Hills Airport, where to park, the spectator area, the club hangar, the glider launch and the no-entry line beside the runway." style="display:block;width:100%;max-width:476px;height:auto;border:0;margin:6px 0 8px"></a>' +
+    '<div style="font-family:' + EMAIL.BODY + ';font-size:15px;line-height:1.45;color:' + EMAIL.INK + '">Follow the gravel road in, then turn right to park. Tap the map to open it full size. ' +
+    '<a href="' + esc(ARRIVAL.ENTRANCE) + '" style="color:#1F5F8F">Open the entrance in Google Maps</a>.</div>');
+}
+
+/** Change or cancel online until 24 hours before; after that, call. links.late is set by the sender. */
+function changeHtml(links) {
+  if (links.late) {
+    return para("Can't make it? Please call us at " + esc(links.phone) + ' or reply to this email as soon as you can. Our volunteers are planning the day around you.');
+  }
+  return button('Change or cancel', links.cancel, true) +
+    para('<span style="font-size:14px;color:' + EMAIL.GREY + '">You can change or cancel online up to 24 hours before your flight. After that, please call us.</span>');
+}
+
+function changeText(links) {
+  return links.late
+    ? "Can't make it? Please call us at " + links.phone + ' or reply to this email as soon as you can.'
+    : 'Change or cancel (up to 24 hours before your flight): ' + links.cancel;
+}
+
 var BRING = 'Bring a hat, sunscreen, sunglasses, water and snacks, and layers (it is cooler at altitude). If you have not paid online, bring a way to pay: e-transfer or cash.';
 
 // ---------- Emails ----------
@@ -123,7 +151,8 @@ function confirmationEmail(b, held, links) {
       : para('Weekday flying happens when volunteers are free, so a club member will email you to confirm this time or suggest another day.')) +
     para('Plan to stay a while: there is plenty to watch, and the crew is happy to answer questions.') +
     para(esc(BRING)) +
-    button('Change or cancel', links.cancel, true) +
+    (held ? arrivalPanel(links) : '') +
+    changeHtml(links) +
     para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Questions? Just reply to this email.</span>');
   return {
     subject: (held ? "You're pencilled in: " : 'Weekday request received: ') + when,
@@ -134,7 +163,9 @@ function confirmationEmail(b, held, links) {
       '',
       'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
       '', BRING, '',
-      'Change or cancel: ' + links.cancel, '',
+      held ? 'Arriving at the airfield: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
+      '',
+      changeText(links), '',
       EMAIL.CLUB
     ].join('\n')
   };
@@ -159,9 +190,9 @@ function reminderEmail(b, held, which, day, links) {
       : nothingYet
         ? para('Nothing has been posted for the day yet, which is normal' + (which === '1' ? '' : ' this far out') + '. Flying depends on the weather and volunteers, so your time is still pencilled in rather than guaranteed. We will email you as soon as the club posts an update.')
         : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.')) +
-    (which === '1' && status !== 'cancelled' ? para('Check your email the morning of your flight for any last changes before you head out. ' + esc(BRING)) : '') +
+    (which === '1' && status !== 'cancelled' ? para('Check your email the morning of your flight for any last changes before you head out. ' + esc(BRING)) + arrivalPanel(links) : '') +
     (held ? '' : para('If a club member has not confirmed your weekday request yet, reply to this email.')) +
-    (status === 'cancelled' ? '' : button('Change or cancel', links.cancel, true));
+    (status === 'cancelled' ? '' : changeHtml(links));
   return {
     subject: (status === 'cancelled' ? 'Flying is off: ' : lead + ': your Discovery Flight, ') + longDate(b.date) + ' at ' + clock12(b.start),
     html: layout(lead + ': ' + whenText(b), body, links),
@@ -172,7 +203,8 @@ function reminderEmail(b, held, which, day, links) {
       'Forecast: ' + (day.weather || 'Not posted yet.'),
       'Instructors: ' + (day.instructor ? 'An instructor has signed up.' : 'None signed up yet.'), '',
       status === 'cancelled' ? 'Flying is off that day. Cancel this time and pick another day: ' + links.cancel : 'Flying depends on the weather and volunteers, so things can still change. We will email you if they do.',
-      '', status === 'cancelled' ? '' : 'Change or cancel: ' + links.cancel, '', EMAIL.CLUB
+      which === '1' && status !== 'cancelled' ? '\nArriving: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
+      '', status === 'cancelled' ? '' : changeText(links), '', EMAIL.CLUB
     ].join('\n')
   };
 }
@@ -188,13 +220,13 @@ function statusEmail(b, held, day, links) {
     fieldPanel(day) +
     (status === 'cancelled'
       ? para('Cancel this time and pick another day; it only takes a minute. If the club posts that flying is back on, we will email you again.') + button('Cancel and rebook', links.cancel)
-      : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.') + button('Change or cancel', links.cancel, true));
+      : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.') + changeHtml(links));
   return {
     subject: title + ': ' + longDate(b.date),
     html: layout(title + ': ' + day.statusText, body, links),
     text: ['Hi ' + first + ',', '', 'Update for ' + whenText(b) + ':', '"' + day.statusText + '"', '',
       status === 'cancelled' ? 'Cancel this time and pick another day: ' + links.cancel : 'Things can still change; we will email you if they do.',
-      '', status === 'cancelled' ? '' : 'Change or cancel: ' + links.cancel, '', EMAIL.CLUB].join('\n')
+      '', status === 'cancelled' ? '' : changeText(links), '', EMAIL.CLUB].join('\n')
   };
 }
 

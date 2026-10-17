@@ -8,6 +8,8 @@ import { facts, df, lcfirst, listJoin, directionsHref, telHref, facebookHandle, 
 import { guestHours, weekdaysLine } from '../../lib/faq';
 import { clubJsonLd } from '../../lib/schema';
 import { href } from '../../lib/url';
+import { Image } from 'astro:assets';
+import arrivalMap from '../../assets/airfield-arrival.webp';
 
 const dt = facts.location.drive_times;
 ---
@@ -32,6 +34,29 @@ const dt = facts.location.drive_times;
       <a class="more" href={directionsHref('Prince Albert')} rel="noopener">Directions from Prince Albert</a>
       <a class="more" href={directionsHref('Saskatoon')} rel="noopener">Directions from Saskatoon</a>
     </p>
+  </Section>
+
+  <Section id="arriving" labelledby="arrive-h">
+    <h2 id="arrive-h">Arriving at the airfield</h2>
+    <p class="lead">Follow the gravel road in, then turn right to park.</p>
+    <a class="arrival-map" href={href('/images/airfield-arrival.jpg')}>
+      <Image
+        src={arrivalMap}
+        widths={[750, 1200, 2000]}
+        sizes="(min-width: 1100px) 1040px, 100vw"
+        alt="The club's arrival map: a photo of the gravel road into Birch Hills Airport with the turn to the parking area, and an aerial view of the airfield marking the entrance, parking, spectator area, club hangar, glider launch point and the no-entry line beside the runway."
+      />
+      <span class="arrival-map__hint">Tap to open it full size</span>
+    </a>
+    <ol class="arrival-steps">
+      <li><strong>Enter.</strong> Birch Hills Airport here.</li>
+      <li><strong>Park here.</strong> When we're launching from the other end of the runway (east wind), call us at <a href={telHref}>{facts.contact.phone}</a> and we'll escort you there.</li>
+      <li><strong>Spectator area.</strong> Waiting area for guests while people fly.</li>
+      <li><strong>Club hangar.</strong> We might be here if you arrive early.</li>
+      <li><strong>Glider launch.</strong> From here in a west wind. In an east wind we launch from the other end of the runway.</li>
+    </ol>
+    <p class="no-entry"><strong>No entry</strong> past the red line without permission. Planes and gliders are landing.</p>
+    <p><a class="more" href={facts.links.airfield_entrance} rel="noopener">Open the entrance in Google Maps</a></p>
   </Section>
 
   <Section labelledby="car-h">
@@ -64,6 +89,34 @@ const dt = facts.location.drive_times;
   </Section>
 </Base>
 <style>
+  .arrival-map {
+    display: block;
+    margin: 0 0 16px;
+    text-decoration: none;
+  }
+  .arrival-map :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 2px solid var(--ink);
+  }
+  .arrival-map__hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+  .arrival-steps {
+    padding-left: 1.4em;
+    margin: 0 0 12px;
+  }
+  .arrival-steps li {
+    margin-bottom: 6px;
+  }
+  .no-entry {
+    background: var(--orange-tint);
+    padding: 10px 14px;
+  }
   .drive {
     max-width: 24rem;
     margin-bottom: 8px;

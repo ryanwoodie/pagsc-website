@@ -58,6 +58,7 @@ function runReminders() {
         }
       }
       var links = emailLinks(String(r[12]));
+      links.late = minutesUntil(b.date, b.start, today, nowOnField()) < SELF_CANCEL_MINUTES && classifyStatus(day.statusText) !== 'cancelled';
       var lead = daysBetween(isoOf(r[0]), b.date);
       var sent = String(r[15] || '');
 

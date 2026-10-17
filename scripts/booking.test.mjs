@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -124,6 +124,19 @@ test('email text uses the site\'s time style and escapes names', () => {
   assert.match(r.subject, /^Flying is off/);
   assert.ok(r.html.includes('Cancel and rebook'));
   assert.match(statusEmail(b, true, { statusText: 'Day is a go', weather: 'Sunny', instructor: true }, links).subject, /^Flying is on/);
+
+  // Arrival map in the confirmation and the day-before reminder, linked to the full-size image.
+  assert.ok(c.html.includes('https://www.pagsc.ca/images/airfield-arrival.jpg') && c.html.includes('maps.app.goo.gl'));
+  assert.ok(reminderEmail(b, true, '1', { statusText: 'Day is a go', weather: '', instructor: true }, links).html.includes('airfield-arrival.jpg'));
+  assert.ok(!reminderEmail(b, true, '7', { statusText: '', weather: '', instructor: false }, links).html.includes('airfield-arrival.jpg'));
+
+  // Within 24 hours: no self-service cancel link, call instead. A day the club calls off can still be rebooked.
+  assert.equal(minutesUntil('2026-10-10', '15:30', '2026-10-09', 16 * 60), 23 * 60 + 30);
+  const late = { ...links, late: true };
+  const lateReminder = reminderEmail(b, true, '1', { statusText: 'Day is a go', weather: '', instructor: true }, late);
+  assert.ok(!lateReminder.html.includes('https://example.com/c?t=1') && lateReminder.html.includes('(306) 222-5684'));
+  assert.ok(!lateReminder.text.includes('https://example.com/c?t=1'));
+  assert.ok(c.html.includes('up to 24 hours before'));
 });
 
 test('students take 3 half-hour slots each; weekends share 8 guest flights', () => {

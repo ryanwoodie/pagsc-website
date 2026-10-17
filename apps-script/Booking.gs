@@ -399,6 +399,14 @@ function todayOnField() {
   return Utilities.formatDate(new Date(), BOOKING.TZ, 'yyyy-MM-dd');
 }
 
+/** Minutes from now until a booking starts (negative once it has started). */
+function minutesUntil(date, start, today, nowMin) {
+  return daysBetween(today, date) * 1440 + toMinutes(start) - nowMin;
+}
+
+/** Guests can change or cancel online until this many minutes before their start time; after that they call. */
+var SELF_CANCEL_MINUTES = 24 * 60;
+
 /** Minutes since midnight on the field. */
 function nowOnField() {
   var now = new Date();
@@ -594,7 +602,9 @@ function sendGuestEmail(to, mail) {
 
 function sendBookingEmails(b, r) {
   var held = r.kind === 'Held';
-  sendGuestEmail(b.email, confirmationEmail(b, held, emailLinks(r.token)));
+  var links = emailLinks(r.token);
+  links.late = minutesUntil(b.date, b.start, todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES;
+  sendGuestEmail(b.email, confirmationEmail(b, held, links));
   var when = whenText(b);
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
@@ -705,6 +715,17 @@ function cancelBooking(token) {
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][12] !== token) continue;
     if (rows[i][5] === 'Cancelled') return page('Already cancelled', 'This booking was already cancelled.', true);
+    // Within 24 hours the volunteers are already planning around the guest: they call instead, unless the
+    // club has called the day off or moved them (then rebooking online is the point).
+    var date = isoOf(rows[i][1]);
+    if (minutesUntil(date, hhmmOf(rows[i][2]), todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES && !rows[i][BOOKING.HEADERS.indexOf('Moved from')]) {
+      var dayOff = scheduleDays(scheduleSheet().getDataRange().getDisplayValues()).some(function (d) {
+        return d.date === date && classifyStatus(d.statusText) === 'cancelled';
+      });
+      if (!dayOff) {
+        return page('Less than 24 hours to go', 'Your flight is less than 24 hours away, so it can no longer be changed online. Our volunteers are already planning the day around you. If you can\'t make it, please call us at ' + emailLinks('').phone + ' or reply to your confirmation email.', false);
+      }
+    }
     var lock = LockService.getScriptLock();
     lock.waitLock(15000);
     try {

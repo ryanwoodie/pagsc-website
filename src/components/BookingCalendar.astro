@@ -371,7 +371,7 @@ const config = {
         el('h3', {}, held ? "You're pencilled in." : 'Your request is in.'),
         el('p', { class: 'bk-summary' }, `${when}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
         el('p', {}, held
-          ? "We've emailed you the details and a link to cancel or rebook. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
+          ? "We've emailed you the details, a map of the airfield and a link to change or cancel up to 24 hours before. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
           : "Weekday flying depends on who is free. A club member will email you to confirm, or to suggest another day."));
       app.replaceChildren(box);
       box.focus();

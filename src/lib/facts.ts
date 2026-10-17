@@ -41,6 +41,7 @@ const schema = z
       whatsapp_group: z.url().regex(/^https:\/\/chat\.whatsapp\.com\//),
     }),
     links: z.strictObject({
+      airfield_entrance: url,
       flying_schedule: url,
       membership_form: url,
       discovery_flight_payment: url,
