@@ -48,6 +48,13 @@ const dt = facts.location.drive_times;
       />
       <span class="arrival-map__hint">Tap to open it full size</span>
     </a>
+    <dialog class="lightbox" aria-label="Arrival map, full size">
+      <button class="lightbox__close" type="button" aria-label="Close">✕</button>
+      <div class="lightbox__frame">
+        <img src={href('/images/airfield-arrival.jpg')} alt="The club's arrival map, full size" loading="lazy" decoding="async" />
+      </div>
+      <p class="lightbox__hint">Tap the map to zoom in</p>
+    </dialog>
     <ol class="arrival-steps">
       <li><strong>Enter.</strong> Birch Hills Airport here.</li>
       <li><strong>Park here.</strong> When we're launching from the other end of the runway (east wind), call us at <a href={telHref}>{facts.contact.phone}</a> and we'll escort you there.</li>
@@ -88,7 +95,99 @@ const dt = facts.location.drive_times;
     <div class="actions"><BookButton /></div>
   </Section>
 </Base>
+<script>
+  // Arrival map lightbox: opens over the page; closes with the button, a tap outside the map, Esc or Back.
+  // Tapping the map toggles between fit-to-screen and full size (scroll to pan). Without JavaScript the
+  // link opens the image itself.
+  const link = document.querySelector<HTMLAnchorElement>('.arrival-map');
+  const box = document.querySelector<HTMLDialogElement>('.lightbox');
+  if (link && box && typeof box.showModal === 'function') {
+    const frame = box.querySelector<HTMLElement>('.lightbox__frame')!;
+    const close = () => {
+      if (!box.open) return;
+      box.close();
+      if (history.state?.lightbox) history.back();
+    };
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      frame.classList.remove('is-zoomed');
+      box.showModal();
+      history.pushState({ lightbox: true }, '');
+    });
+    box.querySelector('.lightbox__close')!.addEventListener('click', close);
+    box.addEventListener('click', (e) => {
+      if (e.target === box || e.target === frame) close();
+    });
+    frame.querySelector('img')!.addEventListener('click', () => frame.classList.toggle('is-zoomed'));
+    box.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+    window.addEventListener('popstate', () => { if (box.open) box.close(); });
+  }
+</script>
+
 <style>
+  .lightbox {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(14, 34, 51, 0.94);
+    color: #fff;
+  }
+  .lightbox::backdrop {
+    background: rgba(14, 34, 51, 0.94);
+  }
+  .lightbox__frame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 56px 12px 40px;
+  }
+  .lightbox__frame img {
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    cursor: zoom-in;
+  }
+  .lightbox__frame.is-zoomed {
+    display: block;
+  }
+  .lightbox__frame.is-zoomed img {
+    max-width: none;
+    max-height: none;
+    width: 2000px;
+    cursor: zoom-out;
+  }
+  .lightbox__close {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border: 2px solid #fff;
+    background: var(--ink);
+    color: #fff;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .lightbox__hint {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    margin: 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #c9d6e0;
+    pointer-events: none;
+  }
   .arrival-map {
     display: block;
     margin: 0 0 16px;
