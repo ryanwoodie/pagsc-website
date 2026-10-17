@@ -71,7 +71,7 @@ Button: Join the standby list
 
 1. Meet the crew and get a safety briefing.
 2. Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time.
-3. Stay, watch, learn, and fly again if time allows.
+3. Stay, watch and learn.
 
 ## Weather
 

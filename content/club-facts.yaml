@@ -79,7 +79,7 @@ discovery_flight:
   day:
     - Meet the crew and get a safety briefing.
     - "Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time."
-    - Stay, watch, learn, and fly again if time allows.
+    - Stay, watch and learn.
 
 booking:   # the online calendar; keep in step with BOOKING in apps-script/Booking.gs
   first_start: "11:00"
