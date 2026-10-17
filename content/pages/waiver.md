@@ -1,12 +1,12 @@
 ---
 title: Sign the club's waiver
-description: Everyone who flies with the Prince Albert Gliding and Soaring Club signs the club's waiver once. Read it and sign online in a few minutes.
+description: Everyone who flies with the Prince Albert Gliding and Soaring Club, guests and members, signs the club's waiver before flying. Read it and sign online in a few minutes.
 primary_action: Sign the waiver
 ---
 
 # Sign the club's waiver
 
-Everyone who flies with the club signs this waiver once, before their first flight. It covers all your gliding with the club until you cancel it in writing. Anyone under 18 signs with a parent or guardian.
+Everyone who flies with the club, guests and members alike, signs this waiver before their first flight. You sign it once: it covers all your gliding with the club until you cancel it in writing. Anyone under 18 signs with a parent or guardian.
 
 [Read and sign]
 

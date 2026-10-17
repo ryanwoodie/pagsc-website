@@ -376,7 +376,7 @@ const config = {
       if (waiverKey) {
         const link = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/waiver/?b=${encodeURIComponent(waiverKey)}`;
         box.append(
-          el('p', {}, `Before you fly, everyone flying signs the club's waiver. It takes a few minutes${state.people > 1 ? ', and the link is in your email to pass on to the others in your group' : ''}.`),
+          el('p', {}, `Everyone flying needs a signed copy of the club's waiver before their flight. It takes a few minutes${state.people > 1 ? ', and the link is in your email to pass on to the others in your group' : ''}.`),
           el('a', { class: 'btn', href: link }, 'Sign the waiver'));
       }
       app.replaceChildren(box);

@@ -7,6 +7,7 @@ import Button from '../../components/Button.astro';
 import Callout from '../../components/Callout.astro';
 import ScheduleMap from '../../components/ScheduleMap.astro';
 import { facts } from '../../lib/facts';
+import { href } from '../../lib/url';
 
 const l = facts.links;
 ---
@@ -55,6 +56,8 @@ const l = facts.links;
     <h2 id="join-h">Joining and renewing</h2>
     <p>Fill in the membership form and e-transfer your dues to <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
     <div class="actions"><Button href={l.membership_form} variant="ghost" external>Membership form</Button></div>
+    <p>Every member signs the club's waiver before flying. You sign it once, online; it covers all your gliding with the club.</p>
+    <div class="actions"><Button href={href('/waiver/')} variant="ghost">Sign the waiver</Button></div>
   </Section>
 
   <Section labelledby="links-h">

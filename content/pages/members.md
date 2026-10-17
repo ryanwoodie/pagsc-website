@@ -48,6 +48,10 @@ Fill in the membership form and e-transfer your dues to pa.gliding.soaring.club@
 
 [Membership form]
 
+Every member signs the club's waiver before flying. You sign it once, online; it covers all your gliding with the club.
+
+[Sign the waiver]
+
 ## Weather
 
 - Birch Hills weather
