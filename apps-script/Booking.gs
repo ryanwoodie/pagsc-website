@@ -151,11 +151,19 @@ function scheduleDays(grid) {
   if (!grid || !grid.length) return days;
   var statusRow = -1, weatherRow = -1;
   for (var r = 0; r < grid.length; r++) {
-    var first = String(grid[r][0] || '').trim();
-    if (statusRow < 0 && /^status/i.test(first)) statusRow = r;
-    if (weatherRow < 0 && /weather|forecast/i.test(first)) weatherRow = r;
+    if (statusRow < 0 && /^status/i.test(String(grid[r][0] || '').trim())) { statusRow = r; break; }
   }
-  if (weatherRow < 0 && grid.length > 1) weatherRow = 1; // row 2 holds the forecast
+  // The forecast row, near the top: labelled "Weather" or "Forecast", or (as now, under a "Link to SSC
+  // Schedule" label) the row whose day cells read like a forecast. Otherwise row 2.
+  var forecastLike = /\b(high|low)\s*-?\d+\s*°?\s*c\b|gust|kts|km\/h|cloud|clear sky|rain|snow/i;
+  for (var r1 = 1; r1 < Math.min(grid.length, 8) && weatherRow < 0; r1++) {
+    if (r1 === statusRow) continue;
+    if (/^(weather|forecast)/i.test(String(grid[r1][0] || '').trim())) { weatherRow = r1; break; }
+    for (var c1 = 1; c1 < grid[r1].length; c1++) {
+      if (forecastLike.test(String(grid[r1][c1] || ''))) { weatherRow = r1; break; }
+    }
+  }
+  if (weatherRow < 0 && grid.length > 1) weatherRow = 1;
   for (var c = 1; c < grid[0].length; c++) {
     var date = parseSheetDate(grid[0][c]);
     if (!date) continue;
@@ -199,7 +207,8 @@ function scheduleDays(grid) {
       statusText: statusRow >= 0 ? String(grid[statusRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 160) : '',
       students: students,
       manual: manual,
-      weather: weatherRow >= 0 && weatherRow !== statusRow ? String(grid[weatherRow][c] || '').replace(/\s+/g, ' ').trim().slice(0, 200) : '',
+      // "Few clouds--High 18C. Low 4C." -> "Few clouds. High 18C. Low 4C."
+      weather: weatherRow >= 0 && weatherRow !== statusRow ? String(grid[weatherRow][c] || '').replace(/\s*-{2,}\s*/g, '. ').replace(/\s+/g, ' ').trim().slice(0, 200) : '',
       instructor: instructor
     });
   }

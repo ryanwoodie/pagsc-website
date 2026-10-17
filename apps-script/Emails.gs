@@ -79,7 +79,7 @@ function fieldPanel(day) {
     : ({ on: 'Flying is on', delayed: 'Delayed', cancelled: 'Not flying', unknown: 'Update posted' }[status] || 'Update posted') +
       ': <span style="color:' + EMAIL.GREY + '">&ldquo;' + esc(day.statusText) + '&rdquo;</span>';
   rows.push(['Status', statusLine]);
-  rows.push(['Forecast', day.weather ? esc(day.weather) : 'Not posted yet. The forecast fills in about a week ahead.']);
+  rows.push(['Forecast', day.weather ? esc(day.weather) : 'Not posted yet.']);
   rows.push(['Instructors', day.instructor ? 'An instructor has signed up for the day.' : 'No instructor signed up yet.']);
   var html = label('Latest from the field');
   rows.forEach(function (r) {
@@ -180,10 +180,10 @@ function reminderEmail(b, held, which, day, links) {
   var lead = which === '1' ? 'Tomorrow' : which === '3' ? 'In 3 days' : 'In a week';
   var status = classifyStatus(day.statusText);
   var nothingYet = !day.statusText && !day.instructor;
-  var title = status === 'cancelled' ? 'Flying is off that day' : lead + ': your Discovery Flight';
+  var title = status === 'cancelled' ? 'Flying is off that day' : status === 'on' ? lead + ': flying is on' : lead + ': your Discovery Flight';
   var body = heading(title) +
     para('Hi ' + esc(first) + ',') +
-    whenPanel(b, held ? 'Your pencilled-in time' : 'Your weekday request') +
+    whenPanel(b, held ? 'Your flight time' : 'Your weekday request') +
     fieldPanel(day) +
     (status === 'cancelled'
       ? para('The club has posted that flying is off. Cancel this time and pick another day; it only takes a minute.') + button('Cancel and rebook', links.cancel)
@@ -216,7 +216,7 @@ function statusEmail(b, held, day, links) {
   var title = { on: 'Flying is on', delayed: 'Flying is delayed', cancelled: 'Flying is off that day' }[status] || 'An update for your flight';
   var body = heading(title) +
     para('Hi ' + esc(first) + ', the club has posted an update for your day.') +
-    whenPanel(b, held ? 'Your pencilled-in time' : 'Your weekday request') +
+    whenPanel(b, held ? 'Your flight time' : 'Your weekday request') +
     fieldPanel(day) +
     (status === 'cancelled'
       ? para('Cancel this time and pick another day; it only takes a minute. If the club posts that flying is back on, we will email you again.') + button('Cancel and rebook', links.cancel)
@@ -236,7 +236,7 @@ function moveEmail(b, fromDate, links) {
   var dayName = DAY_NAMES[weekdayOf(b.date)];
   var body = heading('Flying moved to ' + dayName) +
     para('Hi ' + esc(first) + ', the club is not flying on ' + esc(longDate(fromDate)) + '. You said either day of the weekend works, so we have pencilled you in for ' + esc(dayName) + ' instead.') +
-    whenPanel(b, 'Your new pencilled-in time') +
+    whenPanel(b, 'Your new flight time') +
     para('Is ' + esc(dayName) + ' still good?') +
     button('Yes, see you ' + dayName, links.confirm) +
     button('Pick another day', links.cancel, true) +

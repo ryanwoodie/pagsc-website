@@ -329,3 +329,21 @@ test('website booking cells are not counted twice, with or without the either-da
   assert.equal(manualEntry(scheduleText('Held', 'Morgan', '12:00', 2, '2026-10-24')), null);
   assert.equal(manualEntry("Pratham's friend").people, 1);
 });
+
+test('forecast row found by its contents, whatever column A says', () => {
+  const rows = [
+    ['a', 'Sat Oct 17,2026', 'Sun Oct 18,2026'],
+    ['Link to SSC Schedule', 'Few clouds--High 18C. Low 4C. Wind SW 11 gusting 20kts.', ''],
+    [' Status/Comments:', 'Day confirmed. Wind looks good for ~2000ft tows.', ''],
+    ['Intro', 'Intro Fam Flight Sign-up Below for Sat Oct 17:', 'Intro Fam Flight Sign-up Below for Sun Oct 18:'],
+    ['Weather permitting, arrive early', '', ''],
+  ];
+  const [sat, sun] = scheduleDays(rows);
+  assert.equal(sat.weather, 'Few clouds. High 18C. Low 4C. Wind SW 11 gusting 20kts.');
+  assert.equal(sat.statusText, 'Day confirmed. Wind looks good for ~2000ft tows.');
+  assert.equal(sun.weather, '');
+  const links = { cancel: 'https://x/c', site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684' };
+  const r = reminderEmail({ name: 'Sam Lee', date: '2026-10-17', start: '13:00', people: 2 }, true, '1', sat, links);
+  assert.ok(r.html.includes('Tomorrow: flying is on') && r.html.includes('Your flight time') && r.html.includes('High 18C'));
+  assert.ok(!r.html.includes('pencilled-in time'));
+});
