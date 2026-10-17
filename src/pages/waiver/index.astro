@@ -1,0 +1,378 @@
+---
+// The club's waiver, read and signed online. Copy: content/pages/waiver.md; wording: content/waiver.md.
+// Posts to the Apps Script (apps-script/Waivers.gs), which files the signed PDF and emails a copy.
+// From a booking email the link carries ?b=<waiver key>, so the page shows who in the group is still to sign.
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import Section from '../../components/Section.astro';
+import Button from '../../components/Button.astro';
+import SignaturePad from '../../components/SignaturePad.astro';
+import { FORM_ENDPOINT } from '../../config';
+import { facts, telHref } from '../../lib/facts';
+import { readWaiver, inlineHtml } from '../../../scripts/waiver-text.mjs';
+import waiverMd from '../../../content/waiver.md?raw';
+
+const waiver = readWaiver(waiverMd);
+const guardianAge = facts.waiver.guardian_max_age;
+const part = (text: string) => inlineHtml(text).replace(/\{participant\}/g, '<strong class="wv-name">[your name]</strong>');
+---
+<Base
+  title="Sign the club's waiver"
+  description={`Everyone who flies with the ${facts.club.name} signs the club's waiver once. Read it and sign online in a few minutes.`}
+  noindex
+>
+  <PageHero title="Sign the club's waiver">
+    <p class="lead">Everyone who flies with the club signs this waiver once, before their first flight. It stays in force while you fly with us. Anyone {guardianAge} or under signs with a parent or guardian.</p>
+    <p class="wv-booking" role="status" hidden></p>
+    <div class="actions"><Button href="#sign">Read and sign</Button></div>
+  </PageHero>
+
+  <Section id="sign" variant="plain" labelledby="waiver-h">
+    <h2 id="waiver-h">The waiver</h2>
+    <article class="wv-doc">
+      {waiver.blocks.map((b) =>
+        b.type === 'ul' ? <ul>{b.items.map((i) => <li set:html={part(i)} />)}</ul>
+        : b.type === 'h2' ? <h3 class="wv-doc__title">{b.text}</h3>
+        : b.type === 'h3' ? <h4>{b.text}</h4>
+        : <p set:html={part(b.text)} />
+      )}
+    </article>
+
+    <div class="wv" data-endpoint={FORM_ENDPOINT} data-version={waiver.version} data-guardian-age={guardianAge} data-email={facts.contact.email} data-phone={facts.contact.phone} data-tel={telHref} hidden>
+      <form class="wv__form" novalidate>
+        <input type="hidden" name="form" value="waiver" />
+        <input type="hidden" name="version" value={waiver.version} />
+        <input type="hidden" name="key" value="" />
+        <input type="hidden" name="device" value="" />
+        <div class="hp" aria-hidden="true">
+          <label for="wv-website">Leave this empty</label>
+          <input id="wv-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <h2>Sign</h2>
+        <fieldset class="wv__group">
+          <legend>The person flying</legend>
+          <div class="field">
+            <label for="wv-participant">Full name</label>
+            <input id="wv-participant" name="participant" type="text" autocomplete="name" required />
+          </div>
+          <div class="field field--short">
+            <label for="wv-dob">Date of birth</label>
+            <input id="wv-dob" name="dob" type="date" autocomplete="bday" required />
+          </div>
+        </fieldset>
+
+        <fieldset class="wv__group">
+          <legend>Contact</legend>
+          <div class="field">
+            <label for="wv-email">Email</label>
+            <input id="wv-email" name="email" type="email" autocomplete="email" required aria-describedby="wv-email-hint" />
+            <p class="hint" id="wv-email-hint">We email a signed copy here.</p>
+          </div>
+          <div class="field">
+            <label for="wv-phone">Phone</label>
+            <input id="wv-phone" name="phone" type="tel" autocomplete="tel" required />
+          </div>
+          <div class="field">
+            <label for="wv-address">Address</label>
+            <input id="wv-address" name="address" type="text" autocomplete="street-address" required />
+          </div>
+        </fieldset>
+
+        <fieldset class="wv__group">
+          <legend>Emergency contact</legend>
+          <div class="field">
+            <label for="wv-ec-name">Name</label>
+            <input id="wv-ec-name" name="emergency_name" type="text" autocomplete="off" required />
+          </div>
+          <div class="field">
+            <label for="wv-ec-phone">Phone</label>
+            <input id="wv-ec-phone" name="emergency_phone" type="tel" autocomplete="off" required />
+          </div>
+        </fieldset>
+
+        <fieldset class="wv__group">
+          <legend>Signature</legend>
+          <div class="field">
+            <label for="wv-place">Signed at</label>
+            <input id="wv-place" name="place" type="text" autocomplete="address-level2" required aria-describedby="wv-place-hint" />
+            <p class="hint" id="wv-place-hint">Town or city</p>
+          </div>
+          <SignaturePad name="sig" id="wv-sig" legend="Signature of the person flying" />
+        </fieldset>
+
+        <fieldset class="wv__group wv__guardian" hidden>
+          <legend>Parent or guardian</legend>
+          <div class="field">
+            <label for="wv-guardian">Parent or guardian's full name</label>
+            <input id="wv-guardian" name="guardian" type="text" autocomplete="off" />
+          </div>
+          <SignaturePad name="guardian_sig" id="wv-gsig" legend="Parent or guardian's signature" />
+        </fieldset>
+
+        <label class="wv__agree"><input type="checkbox" name="agree" value="yes" required /> <span>I have read this waiver, I agree to it, and this is my signature.</span></label>
+
+        <div class="wv__error" role="alert" tabindex="-1" hidden></div>
+        <button class="btn" type="submit">Sign the waiver</button>
+      </form>
+
+      <div class="wv__done" tabindex="-1" hidden>
+        <h2>Signed</h2>
+        <p class="wv__done-msg"></p>
+        <p class="wv__done-group" hidden></p>
+        <button class="btn btn--ghost wv__next" type="button" hidden>Sign for the next person</button>
+      </div>
+    </div>
+    <noscript><p>To sign online, turn on JavaScript, or email us at <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p></noscript>
+  </Section>
+</Base>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.wv');
+  if (root && root.dataset.endpoint) {
+    const endpoint = root.dataset.endpoint;
+    const guardianAge = Number(root.dataset.guardianAge);
+    const form = root.querySelector<HTMLFormElement>('form')!;
+    const err = root.querySelector<HTMLElement>('.wv__error')!;
+    const done = root.querySelector<HTMLElement>('.wv__done')!;
+    const submit = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    const guardianBox = form.querySelector<HTMLElement>('.wv__guardian')!;
+    const guardianName = form.querySelector<HTMLInputElement>('[name=guardian]')!;
+    const nameInput = form.querySelector<HTMLInputElement>('[name=participant]')!;
+    const dob = form.querySelector<HTMLInputElement>('[name=dob]')!;
+    const banner = document.querySelector<HTMLElement>('.wv-booking')!;
+    const key = (new URLSearchParams(location.search).get('b') || '').replace(/[^a-f0-9]/g, '');
+    const longDate = new Intl.DateTimeFormat('en-CA', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    let booking: { date: string; people: number; signed: number } | null = null;
+
+    root.hidden = false;
+    form.querySelector<HTMLInputElement>('[name=key]')!.value = key;
+    form.querySelector<HTMLInputElement>('[name=device]')!.value = navigator.userAgent;
+    dob.max = new Date().toISOString().slice(0, 10);
+
+    // The name typed in shows in the waiver's opening line.
+    const showName = () => {
+      for (const el of document.querySelectorAll('.wv-name')) el.textContent = nameInput.value.trim() || '[your name]';
+    };
+    nameInput.addEventListener('input', showName);
+
+    const age = () => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob.value);
+      if (!m) return NaN;
+      const now = new Date();
+      const today = `${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      return now.getFullYear() - Number(m[1]) - (today < m[2] + m[3] ? 1 : 0);
+    };
+    const minor = () => age() <= guardianAge;
+    const syncGuardian = () => {
+      guardianBox.hidden = !minor();
+      guardianName.required = minor();
+    };
+    dob.addEventListener('change', syncGuardian);
+    dob.addEventListener('input', syncGuardian);
+
+    const groupLine = (b: { date: string; people: number; signed: number }) =>
+      `${longDate.format(new Date(b.date + 'T12:00:00Z'))}: ${b.signed} of ${b.people} ${b.people === 1 ? 'person has' : 'people have'} signed.`;
+
+    if (key) {
+      fetch(`${endpoint}?action=waiver&key=${key}`, { signal: AbortSignal.timeout(20000) })
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.ok) return;
+          booking = data;
+          banner.textContent = groupLine(data) + (data.people > 1 ? ' Each person in a group signs their own.' : '');
+          banner.hidden = false;
+        })
+        .catch(() => {});
+    }
+
+    const fail = (message: string) => {
+      err.replaceChildren(message + ' ', 'Or email us at ', Object.assign(document.createElement('a'), { href: `mailto:${root.dataset.email}`, textContent: root.dataset.email }),
+        ' or call ', Object.assign(document.createElement('a'), { href: root.dataset.tel, textContent: root.dataset.phone }), '.');
+      err.hidden = false;
+      err.focus();
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      if (!form.reportValidity()) return;
+      if (!(age() >= 0)) return fail('Check the date of birth.');
+      const data = new FormData(form);
+      if (!data.get('sig')) return fail('Sign in the signature box, or type your name.');
+      if (minor() && !data.get('guardian_sig')) return fail('A parent or guardian signs too.');
+      if (!minor()) {
+        data.delete('guardian');
+        data.delete('guardian_sig');
+      }
+      const body = new URLSearchParams(data as unknown as Record<string, string>);
+      submit.disabled = true;
+      try {
+        const res = await fetch(endpoint, { method: 'POST', body, signal: AbortSignal.timeout(45000) });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || 'Something went wrong.');
+        const first = nameInput.value.trim().split(/\s+/)[0];
+        done.querySelector('.wv__done-msg')!.textContent = `Thanks, ${first}. We've emailed a signed copy to ${data.get('email')}.`;
+        const group = done.querySelector<HTMLElement>('.wv__done-group')!;
+        const next = done.querySelector<HTMLButtonElement>('.wv__next')!;
+        if (booking && out.people) {
+          booking.signed = out.signed;
+          group.textContent = groupLine(booking);
+          banner.textContent = group.textContent;
+          group.hidden = false;
+          next.hidden = out.signed >= out.people;
+        } else {
+          group.hidden = true;
+          next.hidden = true;
+        }
+        form.hidden = true;
+        done.hidden = false;
+        done.focus();
+      } catch (x) {
+        fail(x instanceof Error && x.name === 'Error' && x.message ? x.message : 'That did not go through.');
+      } finally {
+        submit.disabled = false;
+      }
+    });
+
+    done.querySelector('.wv__next')!.addEventListener('click', () => {
+      const place = form.querySelector<HTMLInputElement>('[name=place]')!.value;
+      form.reset();
+      form.querySelector<HTMLInputElement>('[name=place]')!.value = place;
+      form.querySelector<HTMLInputElement>('[name=key]')!.value = key;
+      form.querySelector<HTMLInputElement>('[name=device]')!.value = navigator.userAgent;
+      for (const s of form.querySelectorAll('.sig')) s.dispatchEvent(new Event('sig-reset'));
+      showName();
+      syncGuardian();
+      done.hidden = true;
+      form.hidden = false;
+      nameInput.focus();
+    });
+  }
+</script>
+
+<style>
+  .wv-booking {
+    background: var(--paper);
+    border-top: 2px solid var(--ink);
+    padding: 12px 16px;
+    margin: 0 0 18px;
+    max-width: 32rem;
+    font-weight: 600;
+  }
+  .wv-booking[hidden] {
+    display: none;
+  }
+  .wv-doc {
+    max-width: 44rem;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 20px 18px;
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+  .wv-doc > :first-child {
+    margin-top: 0;
+  }
+  .wv-doc__title {
+    font-size: 1.35rem;
+  }
+  .wv-doc h4 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin: 22px 0 8px;
+  }
+  .wv-doc ul {
+    padding-left: 1.2em;
+  }
+  .wv-doc li + li {
+    margin-top: 6px;
+  }
+  .wv {
+    max-width: 36rem;
+    margin-top: 32px;
+  }
+  .wv [hidden] {
+    display: none !important;
+  }
+  .wv__form {
+    display: grid;
+    gap: 24px;
+  }
+  .wv__form h2 {
+    margin: 0;
+  }
+  .wv__group {
+    border: 0;
+    border-top: 2px solid var(--ink);
+    margin: 0;
+    padding: 12px 0 0;
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+  }
+  .wv__group > legend {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+    padding: 0 8px 0 0;
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 600;
+  }
+  .field--short input {
+    max-width: 14rem;
+  }
+  .field input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--grey);
+    border-radius: 0;
+  }
+  .hint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  .wv__agree {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .wv__agree input {
+    width: 22px;
+    height: 22px;
+    margin: 1px 0 0;
+    flex: none;
+    accent-color: var(--orange);
+  }
+  .wv__error {
+    background: var(--orange-tint);
+    padding: 12px 16px;
+  }
+  .wv__done {
+    background: var(--sky);
+    border-top: 2px solid var(--ink);
+    padding: 16px 18px;
+  }
+  .wv__done h2 {
+    margin-top: 0;
+  }
+</style>

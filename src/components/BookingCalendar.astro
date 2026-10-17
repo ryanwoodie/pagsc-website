@@ -347,7 +347,7 @@ const config = {
         }
         track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         adsBooking();
-        done(data.kind === 'Held', day, end);
+        done(data.kind === 'Held', day, end, data.waiver);
       } catch {
         err.replaceChildren('That did not go through. Email us at ', el('a', { href: `mailto:${cfg.email}` }, cfg.email), ' or call ', el('a', { href: cfg.tel }, cfg.phone), ' and we will book you in.');
         err.hidden = false;
@@ -365,7 +365,7 @@ const config = {
       box.focus();
     }
 
-    function done(held: boolean, day: Day, end: string) {
+    function done(held: boolean, day: Day, end: string, waiverKey?: string) {
       const when = `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}`;
       const box = el('div', { class: 'bk-done', tabindex: '-1' },
         el('h3', {}, held ? "You're pencilled in." : 'Your request is in.'),
@@ -373,6 +373,12 @@ const config = {
         el('p', {}, held
           ? "We've emailed you the details, a map of the airfield and a link to change or cancel up to 24 hours before. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
           : "Weekday flying depends on who is free. A club member will email you to confirm, or to suggest another day."));
+      if (waiverKey) {
+        const link = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/waiver/?b=${encodeURIComponent(waiverKey)}`;
+        box.append(
+          el('p', {}, `Before you fly, everyone flying signs the club's waiver. It takes a few minutes${state.people > 1 ? ', and the link is in your email to pass on to the others in your group' : ''}.`),
+          el('a', { class: 'btn', href: link }, 'Sign the waiver'));
+      }
       app.replaceChildren(box);
       box.focus();
     }

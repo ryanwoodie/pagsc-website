@@ -1,0 +1,249 @@
+---
+// A signature: drawn with a finger or mouse, or typed and set in a script face. Either way the form gets a
+// PNG data URL in the hidden input `name`, and `name`_method says which ("drawn" or "typed").
+// Used by the waiver page; the image goes into the signed PDF (apps-script/Waivers.gs).
+interface Props { name: string; id: string; legend: string }
+const { name, id, legend } = Astro.props;
+---
+<fieldset class="sig" data-sig={name}>
+  <legend>{legend}</legend>
+  <div class="sig__tabs" role="tablist" aria-label="How to sign">
+    <button type="button" role="tab" id={`${id}-tab-draw`} aria-controls={`${id}-draw`} aria-selected="true">Draw</button>
+    <button type="button" role="tab" id={`${id}-tab-type`} aria-controls={`${id}-type`} aria-selected="false" tabindex="-1">Type</button>
+  </div>
+  <div class="sig__panel" id={`${id}-draw`} role="tabpanel" aria-labelledby={`${id}-tab-draw`}>
+    <div class="sig__box">
+      <canvas width="600" height="240" aria-label="Signature box: draw your signature here"></canvas>
+      <span class="sig__line" aria-hidden="true"></span>
+      <span class="sig__hint" aria-hidden="true">Sign here with your finger or mouse</span>
+    </div>
+    <button type="button" class="sig__clear">Clear</button>
+  </div>
+  <div class="sig__panel" id={`${id}-type`} role="tabpanel" aria-labelledby={`${id}-tab-type`} hidden>
+    <label class="sig__label" for={`${id}-typed`}>Type your full name</label>
+    <input id={`${id}-typed`} type="text" autocomplete="off" />
+    <p class="sig__preview" aria-hidden="true"></p>
+  </div>
+  <input type="hidden" name={name} />
+  <input type="hidden" name={`${name}_method`} value="drawn" />
+</fieldset>
+
+<script>
+  const SCRIPT = '"Snell Roundhand", "Apple Chancery", "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive';
+  const INK = '#0e2233';
+
+  for (const root of document.querySelectorAll<HTMLFieldSetElement>('.sig')) {
+    const canvas = root.querySelector('canvas')!;
+    const g = canvas.getContext('2d')!;
+    const hint = root.querySelector<HTMLElement>('.sig__hint')!;
+    const typed = root.querySelector<HTMLInputElement>('input[type=text]')!;
+    const preview = root.querySelector<HTMLElement>('.sig__preview')!;
+    const out = root.querySelector<HTMLInputElement>(`input[name="${root.dataset.sig}"]`)!;
+    const method = root.querySelector<HTMLInputElement>(`input[name="${root.dataset.sig}_method"]`)!;
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+    let mode: 'drawn' | 'typed' = 'drawn';
+    let inked = false;
+    let last: { x: number; y: number } | null = null;
+
+    g.lineWidth = 3.2;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.strokeStyle = INK;
+
+    const sync = () => {
+      method.value = mode;
+      if (mode === 'drawn') out.value = inked ? canvas.toDataURL('image/png') : '';
+      else out.value = typed.value.trim() ? renderTyped(typed.value.trim()) : '';
+      root.dispatchEvent(new Event('sig-change', { bubbles: true }));
+    };
+
+    const at = (e: PointerEvent) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: ((e.clientX - r.left) / r.width) * canvas.width, y: ((e.clientY - r.top) / r.height) * canvas.height };
+    };
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      canvas.setPointerCapture(e.pointerId);
+      last = at(e);
+      g.beginPath();
+      g.arc(last.x, last.y, g.lineWidth / 2, 0, Math.PI * 2);
+      g.fillStyle = INK;
+      g.fill();
+      inked = true;
+      hint.hidden = true;
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!last) return;
+      const p = at(e);
+      g.beginPath();
+      g.moveTo(last.x, last.y);
+      g.lineTo(p.x, p.y);
+      g.stroke();
+      last = p;
+    });
+    const end = () => {
+      if (!last) return;
+      last = null;
+      sync();
+    };
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointercancel', end);
+    root.querySelector('.sig__clear')!.addEventListener('click', () => {
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      inked = false;
+      hint.hidden = false;
+      sync();
+    });
+
+    function renderTyped(text: string) {
+      const c = document.createElement('canvas');
+      c.width = 600;
+      c.height = 240;
+      const t = c.getContext('2d')!;
+      let size = 72;
+      do {
+        t.font = `italic ${size}px ${SCRIPT}`;
+        size -= 4;
+      } while (t.measureText(text).width > 560 && size > 24);
+      t.fillStyle = INK;
+      t.textBaseline = 'alphabetic';
+      t.fillText(text, 20, 170);
+      return c.toDataURL('image/png');
+    }
+    typed.addEventListener('input', () => {
+      preview.textContent = typed.value;
+      sync();
+    });
+    preview.style.fontFamily = SCRIPT;
+
+    const select = (i: number) => {
+      tabs.forEach((t, j) => {
+        t.setAttribute('aria-selected', String(i === j));
+        t.tabIndex = i === j ? 0 : -1;
+        document.getElementById(t.getAttribute('aria-controls')!)!.hidden = i !== j;
+      });
+      mode = i === 0 ? 'drawn' : 'typed';
+      sync();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        const j = (i + 1) % 2;
+        select(j);
+        tabs[j].focus();
+      });
+    });
+
+    root.addEventListener('sig-reset', () => {
+      g.clearRect(0, 0, canvas.width, canvas.height);
+      inked = false;
+      hint.hidden = false;
+      typed.value = '';
+      preview.textContent = '';
+      select(0);
+    });
+  }
+</script>
+
+<style>
+  .sig {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+  }
+  .sig legend {
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 6px;
+  }
+  .sig [hidden] {
+    display: none !important;
+  }
+  .sig__tabs {
+    display: inline-flex;
+    border: 2px solid var(--ink);
+    width: max-content;
+  }
+  .sig__tabs button {
+    font: 600 1rem var(--font-body);
+    background: var(--paper);
+    color: var(--ink);
+    border: 0;
+    min-height: 44px;
+    padding: 0 20px;
+    cursor: pointer;
+  }
+  .sig__tabs button[aria-selected='true'] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .sig__box {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--grey);
+  }
+  .sig__box canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 5 / 2;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .sig__line {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 26%;
+    border-bottom: 1px solid var(--rule);
+    pointer-events: none;
+  }
+  .sig__hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8%;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--grey);
+    pointer-events: none;
+  }
+  .sig__clear {
+    justify-self: start;
+    font: 600 0.95rem var(--font-body);
+    color: var(--blue);
+    background: none;
+    border: 0;
+    padding: 6px 0;
+    min-height: 44px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .sig__label {
+    font-weight: 600;
+  }
+  .sig input[type='text'] {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    font: inherit;
+    border: 1px solid var(--grey);
+    border-radius: 0;
+  }
+  .sig__preview {
+    margin: 0;
+    min-height: 3.2rem;
+    padding: 4px 8px;
+    font-size: 2.2rem;
+    font-style: italic;
+    line-height: 1.3;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+</style>

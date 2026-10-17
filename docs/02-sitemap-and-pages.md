@@ -25,6 +25,7 @@ Footer, every page: the button again; email, phone, Facebook; **Members**; affil
 | `/faq/` | Questions | Book a Discovery Flight | `faq.md` |
 | `/news/` | Club news (list) and `/news/<file-name>/` (one post) | Book a Discovery Flight | `content/news/*.md`, format in `CLAUDE.md` |
 | `/members/` | Members | Open the Flying Schedule | `members.md` |
+| `/waiver/` | The club's waiver, signed online (not indexed). Linked from booking emails and the booking confirmation with `?b=<waiver key>`, which shows how many in the group have signed. Added 16 October 2026. | Sign the waiver | `waiver.md`; wording `content/waiver.md` |
 | `/404` | Not found | Go home | none |
 | `/welcome-pack/print/` | Welcome pack source (not indexed). Printed to `/welcome-pack.pdf` on every build: cover and three steps, Flying Schedule, flying day, learning to fly, costs, youth and power pilots, why gliding, fleet, links and contacts. | None | facts and `src/pages/welcome-pack/print.astro` |
 
