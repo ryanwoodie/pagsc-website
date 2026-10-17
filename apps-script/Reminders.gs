@@ -35,11 +35,13 @@ function runReminders() {
     var sh = bookingsSheet();
     var rows = sh.getDataRange().getValues();
     var flexCol = BOOKING.HEADERS.indexOf('Either weekend day'), movedCol = BOOKING.HEADERS.indexOf('Moved from');
+    var waiverCol = BOOKING.HEADERS.indexOf('Waiver key');
     var availByDate = null;
     for (var i = 1; i < rows.length; i++) {
       var r = rows[i];
       if (!r[1] || r[5] === 'Cancelled') continue;
-      var b = { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1, name: String(r[6]), email: String(r[7]) };
+      var b = { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1, name: String(r[6]), email: String(r[7]),
+        waiversSigned: Number(r[waiverCol + 1]) || 0 };
       var daysUntil = daysBetween(today, b.date);
       if (daysUntil < 0) continue;
       var day = byDate[b.date] || { statusText: '', weather: '', instructor: false };
@@ -57,7 +59,7 @@ function runReminders() {
           continue;
         }
       }
-      var links = emailLinks(String(r[12]));
+      var links = emailLinks(String(r[12]), String(r[waiverCol] || ''));
       links.late = minutesUntil(b.date, b.start, today, nowOnField()) < SELF_CANCEL_MINUTES && classifyStatus(day.statusText) !== 'cancelled';
       var lead = daysBetween(isoOf(r[0]), b.date);
       var sent = String(r[15] || '');

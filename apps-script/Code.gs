@@ -6,6 +6,7 @@
  *   form=pack    Welcome pack requests from prospective students: the visitor is emailed a link
  *                to the pack, and the request is added to the "Student leads" tab and emailed to the club.
  *   form=booking Discovery Flight bookings from the calendar (see Booking.gs, which also has doGet).
+ *   form=waiver  A signed waiver from /waiver/ (see Waivers.gs).
  *
  * Settings live in Project Settings > Script Properties, not in this file:
  *   SHEET_ID     the spreadsheet that holds the "Guest requests" tab
@@ -28,10 +29,11 @@ function doPost(e) {
   var next = safeNext(p.next);
 
   // Honeypot: people never see this field; bots fill it. Drop silently.
-  if (p.website) return p.form === 'booking' ? json({ ok: true, kind: 'Held' }) : p.form === 'standby' ? json({ ok: true, kind: 'Standby' }) : redirect(next);
+  if (p.website) return p.form === 'booking' ? json({ ok: true, kind: 'Held' }) : p.form === 'standby' ? json({ ok: true, kind: 'Standby' }) : p.form === 'waiver' ? json({ ok: true, signed: 0, people: 0 }) : redirect(next);
 
   if (p.form === 'booking') return bookingPost(p);
   if (p.form === 'standby') return standbyPost(p);
+  if (p.form === 'waiver') return waiverPost(p);
 
   if (p.form === 'pack') return packRequest(p, next);
 

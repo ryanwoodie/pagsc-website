@@ -180,6 +180,25 @@ least an hour away (`BOOKING.SAME_DAY_LEAD`), and the regular check emails the s
 
 Signing up for any weekend again replaces their earlier waiting rows (`Replaced`).
 
+## The waiver (Waivers.gs, WaiverText.gs)
+
+Guests read and sign the club's waiver at `/waiver/`: name, date of birth, contact, address, emergency contact,
+where they are signing, and a signature drawn with a finger or typed. Anyone 18 or under (`WAIVER.GUARDIAN_MAX_AGE`,
+`waiver.guardian_max_age` in `content/club-facts.yaml`) also needs a parent or guardian's name and signature.
+
+- Each signature adds a row to the **Waivers** tab and files a signed PDF (the full text, both signatures, the details,
+  the time, the waiver version, a SHA-256 hash of the exact text signed and the browser) in the Drive folder
+  **PAGSC signed waivers** (created on first use; set `WAIVER_FOLDER_ID` to use another). The signer is emailed the PDF;
+  the club gets a note with the link.
+- Every booking gets a **Waiver key** (Bookings tab). The confirmation and reminder emails, and the calendar's
+  confirmation, link to `/waiver/?b=<key>` until **Waivers signed** reaches the number of people. The key is safe to
+  forward to the rest of a group; it only shows the date and how many have signed.
+- The wording is `content/waiver.md`. After changing it, raise its `version` and run `npm run waiver`, which rewrites
+  `WaiverText.gs` (`npm test` fails until you do). A page opened before the change is refused and asked to reload.
+
+**Setup (once):** deploying a version with Waivers.gs asks the club account to approve Google Drive access (for the PDFs).
+Approve it in the editor first (run `waiverFolder` once), or the web app stops until it is approved.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

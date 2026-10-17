@@ -42,7 +42,7 @@ var BOOKING = {
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
     'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates',
-    'Either weekend day', 'Moved from', 'Move confirmed']
+    'Either weekend day', 'Moved from', 'Move confirmed', 'Waiver key', 'Waivers signed']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -397,6 +397,7 @@ function doGet(e) {
   if (p.action === 'confirm') return confirmMove(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
   if (p.action === 'standby-off') return standbyOff(p.token);
+  if (p.action === 'waiver') return json(waiverInfo(p.key));
   return HtmlService.createHtmlOutput('PAGSC website endpoint.');
 }
 
@@ -544,6 +545,7 @@ function bookingPost(p) {
     }
     var kind = day.kind === 'weekend' ? 'Held' : 'Requested';
     var token = Utilities.getUuid();
+    b.waiverKey = Utilities.getUuid().replace(/-/g, '').slice(0, 20); // shareable with the group, unlike the cancel token
     var first = b.name.split(/\s+/)[0];
     var text = scheduleText(kind, first, b.start, b.people, b.flexible === 'Yes' ? partner : null);
     var cell = writeToSchedule(sched, grid, days, b.date, text, true);
@@ -551,7 +553,7 @@ function bookingPost(p) {
     bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
       b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', '),
-      b.flexible, '', ''
+      b.flexible, '', '', b.waiverKey, 0
     ]);
     markCodesBooked(codeCheck.rows, token, b.date);
     clearAvailabilityCache();
@@ -562,7 +564,7 @@ function bookingPost(p) {
 
   sendBookingEmails(b, result);
   try { standbyBooked(b.email); } catch (err) { /* the booking stands; the standby row can be tidied by hand */ }
-  return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people });
+  return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people, waiver: b.waiverKey });
 }
 
 /** "Jane 13:30 (2) web (or Sun)": first name and time only; the note shows the other weekend day works. */
@@ -598,13 +600,14 @@ function siteOrigin() {
   return ((PropertiesService.getScriptProperties().getProperty('SITE_ORIGINS') || 'https://www.pagsc.ca').split(',')[0]).trim();
 }
 
-/** Links used in every guest email. */
-function emailLinks(token) {
+/** Links used in every guest email. waiverKey (optional) links the booking's waiver page. */
+function emailLinks(token, waiverKey) {
   var site = siteOrigin();
   return {
     cancel: ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(token),
     confirm: ScriptApp.getService().getUrl() + '?action=confirm&token=' + encodeURIComponent(token),
     calendar: site + '/discovery-flight/#request',
+    waiver: site + '/waiver/' + (waiverKey ? '?b=' + encodeURIComponent(waiverKey) : ''),
     site: site,
     email: prop('CLUB_EMAIL'),
     phone: '(306) 222-5684'
@@ -617,7 +620,7 @@ function sendGuestEmail(to, mail) {
 
 function sendBookingEmails(b, r) {
   var held = r.kind === 'Held';
-  var links = emailLinks(r.token);
+  var links = emailLinks(r.token, b.waiverKey);
   links.late = minutesUntil(b.date, b.start, todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES;
   sendGuestEmail(b.email, confirmationEmail(b, held, links));
   var when = whenText(b);

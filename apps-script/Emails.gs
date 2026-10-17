@@ -130,6 +130,25 @@ function changeText(links) {
     : 'Change or cancel (up to 24 hours before your flight): ' + links.cancel;
 }
 
+/** Until everyone in the booking has signed: the waiver link. b.waiversSigned counts those who have. */
+function waiverHtml(b, links) {
+  var signed = b.waiversSigned || 0;
+  if (signed >= b.people) return '';
+  return panel(label('Before you fly: the waiver') +
+    '<div style="font-family:' + EMAIL.BODY + ';font-size:15px;line-height:1.45;color:' + EMAIL.INK + ';margin:0 0 10px">' + esc(waiverLine(b)) + '</div>' +
+    button('Sign the waiver', links.waiver));
+}
+
+function waiverLine(b) {
+  var signed = b.waiversSigned || 0;
+  return 'Everyone flying signs the club\'s waiver first. It takes a few minutes online, and anyone ' + WAIVER.GUARDIAN_MAX_AGE + ' or under signs with a parent or guardian.' +
+    (b.people > 1 ? ' Send the link to the others in your group so each person signs their own' + (signed ? ' (' + signed + ' of ' + b.people + ' signed so far).' : '.') : '');
+}
+
+function waiverText(b, links) {
+  return (b.waiversSigned || 0) >= b.people ? '' : 'Before you fly: ' + waiverLine(b) + ' ' + links.waiver;
+}
+
 var EARLY = "You're welcome to come early, even for the start of the day, to watch the crew get the gliders ready. If you're thinking about learning to fly, we encourage it, and the crew is happy to answer questions.";
 
 var BRING = 'Bring a hat, sunscreen, sunglasses, water and snacks, and layers (it is cooler at altitude). If you have not paid online, bring a way to pay: e-transfer or cash.';
@@ -151,6 +170,7 @@ function confirmationEmail(b, held, links) {
     (held
       ? para('Gliding depends on the weather and on volunteers, so this is a pencilled-in time rather than a guarantee. We will send you a reminder before the day with the latest from the field, including any arrival time the club has posted, and let you know if anything changes.')
       : para('Weekday flying happens when volunteers are free, so a club member will email you to confirm this time or suggest another day.')) +
+    waiverHtml(b, links) +
     para(esc(EARLY)) +
     para(esc(BRING)) +
     (held ? arrivalPanel(links) : '') +
@@ -164,7 +184,7 @@ function confirmationEmail(b, held, links) {
       held ? "You're pencilled in for a Discovery Flight: " + when + '.' : 'We have your weekday request: ' + when + '. A club member will email you to confirm.',
       '',
       'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
-      '', EARLY, '', BRING, '',
+      '', waiverText(b, links), '', EARLY, '', BRING, '',
       held ? 'Arriving at the airfield: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '',
       changeText(links), '',
@@ -192,6 +212,7 @@ function reminderEmail(b, held, which, day, links) {
       : nothingYet
         ? para('Nothing has been posted for the day yet, which is normal' + (which === '1' ? '' : ' this far out') + '. Flying depends on the weather and volunteers, so your time is still pencilled in rather than guaranteed. We will email you as soon as the club posts an update.')
         : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.')) +
+    (status === 'cancelled' ? '' : waiverHtml(b, links)) +
     (which === '1' && status !== 'cancelled' ? para('Check your email the morning of your flight for any last changes before you head out. ' + esc(BRING)) + para(esc(EARLY)) + arrivalPanel(links) : '') +
     (held ? '' : para('If a club member has not confirmed your weekday request yet, reply to this email.')) +
     (status === 'cancelled' ? '' : changeHtml(links));
@@ -205,6 +226,7 @@ function reminderEmail(b, held, which, day, links) {
       'Forecast: ' + (day.weather || 'Not posted yet.'),
       'Instructors: ' + (day.instructor ? 'An instructor has signed up.' : 'None signed up yet.'), '',
       status === 'cancelled' ? 'Flying is off that day. Cancel this time and pick another day: ' + links.cancel : 'Flying depends on the weather and volunteers, so things can still change. We will email you if they do.',
+      status === 'cancelled' ? '' : waiverText(b, links),
       which === '1' && status !== 'cancelled' ? '\nArriving: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '', status === 'cancelled' ? '' : changeText(links), '', EMAIL.CLUB
     ].join('\n')

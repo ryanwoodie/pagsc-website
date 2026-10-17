@@ -7,7 +7,7 @@ import { parse } from 'yaml';
 
 const ctx = {};
 vm.createContext(ctx);
-for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
+for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs', 'Waivers.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
 const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.

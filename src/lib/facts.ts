@@ -84,6 +84,9 @@ const schema = z
       max_group: z.number().int().positive(),
       days_ahead: z.number().int().positive(),
     }),
+    waiver: z.strictObject({
+      guardian_max_age: z.number().int().positive(),
+    }),
     fees: z.strictObject({
       membership: z.strictObject({ regular: membership, junior: membership, youth_air_cadet: membership }),
       membership_notes: z.array(z.string()),

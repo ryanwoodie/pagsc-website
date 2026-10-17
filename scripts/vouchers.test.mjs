@@ -7,7 +7,7 @@ import { parse } from 'yaml';
 
 const ctx = {};
 vm.createContext(ctx);
-for (const f of ['Booking.gs', 'Emails.gs', 'Qr.gs', 'Vouchers.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
+for (const f of ['Booking.gs', 'Emails.gs', 'Qr.gs', 'Vouchers.gs', 'Waivers.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
 const { makeCode, normalizeCode, parseCodes, orderFromSession, flightsRefunded, bookingLink, certificateHtml, voucherEmail, qrMatrix, VOUCHER, BOOKING } = ctx;
 const links = { site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 000-0000' };
 
