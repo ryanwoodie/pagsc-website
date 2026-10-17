@@ -7,7 +7,7 @@
  *   Weekend  either day of one weekend
  *   Any      any weekend we fly (the general list)
  * Nothing is held. Once the club opens a day to the standby list ("Discovery flights available" in the Status /
- * Comments row; see guestOpening in Booking.gs), the hourly check emails everyone waiting for it, all at
+ * Comments row; see guestOpening in Booking.gs), the regular check (every 10 minutes, Reminders.gs) emails everyone waiting for it, all at
  * once: "Spots are open" (or "Flying is on" when the status text explicitly confirms the day), first
  * come, first served. The email quotes the day's Status / Comments text. That includes the day itself:
  * a day opened that morning can be booked the same day.
@@ -158,7 +158,7 @@ function standbyPost(p) {
       'Interest: ' + s.interest,
       'Message: ' + (s.message || '(none)'),
       '',
-      'When you mark a day as on in the Status row, they get an email within the hour that spots are open.'
+      'When you add "Discovery flights available" to that day\'s Status row, they get an email within about 10 minutes that spots are open.'
     ].filter(function (line) { return line !== null; }).join('\n')
   });
   return json({ ok: true, kind: 'Standby', scope: scope, date: s.date, people: s.people });
@@ -197,7 +197,7 @@ function standbyOff(token) {
   return page('Not found', 'That link is not valid.', true);
 }
 
-/** Hourly (from runReminders): tell waiting standby guests when a day they want is confirmed. */
+/** Every run of runReminders: tell waiting standby guests when a day they want is confirmed. */
 function openStandby(today) {
   var sh = standbySheet();
   var rows = sh.getDataRange().getValues();

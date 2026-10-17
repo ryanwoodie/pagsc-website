@@ -87,7 +87,7 @@ Guest emails are HTML in the site's style, with times like "3:30 pm" and a "Chan
   `Cancelled`.
 
 **One-time setup:** in the Apps Script editor, pick `installReminders` in the function menu and click
-Run. Approve the permission to run on a schedule. It runs `runReminders` every hour. To preview every
+Run. Approve the permission to run on a schedule. It runs `runReminders` every 10 minutes (`RUN_MINUTES` in Reminders.gs). To preview every
 email, run `sendSampleEmails`: it sends 5 samples to the club address and books nothing.
 
 The slot settings (11:00 to 16:30 starts, 30 minutes, 3 slots per student, 8 per weekend, groups of 4, 28 days) are at the top of
@@ -129,7 +129,7 @@ pre-selected: "If we only fly one day that weekend, could you come on <the other
 "Yes" adds "(or Sun)" / "(or Sat)" to the schedule cell and "Yes" in the Bookings tab's
 "Either weekend day" column.
 
-When the hourly check sees the booked day's Status / Comments marked cancelled (and only then;
+When the regular check sees the booked day's Status / Comments marked cancelled (and only then;
 two-day weekends are left alone), a "Yes" booking moves to the other day: same start time if free,
 otherwise the nearest time that fits. The schedule cell moves, the row's Date, Start and "Moved from"
 update, certificates follow, the club is told, and the guest gets "Flying moved to Sunday" with
@@ -150,7 +150,7 @@ Weekend spots are held only for paid flights (a certificate code) until the club
 On an unconfirmed weekend day, "I'll pay at the field" becomes "put me on the standby list": the
 guest's details go to the **Standby** tab (Status `Waiting`), nothing is held, and they and the club
 get an email. When the day's Status / Comments row says **"Discovery flights available"** (or
-"Discovery flights open"), that day opens to pay-at-the-field bookings for anyone, and the hourly check
+"Discovery flights open"), that day opens to pay-at-the-field bookings for anyone, and the regular check (every 10 minutes)
 emails everyone waiting for it (or for that weekend, if they said either day works): "Flying is on
 Saturday: spots are open", with a link to that day, first come, first served. Their row becomes
 `Notified`; rows for past days become `Expired`. Weekdays and bookings made before this change are
@@ -170,7 +170,7 @@ Nobody is removed for being quiet. `Emails sent` counts their flying-day emails;
 (`STANDBY.ASK_EVERY`) asks whether they would like to come off the list, with the link.
 
 **Same day.** A day opened to the standby list on the morning itself can be booked that day, from start times at
-least an hour away (`BOOKING.SAME_DAY_LEAD`), and the hourly check emails the standby list about it.
+least an hour away (`BOOKING.SAME_DAY_LEAD`), and the regular check emails the standby list about it.
 
 Signing up for any weekend again replaces their earlier waiting rows (`Replaced`).
 

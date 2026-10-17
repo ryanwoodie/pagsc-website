@@ -1,5 +1,6 @@
 /**
- * Booking reminders and status-change emails, run hourly by a time-driven trigger.
+ * Booking reminders, status-change and standby emails, run every RUN_MINUTES by a time-driven trigger.
+ * Each run only sends what is due and records it, so running often never repeats an email.
  *
  * Reminders (see reminderDue in Booking.gs): a week before for bookings made more than a week ahead,
  * 3 days before for bookings made 4 to 7 days ahead, and the day before (late afternoon) for everyone.
@@ -10,13 +11,15 @@
  * Google asks to approve running on a schedule; approve as the club account.
  */
 
+var RUN_MINUTES = 10; // Apps Script allows 1, 5, 10, 15 or 30
+
 /** Run once from the editor. Safe to run again: it replaces the existing trigger. */
 function installReminders() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'runReminders') ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger('runReminders').timeBased().everyHours(1).create();
-  Logger.log('Hourly reminders installed.');
+  ScriptApp.newTrigger('runReminders').timeBased().everyMinutes(RUN_MINUTES).create();
+  Logger.log('Reminders installed: every ' + RUN_MINUTES + ' minutes.');
 }
 
 function runReminders() {
