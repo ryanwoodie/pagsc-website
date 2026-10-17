@@ -130,6 +130,8 @@ function changeText(links) {
     : 'Change or cancel (up to 24 hours before your flight): ' + links.cancel;
 }
 
+var EARLY = "You're welcome to come early, even for the start of the day, to watch the crew get the gliders ready. If you're thinking about learning to fly, we encourage it, and the crew is happy to answer questions.";
+
 var BRING = 'Bring a hat, sunscreen, sunglasses, water and snacks, and layers (it is cooler at altitude). If you have not paid online, bring a way to pay: e-transfer or cash.';
 
 // ---------- Emails ----------
@@ -149,7 +151,7 @@ function confirmationEmail(b, held, links) {
     (held
       ? para('Gliding depends on the weather and on volunteers, so this is a pencilled-in time rather than a guarantee. We will send you a reminder before the day with the latest from the field, including any arrival time the club has posted, and let you know if anything changes.')
       : para('Weekday flying happens when volunteers are free, so a club member will email you to confirm this time or suggest another day.')) +
-    para('Plan to stay a while: there is plenty to watch, and the crew is happy to answer questions.') +
+    para(esc(EARLY)) +
     para(esc(BRING)) +
     (held ? arrivalPanel(links) : '') +
     changeHtml(links) +
@@ -162,7 +164,7 @@ function confirmationEmail(b, held, links) {
       held ? "You're pencilled in for a Discovery Flight: " + when + '.' : 'We have your weekday request: ' + when + '. A club member will email you to confirm.',
       '',
       'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
-      '', BRING, '',
+      '', EARLY, '', BRING, '',
       held ? 'Arriving at the airfield: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '',
       changeText(links), '',
@@ -190,7 +192,7 @@ function reminderEmail(b, held, which, day, links) {
       : nothingYet
         ? para('Nothing has been posted for the day yet, which is normal' + (which === '1' ? '' : ' this far out') + '. Flying depends on the weather and volunteers, so your time is still pencilled in rather than guaranteed. We will email you as soon as the club posts an update.')
         : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.')) +
-    (which === '1' && status !== 'cancelled' ? para('Check your email the morning of your flight for any last changes before you head out. ' + esc(BRING)) + arrivalPanel(links) : '') +
+    (which === '1' && status !== 'cancelled' ? para('Check your email the morning of your flight for any last changes before you head out. ' + esc(BRING)) + para(esc(EARLY)) + arrivalPanel(links) : '') +
     (held ? '' : para('If a club member has not confirmed your weekday request yet, reply to this email.')) +
     (status === 'cancelled' ? '' : changeHtml(links));
   return {
