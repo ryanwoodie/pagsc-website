@@ -107,3 +107,9 @@ test('booking emails carry the waiver link until everyone has signed', () => {
   const done = confirmationEmail({ ...b, waiversSigned: 2 }, true, links);
   assert.ok(!done.html.includes('Sign the waiver'));
 });
+
+test('no waiver link in emails while the links are off', () => {
+  const b = { name: 'Sam Example', date: '2026-10-17', start: '11:00', people: 1 };
+  const mail = confirmationEmail(b, true, { ...links, waiver: '' });
+  assert.ok(!mail.html.includes('Sign the waiver') && !mail.text.includes('/waiver/'));
+});

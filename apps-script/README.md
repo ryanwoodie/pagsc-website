@@ -199,6 +199,8 @@ one the PDF leaves the witness lines blank. Anyone under 18 (`WAIVER.GUARDIAN_UN
 
 **Setup (once):** deploying a version with Waivers.gs asks the club account to approve Google Drive access (for the PDFs).
 Approve it in the editor first (run `waiverFolder` once), or the web app stops until it is approved.
+The waiver links in booking emails and the calendar stay off until the Script Property `WAIVER_LINKS` is `on`; set it
+once the site with `/waiver/` is live and the script is deployed.
 
 ## Updating the deployed script
 

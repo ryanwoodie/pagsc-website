@@ -133,7 +133,7 @@ function changeText(links) {
 /** Until everyone in the booking has signed: the waiver link. b.waiversSigned counts those who have. */
 function waiverHtml(b, links) {
   var signed = b.waiversSigned || 0;
-  if (signed >= b.people) return '';
+  if (!links.waiver || signed >= b.people) return '';
   return panel(label('Before you fly: the waiver') +
     '<div style="font-family:' + EMAIL.BODY + ';font-size:15px;line-height:1.45;color:' + EMAIL.INK + ';margin:0 0 10px">' + esc(waiverLine(b)) + '</div>' +
     button('Sign the waiver', links.waiver));
@@ -146,7 +146,7 @@ function waiverLine(b) {
 }
 
 function waiverText(b, links) {
-  return (b.waiversSigned || 0) >= b.people ? '' : 'Before you fly: ' + waiverLine(b) + ' ' + links.waiver;
+  return !links.waiver || (b.waiversSigned || 0) >= b.people ? '' : 'Before you fly: ' + waiverLine(b) + ' ' + links.waiver;
 }
 
 var EARLY = "You're welcome to come early, even for the start of the day, to watch the crew get the gliders ready. If you're thinking about learning to fly, we encourage it, and the crew is happy to answer questions.";

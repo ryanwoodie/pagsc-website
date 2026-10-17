@@ -564,7 +564,7 @@ function bookingPost(p) {
 
   sendBookingEmails(b, result);
   try { standbyBooked(b.email); } catch (err) { /* the booking stands; the standby row can be tidied by hand */ }
-  return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people, waiver: b.waiverKey });
+  return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people, waiver: emailLinks('').waiver ? b.waiverKey : '' });
 }
 
 /** "Jane 13:30 (2) web (or Sun)": first name and time only; the note shows the other weekend day works. */
@@ -607,7 +607,8 @@ function emailLinks(token, waiverKey) {
     cancel: ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(token),
     confirm: ScriptApp.getService().getUrl() + '?action=confirm&token=' + encodeURIComponent(token),
     calendar: site + '/discovery-flight/#request',
-    waiver: site + '/waiver/' + (waiverKey ? '?b=' + encodeURIComponent(waiverKey) : ''),
+    // Off until the site serves /waiver/: set Script Property WAIVER_LINKS to "on".
+    waiver: PropertiesService.getScriptProperties().getProperty('WAIVER_LINKS') === 'on' ? site + '/waiver/' + (waiverKey ? '?b=' + encodeURIComponent(waiverKey) : '') : '',
     site: site,
     email: prop('CLUB_EMAIL'),
     phone: '(306) 222-5684'
