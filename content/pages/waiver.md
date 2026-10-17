@@ -30,9 +30,6 @@ Name · Phone
 ### Participant's signature
 Signed at ("Town or city") · Signature: draw it, or type your name · "I have read and understood this entire agreement, I agree to it, and this is my signature."
 
-### Witness (optional)
-"Someone with you can sign as a witness on this device." · Witness's full name · Witness's signature
-
 ### Parent or guardian (shown when the participant is under 18)
 The guardian paragraph from the waiver · Full name · Relationship to the participant · Phone · Signature · "I am the participant's parent or legal guardian, I agree to the paragraph above, and this is my signature."
 

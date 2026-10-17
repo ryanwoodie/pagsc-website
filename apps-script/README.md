@@ -183,8 +183,7 @@ Signing up for any weekend again replaces their earlier waiting rows (`Replaced`
 ## The waiver (Waivers.gs, WaiverText.gs)
 
 Guests read and sign the club's waiver at `/waiver/`: name, date of birth, contact, address, emergency contact,
-where they are signing, and a signature drawn with a finger or typed. A witness (name and signature) is optional; without
-one the PDF leaves the witness lines blank. Anyone under 18 (`WAIVER.GUARDIAN_UNDER`, `waiver.guardian_under` in
+where they are signing, and a signature drawn with a finger or typed. Anyone under 18 (`WAIVER.GUARDIAN_UNDER`, `waiver.guardian_under` in
 `content/club-facts.yaml`) also needs a parent or guardian's name, relationship, phone, agreement and signature.
 
 - Each signature adds a row to the **Waivers** tab and files a signed PDF (the full text, both signatures, the details,

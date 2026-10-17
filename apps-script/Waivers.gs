@@ -8,7 +8,6 @@
  * The wording is content/waiver.md, compiled into WaiverText.gs (npm run waiver). Each signature records the
  * waiver version and a SHA-256 hash of the exact text signed (with the guardian's consent when it applies).
  * A participant under GUARDIAN_UNDER on the day they sign needs a parent or guardian to sign as well.
- * A witness is optional online; without one the PDF leaves the witness lines blank.
  *
  * Optional Script Property: WAIVER_FOLDER_ID, the Drive folder for signed PDFs. Without it the script
  * creates "PAGSC signed waivers" in the club's Drive on the first signature and remembers it.
@@ -20,7 +19,7 @@ var WAIVER = {
   MAX_IMAGE: 200000,      // longest accepted signature image, as a data URL
   FOLDER_NAME: 'PAGSC signed waivers',
   HEADERS: ['Signed', 'Participant', 'Date of birth', 'Age', 'Email', 'Phone', 'Address',
-    'Emergency contact', 'Emergency phone', 'Signed at', 'Signature', 'Witness',
+    'Emergency contact', 'Emergency phone', 'Signed at', 'Signature',
     'Guardian', 'Relationship', 'Guardian phone', 'Booking key', 'Flight date',
     'Version', 'Text SHA-256', 'Device', 'PDF', 'ID']
 };
@@ -72,9 +71,6 @@ function readWaiverPost(p, today) {
     place: clean(p.place),
     sig: String(p.sig || ''),
     method: p.sig_method === 'typed' ? 'typed' : 'drawn',
-    witness: clean(p.witness),
-    witnessSig: String(p.witness_sig || ''),
-    witnessMethod: p.witness_sig_method === 'typed' ? 'typed' : 'drawn',
     guardian: clean(p.guardian),
     relationship: clean(p.relationship),
     guardianPhone: clean(p.guardian_phone),
@@ -98,10 +94,6 @@ function readWaiverPost(p, today) {
   if (!f.place) out.push('where you are signing');
   if (!image(f.sig)) out.push('the participant\'s signature');
   if (p.agree !== 'yes') out.push('the box confirming you have read and agree to the agreement');
-  // A witness is optional, but a name and a signature go together.
-  if (!image(f.witnessSig)) f.witnessSig = '';
-  if (f.witness && !f.witnessSig) out.push("the witness's signature");
-  if (f.witnessSig && !f.witness) out.push("the witness's name");
   if (needsGuardian(f.age)) {
     if (!f.guardian) out.push("the parent or guardian's name");
     if (!f.relationship) out.push('their relationship to the participant');
@@ -153,10 +145,6 @@ function waiverDocHtml(w, f) {
       row('Address', text(f.address)),
       row('Emergency contact name', text(f.emergencyName)),
       row('Emergency contact phone', text(f.emergencyPhone))
-    ]) +
-    section('Witness') + table([
-      row('Name', text(f.witness)),
-      row('Signature', sig(f.witnessSig, f.witnessMethod === 'typed'))
     ]) +
     section('Parent or guardian (required if the participant is under ' + WAIVER.GUARDIAN_UNDER + ')') +
     (f.guardianSig
@@ -270,7 +258,7 @@ function waiverPost(p) {
     if (bi >= 0) flightDate = isoOf(brows[bi][1]);
     var wsh = waiversSheet();
     wsh.appendRow([now, f.participant, "'" + f.dob, f.age, f.email, f.phone, f.address,
-      f.emergencyName, f.emergencyPhone, f.place, f.method, f.witness,
+      f.emergencyName, f.emergencyPhone, f.place, f.method,
       f.guardian, f.relationship, f.guardianPhone, bi >= 0 ? f.key : '', flightDate,
       f.version, f.hash, f.device, file.getUrl(), f.id]);
     if (bi >= 0) {

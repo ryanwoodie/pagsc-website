@@ -103,15 +103,6 @@ const guardianUnder = facts.waiver.guardian_under;
           <label class="wv__agree"><input type="checkbox" name="agree" value="yes" required /> <span>I have read and understood this entire agreement, I agree to it, and this is my signature.</span></label>
         </fieldset>
 
-        <fieldset class="wv__group">
-          <legend>Witness <span class="optional">(optional)</span></legend>
-          <p class="hint">Someone with you can sign as a witness on this device.</p>
-          <div class="field">
-            <label for="wv-witness">Witness's full name</label>
-            <input id="wv-witness" name="witness" type="text" autocomplete="off" />
-          </div>
-          <SignaturePad name="witness_sig" id="wv-wsig" legend="Witness's signature" />
-        </fieldset>
 
         <fieldset class="wv__group wv__guardian" hidden>
           <legend>Parent or guardian</legend>
@@ -216,7 +207,6 @@ const guardianUnder = facts.waiver.guardian_under;
       if (!(age() >= 0)) return fail('Check the date of birth.');
       const data = new FormData(form);
       if (!data.get('sig')) return fail('Sign in the signature box, or type your name.');
-      if (!data.get('witness') !== !data.get('witness_sig')) return fail('A witness gives both their name and their signature, or leave both blank.');
       if (minor() && !data.get('guardian_sig')) return fail('A parent or guardian signs too.');
       if (!minor()) for (const k of ['guardian', 'relationship', 'guardian_phone', 'guardian_sig', 'guardian_agree']) data.delete(k);
       const body = new URLSearchParams(data as unknown as Record<string, string>);

@@ -59,11 +59,6 @@ test('an adult signing needs every field, and no guardian', () => {
   assert.match(bad.error, /read and agree/);
 });
 
-test('a witness is optional, but gives both name and signature', () => {
-  assert.equal(readWaiverPost({ ...adult, witness: 'Jo Witness', witness_sig: PNG }, '2026-10-16').f.witness, 'Jo Witness');
-  assert.match(readWaiverPost({ ...adult, witness: 'Jo Witness' }, '2026-10-16').error, /witness's signature/);
-  assert.match(readWaiverPost({ ...adult, witness_sig: PNG }, '2026-10-16').error, /witness's name/);
-});
 
 const guardian = { guardian: 'Pat Example', relationship: 'Mother', guardian_phone: '306 555 0102', guardian_sig: PNG, guardian_agree: 'yes' };
 
