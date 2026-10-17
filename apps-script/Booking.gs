@@ -257,6 +257,11 @@ function computeAvailability(days, bookings, caps, today, nowMin) {
       open: !!opening,
       statusText: d.statusText,
       remaining: Math.max(0, remaining),
+      // Counts only (no names), so the club can see why a day shows full: students on the schedule,
+      // guest flights that day (website bookings plus guests typed on the schedule) and the limit used.
+      students: d.students || 0,
+      guests: used,
+      limit: wd === 0 || wd === 6 ? weekendCap : capFor(d.date),
       slots: times.map(function (t, i) { return { time: t, free: !taken[i] }; })
     });
   });
