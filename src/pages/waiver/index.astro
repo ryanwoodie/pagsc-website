@@ -75,8 +75,22 @@ const guardianUnder = facts.waiver.guardian_under;
             <input id="wv-phone" name="phone" type="tel" autocomplete="tel" required />
           </div>
           <div class="field">
-            <label for="wv-address">Address</label>
-            <input id="wv-address" name="address" type="text" autocomplete="street-address" required />
+            <label for="wv-street">Street address</label>
+            <input id="wv-street" name="street" type="text" autocomplete="address-line1" required />
+          </div>
+          <div class="field">
+            <label for="wv-city">Town or city</label>
+            <input id="wv-city" name="city" type="text" autocomplete="address-level2" required />
+          </div>
+          <div class="wv__pair">
+            <div class="field">
+              <label for="wv-province">Province</label>
+              <input id="wv-province" name="province" type="text" autocomplete="address-level1" value="SK" required />
+            </div>
+            <div class="field">
+              <label for="wv-postal">Postal code</label>
+              <input id="wv-postal" name="postal" type="text" autocomplete="postal-code" autocapitalize="characters" required />
+            </div>
           </div>
         </fieldset>
 
@@ -126,7 +140,8 @@ const guardianUnder = facts.waiver.guardian_under;
         <p class="hint"><em>{waiver.privacy}</em></p>
 
         <div class="wv__error" role="alert" tabindex="-1" hidden></div>
-        <button class="btn" type="submit">Sign the waiver</button>
+        <button class="btn wv__submit" type="submit"><span class="wv__spinner" aria-hidden="true"></span><span class="wv__submit-text">Sign the waiver</span></button>
+        <p class="wv__saving hint" role="status"></p>
       </form>
 
       <div class="wv__done" tabindex="-1" hidden>
@@ -193,6 +208,15 @@ const guardianUnder = facts.waiver.guardian_under;
         .catch(() => {});
     }
 
+    const submitText = submit.querySelector<HTMLElement>('.wv__submit-text')!;
+    const saving = form.querySelector<HTMLElement>('.wv__saving')!;
+    const busy = (on: boolean) => {
+      submit.disabled = on;
+      submit.setAttribute('aria-busy', String(on));
+      submitText.textContent = on ? 'Signing…' : 'Sign the waiver';
+      saving.textContent = on ? 'Saving your signed waiver and emailing your copy. This takes up to half a minute.' : '';
+    };
+
     const fail = (message: string) => {
       err.replaceChildren(message + ' ', 'Or email us at ', Object.assign(document.createElement('a'), { href: `mailto:${root.dataset.email}`, textContent: root.dataset.email }),
         ' or call ', Object.assign(document.createElement('a'), { href: root.dataset.tel, textContent: root.dataset.phone }), '.');
@@ -209,8 +233,12 @@ const guardianUnder = facts.waiver.guardian_under;
       if (!data.get('sig')) return fail('Sign in the signature box, or type your name.');
       if (minor() && !data.get('guardian_sig')) return fail('A parent or guardian signs too.');
       if (!minor()) for (const k of ['guardian', 'relationship', 'guardian_phone', 'guardian_sig', 'guardian_agree']) data.delete(k);
+      // The script keeps one address line: "12 Main St, Prince Albert, SK S6V 1A1".
+      const part = (k: string) => String(data.get(k) || '').trim();
+      data.set('address', [part('street'), part('city'), [part('province'), part('postal').toUpperCase()].filter(Boolean).join(' ')].filter(Boolean).join(', '));
+      for (const k of ['street', 'city', 'province', 'postal']) data.delete(k);
       const body = new URLSearchParams(data as unknown as Record<string, string>);
-      submit.disabled = true;
+      busy(true);
       try {
         const res = await fetch(endpoint, { method: 'POST', body, signal: AbortSignal.timeout(45000) });
         const out = await res.json();
@@ -235,7 +263,7 @@ const guardianUnder = facts.waiver.guardian_under;
       } catch (x) {
         fail(x instanceof Error && x.name === 'Error' && x.message ? x.message : 'That did not go through.');
       } finally {
-        submit.disabled = false;
+        busy(false);
       }
     });
 
@@ -390,6 +418,47 @@ const guardianUnder = facts.waiver.guardian_under;
     letter-spacing: 0;
     text-transform: none;
     color: var(--grey);
+  }
+  .wv__pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .wv__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    justify-self: start;
+  }
+  .wv__spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: wv-spin 0.8s linear infinite;
+  }
+  .wv__submit[aria-busy='true'] {
+    cursor: progress;
+    opacity: 0.85;
+  }
+  .wv__submit[aria-busy='true'] .wv__spinner {
+    display: inline-block;
+  }
+  .wv__saving:empty {
+    display: none;
+  }
+  @keyframes wv-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wv__spinner {
+      animation-duration: 2.4s;
+    }
   }
   .wv__error {
     background: var(--orange-tint);

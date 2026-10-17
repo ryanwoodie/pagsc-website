@@ -22,7 +22,7 @@ The club's waiver, as written (`content/waiver.md`).
 Full name · Date of birth
 
 ### Contact
-Email ("We email a signed copy here.") · Phone · Address
+Email ("We email a signed copy here.") · Phone · Street address · Town or city · Province · Postal code
 
 ### Emergency contact
 Name · Phone
