@@ -546,7 +546,7 @@ function bookingPost(p) {
     var token = Utilities.getUuid();
     var first = b.name.split(/\s+/)[0];
     var text = scheduleText(kind, first, b.start, b.people, b.flexible === 'Yes' ? partner : null);
-    var cell = writeToSchedule(sched, grid, days, b.date, text);
+    var cell = writeToSchedule(sched, grid, days, b.date, text, true);
 
     bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
@@ -572,20 +572,26 @@ function scheduleText(kind, first, start, people, orDate) {
 }
 
 /** Put the booking in the first empty cell of that day's intro-flight block. Returns its A1 address, or ''. */
-function writeToSchedule(sched, grid, days, date, text) {
+function writeToSchedule(sched, grid, days, date, text, bumpStandby) {
   var d = null;
   days.forEach(function (x) { if (x.date === date) d = x; });
   if (!d || d.introRow < 0) return '';
+  var put = function (r) {
+    var range = sched.getRange(r + 1, d.col + 1);
+    range.setValue(text);
+    while (grid.length <= r) grid.push([]);
+    grid[r][d.col] = text; // later writes in the same run see it taken
+    return range.getA1Notation();
+  };
+  var standbyRow = -1;
   for (var r = d.introRow + 1; r < grid.length + 20; r++) {
     var v = r < grid.length ? String(grid[r][d.col] || '') : '';
-    if (/sign-?\s*up\s+below/i.test(v)) return ''; // block is full
-    if (!v.trim()) {
-      var range = sched.getRange(r + 1, d.col + 1);
-      range.setValue(text);
-      return range.getA1Notation();
-    }
+    if (/sign-?\s*up\s+below/i.test(v)) break; // block is full
+    if (!v.trim()) return put(r);
+    if (standbyRow < 0 && /^standby:/i.test(v.trim())) standbyRow = r;
   }
-  return '';
+  // A full block: a booking takes the place of a standby entry (Standby.gs puts it back when there is room).
+  return bumpStandby && standbyRow >= 0 ? put(standbyRow) : '';
 }
 
 function siteOrigin() {
@@ -669,7 +675,7 @@ function moveBookingRow(sh, rows, i, availByDate) {
   var grid = sched.getDataRange().getDisplayValues();
   var days = scheduleDays(grid);
   var text = scheduleText('Held', b.name.split(/\s+/)[0], to.start, b.people, null);
-  var newCell = writeToSchedule(sched, grid, days, to.date, text);
+  var newCell = writeToSchedule(sched, grid, days, to.date, text, true);
   var newStatus = '';
   days.forEach(function (d) { if (d.date === to.date) newStatus = d.statusText; });
   var col = function (name) { return BOOKING.HEADERS.indexOf(name) + 1; };

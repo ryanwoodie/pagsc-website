@@ -156,6 +156,12 @@ Saturday: spots are open", with a link to that day, first come, first served. Th
 `Notified`; rows for past days become `Expired`. Weekdays and bookings made before this change are
 unaffected.
 
+**On the Flying Schedule.** One-day and either-day sign-ups appear in that day's guest block by first
+name only, e.g. `Standby: Jane (2) web (or Sun)`, within 10 minutes of joining. The "web" ending means
+they are never counted as guest flights. They only use empty rows; if the block is full, a booking
+replaces a standby entry, which comes back when a row frees up. The entry is removed when they book,
+leave the list, or the weekend passes. Any-weekend sign-ups have no day, so they don't appear.
+
 **Any weekend we fly.** Anyone, paid or not, can join the general standby list with the form under
 "Or wait for a good day" on the Discovery Flight page (`#standby`), on the paid page after buying, or
 from the link in the certificate email. Those rows have Scope `Any` and no date. Every time a weekend

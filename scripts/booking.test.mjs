@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
+const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -346,4 +346,28 @@ test('forecast row found by its contents, whatever column A says', () => {
   const r = reminderEmail({ name: 'Sam Lee', date: '2026-10-17', start: '13:00', people: 2 }, true, '1', sat, links);
   assert.ok(r.html.includes('Tomorrow: flying is on') && r.html.includes('Your flight time') && r.html.includes('High 18C'));
   assert.ok(!r.html.includes('pencilled-in time'));
+});
+
+test('standby on the schedule: first name only, never counted, and bookings come first', () => {
+  assert.equal(standbyScheduleText('Jane Doe', 2, '2026-10-18'), 'Standby: Jane (2) web (or Sun)');
+  assert.equal(standbyScheduleText('Jane Doe', 1, null), 'Standby: Jane web');
+  assert.equal(manualEntry('Standby: Jane (2) web (or Sun)'), null);
+  assert.equal(manualEntry('Standby: Jane web'), null);
+
+  // A two-row guest block: standby only takes empty rows; a booking replaces a standby entry when full.
+  const grid = [
+    ['', 'Sat Oct 24,2026'],
+    ['Intro', 'Intro Fam Flight Sign-up Below'],
+    ['', ''],
+    ['', ''],
+    ['Students', 'Student/Pilots Sign-up Below'],
+  ];
+  const writes = [];
+  const sched = { getRange: (r, c) => ({ setValue: (v) => writes.push([r, c, v]), getA1Notation: () => 'B' + r }) };
+  const days = scheduleDays(grid);
+  assert.equal(writeToSchedule(sched, grid, days, '2026-10-24', 'Standby: Jane web', false), 'B3');
+  assert.equal(writeToSchedule(sched, grid, days, '2026-10-24', 'Pat 11:00 web', true), 'B4');
+  assert.equal(writeToSchedule(sched, grid, days, '2026-10-24', 'Standby: Sam web', false), ''); // full: standby waits
+  assert.equal(writeToSchedule(sched, grid, days, '2026-10-24', 'Lee 12:00 web', true), 'B3'); // booking takes Jane's row
+  assert.equal(grid[2][1], 'Lee 12:00 web');
 });

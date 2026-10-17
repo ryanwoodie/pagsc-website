@@ -15,6 +15,10 @@
  * opens and stay on the list until they book or take themselves off (a link in every email). Every
  * ASK_EVERY emails, the email asks whether they would like to come off the list.
  *
+ * Day and Weekend sign-ups also show on the Flying Schedule, in the day's guest block, by first name only:
+ * "Standby: Jane (2) web (or Sun)". They take empty rows only; a booking replaces one if the block is full.
+ * The entry comes off when they book, leave the list or the weekend passes.
+ *
  * Standby tab (requests sheet): one row per sign-up. Status: Waiting -> Notified (Day, Weekend),
  * Booked, Removed, Replaced (signed up again), or Expired (Day, Weekend: the weekend passed).
  */
@@ -22,7 +26,7 @@
 var STANDBY = {
   TAB: 'Standby',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Either weekend day', 'Name', 'Email', 'Phone', 'Interest',
-    'Message', 'Status', 'Notified', 'Opened date', 'Scope', 'Codes', 'Token', 'Days notified', 'Emails sent'],
+    'Message', 'Status', 'Notified', 'Opened date', 'Scope', 'Codes', 'Token', 'Days notified', 'Emails sent', 'Schedule cell', 'Schedule text'],
   ASK_EVERY: 10     // any-weekend guests: every 10th flying-day email asks if they would like to come off the list
 };
 
@@ -74,6 +78,13 @@ function standbyNotifiedList(v) {
   if (!v) return [];
   if (Object.prototype.toString.call(v) === '[object Date]') return [isoOf(v)];
   return String(v).split(/,\s*/).filter(String);
+}
+
+/** The schedule entry for a one-weekend sign-up. Ends in "web" so it is never counted as a guest flight. */
+function standbyScheduleText(name, people, orDate) {
+  var first = String(name || '').trim().split(/\s+/)[0];
+  return 'Standby: ' + first + (people > 1 ? ' (' + people + ')' : '') + ' web' +
+    (orDate ? ' (or ' + DAY_NAMES[weekdayOf(orDate)].slice(0, 3) + ')' : '');
 }
 
 /** Any-weekend sign-ups: does the nth flying-day email ask whether they would like to come off the list? */
@@ -207,6 +218,7 @@ function openStandby(today) {
   avail.forEach(function (a) { availByDate[a.date] = a; });
   var col = standbyCol, site = siteOrigin();
   var set = function (i, name, value) { sh.getRange(i + 1, col(name)).setValue(value); };
+  syncStandbySchedule(sh, rows, today);
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
     if (r[col('Status') - 1] !== 'Waiting') continue;
@@ -248,5 +260,41 @@ function openStandby(today) {
     set(i, 'Status', 'Notified');
     set(i, 'Notified', new Date());
     set(i, 'Opened date', day.date);
+  }
+}
+
+/**
+ * Keep the Flying Schedule in step with one-weekend standby sign-ups: an entry for each one still waiting
+ * (or emailed, until the weekend passes), none for anyone who booked, left or expired.
+ */
+function syncStandbySchedule(sh, rows, today) {
+  var sched = scheduleSheet();
+  var grid = sched.getDataRange().getDisplayValues();
+  var days = scheduleDays(grid);
+  var col = standbyCol;
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    var scope = standbyScope(r[col('Scope') - 1], r[col('Either weekend day') - 1]);
+    if (scope === 'Any' || !r[1]) continue;
+    var date = isoOf(r[1]);
+    var status = r[col('Status') - 1];
+    var lastDay = scope === 'Weekend' && weekdayOf(date) === 6 ? addDays(date, 1) : date;
+    var active = (status === 'Waiting' || status === 'Notified') && lastDay >= today;
+    var a1 = String(r[col('Schedule cell') - 1] || ''), text = String(r[col('Schedule text') - 1] || '');
+    var shown = false;
+    if (a1) {
+      var range = sched.getRange(a1);
+      shown = String(range.getDisplayValue()) === text;
+      if (shown && !active) { range.clearContent(); shown = false; }
+      if (!shown) sh.getRange(i + 1, col('Schedule cell')).setValue(''); // cleared, or a booking took its place
+    }
+    if (active && !shown && date >= today) {
+      text = standbyScheduleText(r[col('Name') - 1], Number(r[3]) || 1, scope === 'Weekend' ? weekendPartner(date) : null);
+      var cell = writeToSchedule(sched, grid, days, date, text, false);
+      if (cell) {
+        sh.getRange(i + 1, col('Schedule cell')).setValue(cell);
+        sh.getRange(i + 1, col('Schedule text')).setValue(text);
+      }
+    }
   }
 }
