@@ -458,7 +458,10 @@ function guestCaps() {
 }
 
 var AVAILABILITY_CACHE = 'availability';
-var AVAILABILITY_SECONDS = 60; // edits to the schedule show within a minute; bookings clear it at once
+// The regular check (Reminders.gs, every 10 minutes) refreshes the cache, so visitors nearly always get the fast
+// cached answer: a fresh read of the schedule takes 5 to 25 seconds. Schedule edits show within 10 minutes;
+// bookings clear the cache at once.
+var AVAILABILITY_SECONDS = 15 * 60;
 
 function daysResponse() {
   try {
@@ -472,17 +475,21 @@ function daysResponse() {
 }
 
 function availabilityResponse() {
-  var cache = CacheService.getScriptCache();
-  var hit = cache.get(AVAILABILITY_CACHE);
+  var hit = CacheService.getScriptCache().get(AVAILABILITY_CACHE);
   if (hit) return JSON.parse(hit);
   try {
-    var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
-    var out = { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField(), nowOnField()) };
-    try { cache.put(AVAILABILITY_CACHE, JSON.stringify(out), AVAILABILITY_SECONDS); } catch (e) { /* too big to cache */ }
-    return out;
+    return refreshAvailabilityCache();
   } catch (err) {
     return { ok: false, error: 'unavailable' };
   }
+}
+
+/** Read the schedule and bookings afresh and cache the calendar's answer. */
+function refreshAvailabilityCache() {
+  var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
+  var out = { ok: true, days: computeAvailability(days, activeBookings(), guestCaps(), todayOnField(), nowOnField()) };
+  try { CacheService.getScriptCache().put(AVAILABILITY_CACHE, JSON.stringify(out), AVAILABILITY_SECONDS); } catch (e) { /* too big to cache */ }
+  return out;
 }
 
 function clearAvailabilityCache() {

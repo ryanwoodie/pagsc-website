@@ -80,6 +80,7 @@ function runReminders() {
   } finally {
     lock.releaseLock();
   }
+  try { refreshAvailabilityCache(); } catch (err) { /* visitors fall back to a fresh read */ }
 }
 
 /** Run from the editor to email the club a sample of each guest email. Sends 5 emails, books nothing. */

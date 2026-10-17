@@ -66,6 +66,9 @@ What it does with the sheets:
   Times without am/pm are read as flying hours (1:30 is 1:30 pm). A name with no time takes one spot
   that day without blocking a time; `(2)` or `+1` for more people. Leave the word `web` on the
   script's own entries: those are counted from the Bookings tab, and removing it counts them twice.
+- The calendar's answer is cached for 15 minutes and refreshed by the regular check every 10 minutes, because a fresh
+  read of the schedule takes 5 to 25 seconds. Edits to the schedule show on the website within 10 minutes; bookings
+  and cancellations show at once.
 - To change a weekend's guest limit (or one weekday's), add a **Guest caps** tab with `Date` (yyyy-mm-dd) and `Cap` columns; for a weekend, a date on either day sets the shared limit.
 - A day whose Status / Comments cell says it is cancelled is shown as "Not flying" and can't be booked.
 - Guests get a confirmation email with a cancel link; cancelling frees the slot, clears the schedule

@@ -35,7 +35,7 @@ const config = {
     <p><strong>Flying depends on the weather and on volunteers.</strong> A booking holds a spot for you, not a guaranteed time. If the day changes we'll email you, and you can rebook at no charge.</p>
   </div>
 
-  <p class="booking__loading" hidden>Loading the flying calendar…</p>
+  <p class="booking__loading" role="status" hidden>Loading the flying calendar…</p>
   <p class="booking__fresh" hidden>Checking for the latest spots…</p>
   <div class="booking__app" hidden></div>
 
@@ -113,7 +113,7 @@ const config = {
     });
 
     async function fetchLive(): Promise<Day[]> {
-      const res = await fetch(`${cfg.endpoint}?action=availability`, { signal: AbortSignal.timeout(20000) });
+      const res = await fetch(`${cfg.endpoint}?action=availability`, { signal: AbortSignal.timeout(45000) });
       const data = await res.json();
       if (!data.ok || !Array.isArray(data.days) || !data.days.length) throw new Error('no days');
       try {
@@ -147,6 +147,7 @@ const config = {
         fallback.hidden = true;
         loading.hidden = false;
       }
+      const slow = setTimeout(() => { loading.textContent = 'Still loading the flying calendar. It can take up to half a minute…'; }, 8000);
       try {
         const days = await fetchLive();
         // Someone already filling in the form keeps it, unless their time is no longer free.
@@ -162,6 +163,7 @@ const config = {
           fallback.hidden = false;
         }
       } finally {
+        clearTimeout(slow);
         fresh.hidden = true;
       }
     }
