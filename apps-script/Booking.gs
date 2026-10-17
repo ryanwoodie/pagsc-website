@@ -265,6 +265,8 @@ function computeAvailability(days, bookings, caps, today, nowMin) {
       kind: wd === 0 || wd === 6 ? 'weekend' : 'weekday',
       status: classifyStatus(d.statusText),
       open: !!opening,
+      // The Status / Comments row explicitly confirms flying ("Day confirmed", "Day is a go"): weekend bookings are booked in, not pencilled in.
+      confirmed: (wd === 0 || wd === 6) && standbyDayConfirmed(d.statusText),
       statusText: d.statusText,
       remaining: Math.max(0, remaining),
       // Counts only (no names), so the club can see why a day shows full: students on the schedule,
@@ -551,6 +553,7 @@ function bookingPost(p) {
       return json({ ok: false, error: 'Please tell us whether the other day of that weekend would also work.' });
     }
     var kind = day.kind === 'weekend' ? 'Held' : 'Requested';
+    b.confirmed = !!day.confirmed;
     var token = Utilities.getUuid();
     b.waiverKey = Utilities.getUuid().replace(/-/g, '').slice(0, 20); // shareable with the group, unlike the cancel token
     var first = b.name.split(/\s+/)[0];
@@ -571,7 +574,7 @@ function bookingPost(p) {
 
   sendBookingEmails(b, result);
   try { standbyBooked(b.email); } catch (err) { /* the booking stands; the standby row can be tidied by hand */ }
-  return json({ ok: true, kind: result.kind, date: result.date, range: result.range, people: result.people, waiver: emailLinks('').waiver ? b.waiverKey : '' });
+  return json({ ok: true, kind: result.kind, confirmed: !!b.confirmed, date: result.date, range: result.range, people: result.people, waiver: emailLinks('').waiver ? b.waiverKey : '' });
 }
 
 /** "Jane 13:30 (2) web (or Sun)": first name and time only; the note shows the other weekend day works. */
@@ -635,9 +638,9 @@ function sendBookingEmails(b, r) {
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
     replyTo: b.email,
-    subject: (held ? 'Guest pencilled in: ' : 'Weekday request: ') + b.name + ', ' + when,
+    subject: (held ? (b.confirmed ? 'Guest booked in: ' : 'Guest pencilled in: ') : 'Weekday request: ') + b.name + ', ' + when,
     body: [
-      (held ? 'A guest pencilled in a slot on the website.' : 'A weekday request came in on the website. Please confirm or decline by replying.'),
+      (held ? (b.confirmed ? 'A guest booked a slot on a confirmed day on the website.' : 'A guest pencilled in a slot on the website.') : 'A weekday request came in on the website. Please confirm or decline by replying.'),
       '',
       'When: ' + when,
       'Name: ' + b.name,

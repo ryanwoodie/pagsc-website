@@ -371,3 +371,17 @@ test('standby on the schedule: first name only, never counted, and bookings come
   assert.equal(writeToSchedule(sched, grid, days, '2026-10-24', 'Lee 12:00 web', true), 'B3'); // booking takes Jane's row
   assert.equal(grid[2][1], 'Lee 12:00 web');
 });
+
+test('a confirmed weekend day books guests in rather than pencilling them in', () => {
+  const days = scheduleDays(grid);
+  const [sat, sun, tue] = computeAvailability(days, [], {}, '2026-10-09');
+  assert.equal(sat.confirmed, true); // "Day is a go"
+  assert.equal(sun.confirmed, false); // cancelled
+  assert.equal(tue.confirmed, false); // weekdays stay requests
+  const links = { site: 'https://www.pagsc.ca', email: 'club@example.com', phone: '(306) 222-5684', cancel: 'https://x/cancel', waiver: '' };
+  const b = { name: 'Sam Example', date: '2026-10-10', start: '11:00', people: 1 };
+  const booked = confirmationEmail({ ...b, confirmed: true }, true, links);
+  assert.match(booked.subject, /^You're booked in: /);
+  assert.ok(!/pencil/i.test(booked.html + booked.text));
+  assert.match(confirmationEmail(b, true, links).subject, /^You're pencilled in: /);
+});

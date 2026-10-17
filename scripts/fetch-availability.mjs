@@ -30,7 +30,7 @@ async function main() {
   const data = await res.json();
   if (!data.ok || !Array.isArray(data.days)) throw new Error('no days in the response');
   // Keep only what the calendar uses.
-  const days = data.days.map(({ date, kind, status, statusText, remaining, slots }) => ({ date, kind, status, statusText, remaining, slots }));
+  const days = data.days.map(({ date, kind, status, confirmed, statusText, remaining, slots }) => ({ date, kind, status, confirmed, statusText, remaining, slots }));
   await write({ updated: new Date().toISOString(), days });
   console.log(`[availability] ${days.length} bookable day(s)`);
 }

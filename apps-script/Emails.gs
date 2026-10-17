@@ -157,17 +157,21 @@ var BRING = 'Bring a hat, sunscreen, sunglasses, water and snacks, and layers (i
 
 /**
  * @param b {name, date, start, people}
- * @param held true for a weekend booking (pencilled in), false for a weekday request
+ * @param held true for a weekend booking (pencilled in, or booked in when b.confirmed), false for a weekday request
  * @param links {cancel, calendar, site, email, phone}
  * @returns {subject, html, text}
  */
 function confirmationEmail(b, held, links) {
   var first = String(b.name).split(/\s+/)[0];
   var when = whenText(b);
-  var body = heading(held ? "You're pencilled in" : 'Your weekday request is in') +
+  var booked = held && b.confirmed; // the club has confirmed flying that day
+  var title = booked ? "You're booked in" : held ? "You're pencilled in" : 'Your weekday request is in';
+  var body = heading(title) +
     para('Hi ' + esc(first) + ',') +
     whenPanel(b, held ? 'Discovery Flight' : 'Weekday request') +
-    (held
+    (booked
+      ? para('The club has confirmed flying that day. If the weather or anything else changes, we will email you straight away, and we will send you a reminder before the day with any arrival time the club has posted.')
+      : held
       ? para('Gliding depends on the weather and on volunteers, so this is a pencilled-in time rather than a guarantee. We will send you a reminder before the day with the latest from the field, including any arrival time the club has posted, and let you know if anything changes.')
       : para('Weekday flying happens when volunteers are free, so a club member will email you to confirm this time or suggest another day.')) +
     waiverHtml(b, links) +
@@ -177,13 +181,15 @@ function confirmationEmail(b, held, links) {
     changeHtml(links) +
     para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Questions? Just reply to this email.</span>');
   return {
-    subject: (held ? "You're pencilled in: " : 'Weekday request received: ') + when,
+    subject: (held ? title + ': ' : 'Weekday request received: ') + when,
     html: layout(held ? 'Your Discovery Flight: ' + when : 'Your weekday request: ' + when, body, links),
     text: [
       'Hi ' + first + ',', '',
-      held ? "You're pencilled in for a Discovery Flight: " + when + '.' : 'We have your weekday request: ' + when + '. A club member will email you to confirm.',
+      held ? title + ' for a Discovery Flight: ' + when + '.' : 'We have your weekday request: ' + when + '. A club member will email you to confirm.',
       '',
-      'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
+      booked
+        ? 'The club has confirmed flying that day. If the weather or anything else changes, we will email you straight away, and we will send you a reminder before the day with any arrival time the club has posted.'
+        : 'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
       '', waiverText(b, links), '', EARLY, '', BRING, '',
       held ? 'Arriving at the airfield: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '',

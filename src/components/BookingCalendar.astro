@@ -47,7 +47,7 @@ const config = {
 <script>
   import { track, adsBooking } from '../scripts/track';
   type Slot = { time: string; free: boolean };
-  type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; open?: boolean; statusText: string; remaining: number; slots: Slot[] };
+  type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; open?: boolean; confirmed?: boolean; statusText: string; remaining: number; slots: Slot[] };
   type Snapshot = { updated: string | null; days: Day[] };
   type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string };
   const CACHE_KEY = 'pagsc-availability';
@@ -238,7 +238,7 @@ const config = {
         el('p', { class: 'bk-hint', id: 'bk-codes-hint' }, state.people > 1 ? 'One for each person flying, separated by commas. They are on the certificates and in the email.' : 'On your certificate and in the email.'));
       form.append(
         el('h3', {}, '4. Your details'),
-        el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}, ${state.people} ${state.people === 1 ? 'person' : 'people'}. ${held ? 'We pencil you in for this spot.' : 'This is a request; we confirm by email.'}`),
+        el('p', { class: 'bk-summary' }, `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}, ${state.people} ${state.people === 1 ? 'person' : 'people'}. ${held ? (day.confirmed ? 'Flying is confirmed that day, so this books you in.' : 'We pencil you in for this spot.') : 'This is a request; we confirm by email.'}`),
         el('div', { class: 'hp', 'aria-hidden': 'true' }, el('label', { for: 'bk-website' }, 'Leave this empty'), el('input', { id: 'bk-website', name: 'website', type: 'text', tabindex: '-1', autocomplete: 'off' })),
         field('bk-name', 'Name', el('input', { id: 'bk-name', name: 'name', type: 'text', autocomplete: 'name', required: '' })),
         field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
@@ -268,11 +268,11 @@ const config = {
         const phone = form.querySelector<HTMLInputElement>('#bk-phone')!;
         phone.required = !standbyNow;
         form.querySelector<HTMLElement>('label[for="bk-phone"] .optional')!.hidden = !standbyNow;
-        submit.textContent = isStandbyDay(day) && p === 'Pay at the field' ? 'Join the standby list' : held ? 'Pencil me in' : 'Send my request';
+        submit.textContent = isStandbyDay(day) && p === 'Pay at the field' ? 'Join the standby list' : held ? (day.confirmed ? 'Book me in' : 'Pencil me in') : 'Send my request';
       };
       const err = el('div', { class: 'bk-error', role: 'alert', tabindex: '-1' });
       if (message) err.textContent = message; else err.hidden = true;
-      const submit = el('button', { class: 'btn', type: 'submit' }, held ? 'Pencil me in' : 'Send my request');
+      const submit = el('button', { class: 'btn', type: 'submit' }, held ? (day.confirmed ? 'Book me in' : 'Pencil me in') : 'Send my request');
       form.addEventListener('change', showCode);
       showCode();
       form.append(err, submit);
@@ -349,7 +349,7 @@ const config = {
         }
         track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         adsBooking();
-        done(data.kind === 'Held', day, end, data.waiver);
+        done(data.kind === 'Held', day, end, data.waiver, !!data.confirmed);
       } catch {
         err.replaceChildren('That did not go through. Email us at ', el('a', { href: `mailto:${cfg.email}` }, cfg.email), ' or call ', el('a', { href: cfg.tel }, cfg.phone), ' and we will book you in.');
         err.hidden = false;
@@ -367,12 +367,14 @@ const config = {
       box.focus();
     }
 
-    function done(held: boolean, day: Day, end: string, waiverKey?: string) {
+    function done(held: boolean, day: Day, end: string, waiverKey?: string, confirmed = false) {
       const when = `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}`;
       const box = el('div', { class: 'bk-done', tabindex: '-1' },
-        el('h3', {}, held ? "You're pencilled in." : 'Your request is in.'),
+        el('h3', {}, held ? (confirmed ? "You're booked in." : "You're pencilled in.") : 'Your request is in.'),
         el('p', { class: 'bk-summary' }, `${when}, ${state.people} ${state.people === 1 ? 'person' : 'people'}.`),
-        el('p', {}, held
+        el('p', {}, held && confirmed
+          ? "We've emailed you the details, a map of the airfield and a link to change or cancel up to 24 hours before. The club has confirmed flying that day; if the weather or anything else changes, we'll email you straight away."
+          : held
           ? "We've emailed you the details, a map of the airfield and a link to change or cancel up to 24 hours before. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
           : "Weekday flying depends on who is free. A club member will email you to confirm, or to suggest another day."));
       if (waiverKey) {
