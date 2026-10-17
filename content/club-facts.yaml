@@ -89,7 +89,7 @@ booking:   # the online calendar; keep in step with BOOKING in apps-script/Booki
   days_ahead: 28
 
 waiver:   # signed online at /waiver/; the wording is content/waiver.md. Keep in step with WAIVER in apps-script/Waivers.gs
-  guardian_max_age: 18   # "Guardian Signature: (18 and under)"
+  guardian_under: 18   # "Parent or guardian (required if the participant is under 18)"
 
 fees:
   membership:

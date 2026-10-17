@@ -141,7 +141,7 @@ function waiverHtml(b, links) {
 
 function waiverLine(b) {
   var signed = b.waiversSigned || 0;
-  return 'Everyone flying signs the club\'s waiver first. It takes a few minutes online, and anyone ' + WAIVER.GUARDIAN_MAX_AGE + ' or under signs with a parent or guardian.' +
+  return 'Everyone flying signs the club\'s waiver first. It takes a few minutes online, and anyone under ' + WAIVER.GUARDIAN_UNDER + ' signs with a parent or guardian.' +
     (b.people > 1 ? ' Send the link to the others in your group so each person signs their own' + (signed ? ' (' + signed + ' of ' + b.people + ' signed so far).' : '.') : '');
 }
 

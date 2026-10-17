@@ -6,7 +6,7 @@ primary_action: Sign the waiver
 
 # Sign the club's waiver
 
-Everyone who flies with the club signs this waiver once, before their first flight. It stays in force while you fly with us. Anyone 18 or under signs with a parent or guardian.
+Everyone who flies with the club signs this waiver once, before their first flight. It covers all your gliding with the club until you cancel it in writing. Anyone under 18 signs with a parent or guardian.
 
 [Read and sign]
 
@@ -18,7 +18,7 @@ The club's waiver, as written (`content/waiver.md`).
 
 ## Sign
 
-### The person flying
+### Participant
 Full name · Date of birth
 
 ### Contact
@@ -27,11 +27,16 @@ Email ("We email a signed copy here.") · Phone · Address
 ### Emergency contact
 Name · Phone
 
-### Parent or guardian (shown when the person flying is 18 or under)
-Parent or guardian's full name · Parent or guardian's signature
+### Participant's signature
+Signed at ("Town or city") · Signature: draw it, or type your name · "I have read and understood this entire agreement, I agree to it, and this is my signature."
 
-### Signature
-Signed at ("Town or city") · Signature: draw it, or type your name · "I have read this waiver, I agree to it, and this is my signature."
+### Witness (optional)
+"Someone with you can sign as a witness on this device." · Witness's full name · Witness's signature
+
+### Parent or guardian (shown when the participant is under 18)
+The guardian paragraph from the waiver · Full name · Relationship to the participant · Phone · Signature · "I am the participant's parent or legal guardian, I agree to the paragraph above, and this is my signature."
+
+The waiver's privacy line, in italics.
 
 [Sign the waiver]
 

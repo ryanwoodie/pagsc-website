@@ -6,8 +6,9 @@
  *   GET  ?action=waiver&key=…  for a booking's waiver link: the flight date, people and how many have signed.
  *
  * The wording is content/waiver.md, compiled into WaiverText.gs (npm run waiver). Each signature records the
- * waiver version and a SHA-256 hash of the exact text signed, with the participant's name filled in.
- * Anyone GUARDIAN_MAX_AGE or under on the day they sign needs a parent or guardian to sign as well.
+ * waiver version and a SHA-256 hash of the exact text signed (with the guardian's consent when it applies).
+ * A participant under GUARDIAN_UNDER on the day they sign needs a parent or guardian to sign as well.
+ * A witness is optional online; without one the PDF leaves the witness lines blank.
  *
  * Optional Script Property: WAIVER_FOLDER_ID, the Drive folder for signed PDFs. Without it the script
  * creates "PAGSC signed waivers" in the club's Drive on the first signature and remembers it.
@@ -15,11 +16,12 @@
 
 var WAIVER = {
   TAB: 'Waivers',
-  GUARDIAN_MAX_AGE: 18,   // waiver.guardian_max_age in content/club-facts.yaml
+  GUARDIAN_UNDER: 18,     // waiver.guardian_under in content/club-facts.yaml
   MAX_IMAGE: 200000,      // longest accepted signature image, as a data URL
   FOLDER_NAME: 'PAGSC signed waivers',
-  HEADERS: ['Signed', 'Participant', 'Date of birth', 'Age', 'Guardian', 'Email', 'Phone', 'Address',
-    'Emergency contact', 'Emergency phone', 'Signed at', 'Signature', 'Booking key', 'Flight date',
+  HEADERS: ['Signed', 'Participant', 'Date of birth', 'Age', 'Email', 'Phone', 'Address',
+    'Emergency contact', 'Emergency phone', 'Signed at', 'Signature', 'Witness',
+    'Guardian', 'Relationship', 'Guardian phone', 'Booking key', 'Flight date',
     'Version', 'Text SHA-256', 'Device', 'PDF', 'ID']
 };
 
@@ -35,19 +37,26 @@ function ageOn(dob, today) {
 }
 
 function needsGuardian(age) {
-  return age <= WAIVER.GUARDIAN_MAX_AGE;
+  return age < WAIVER.GUARDIAN_UNDER;
 }
 
-/** The waiver as plain text, the participant's name filled in: what the hash covers. */
-function waiverPlain(w, participant) {
-  return w.blocks.map(function (b) {
-    var t = b.type === 'ul' ? b.items.map(function (i) { return '- ' + i; }).join('\n') : b.text;
-    return t.replace(/\*\*/g, '').replace(/\{participant\}/g, participant);
-  }).join('\n\n');
+function stripMarks(text) {
+  return text.replace(/\*\*/g, '').replace(/\*(.+?)\*/g, '$1');
 }
 
-function waiverInline(text, participant) {
-  return esc(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\{participant\}/g, '<strong>' + esc(participant) + '</strong>');
+/** The agreement as plain text, plus the guardian's consent when a guardian signs: what the hash covers. */
+function waiverPlain(w, withGuardian) {
+  var parts = w.blocks.map(function (b) {
+    if (b.type === 'hr') return '---';
+    if (b.type === 'ul') return b.items.map(function (i) { return '- ' + stripMarks(i); }).join('\n');
+    return stripMarks(b.text);
+  });
+  if (withGuardian) parts.push(w.guardianConsent);
+  return parts.join('\n\n');
+}
+
+function waiverInline(text) {
+  return esc(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
 
 /** Reads and checks a signing. Returns {f} or {error}. */
@@ -61,78 +70,109 @@ function readWaiverPost(p, today) {
     emergencyName: clean(p.emergency_name),
     emergencyPhone: clean(p.emergency_phone),
     place: clean(p.place),
-    guardian: clean(p.guardian),
-    method: p.sig_method === 'typed' ? 'typed' : 'drawn',
-    guardianMethod: p.guardian_sig_method === 'typed' ? 'typed' : 'drawn',
     sig: String(p.sig || ''),
+    method: p.sig_method === 'typed' ? 'typed' : 'drawn',
+    witness: clean(p.witness),
+    witnessSig: String(p.witness_sig || ''),
+    witnessMethod: p.witness_sig_method === 'typed' ? 'typed' : 'drawn',
+    guardian: clean(p.guardian),
+    relationship: clean(p.relationship),
+    guardianPhone: clean(p.guardian_phone),
     guardianSig: String(p.guardian_sig || ''),
+    guardianMethod: p.guardian_sig_method === 'typed' ? 'typed' : 'drawn',
     key: clean(p.key).replace(/[^a-f0-9]/g, '').slice(0, 32),
     version: clean(p.version),
     device: clean(p.device).slice(0, 300)
   };
   f.age = ageOn(f.dob, today);
   var image = function (v) { return /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(v) && v.length <= WAIVER.MAX_IMAGE; };
+  var phone = function (v) { return /\d{3}.*\d{4}/.test(v); };
   var out = [];
-  if (!f.participant) out.push('the name of the person flying');
+  if (!f.participant) out.push('the participant\'s name');
   if (!(f.age >= 0 && f.age < 120)) out.push('their date of birth');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) out.push('a valid email address');
-  if (!/\d{3}.*\d{4}/.test(f.phone)) out.push('a phone number');
+  if (!phone(f.phone)) out.push('a phone number');
   if (!f.address) out.push('an address');
   if (!f.emergencyName) out.push('an emergency contact');
-  if (!/\d{3}.*\d{4}/.test(f.emergencyPhone)) out.push("the emergency contact's phone number");
+  if (!phone(f.emergencyPhone)) out.push("the emergency contact's phone number");
   if (!f.place) out.push('where you are signing');
-  if (!image(f.sig)) out.push('a signature');
+  if (!image(f.sig)) out.push('the participant\'s signature');
+  if (p.agree !== 'yes') out.push('the box confirming you have read and agree to the agreement');
+  // A witness is optional, but a name and a signature go together.
+  if (!image(f.witnessSig)) f.witnessSig = '';
+  if (f.witness && !f.witnessSig) out.push("the witness's signature");
+  if (f.witnessSig && !f.witness) out.push("the witness's name");
   if (needsGuardian(f.age)) {
     if (!f.guardian) out.push("the parent or guardian's name");
+    if (!f.relationship) out.push('their relationship to the participant');
+    if (!phone(f.guardianPhone)) out.push("the parent or guardian's phone number");
     if (!image(f.guardianSig)) out.push("the parent or guardian's signature");
+    if (p.guardian_agree !== 'yes') out.push("the parent or guardian's agreement");
   } else {
-    f.guardian = '';
-    f.guardianSig = '';
+    f.guardian = f.relationship = f.guardianPhone = f.guardianSig = '';
   }
-  if (p.agree !== 'yes') out.push('the box confirming you have read the waiver');
   if (out.length) return { error: 'We still need ' + out.join(', ') + '.' };
   return { f: f };
 }
 
-/** "16th day of October, 2026" */
-function dayOfMonth(iso) {
-  var d = Number(iso.slice(8, 10)), m = Number(iso.slice(5, 7)), y = iso.slice(0, 4);
-  var suffix = d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th';
-  return d + suffix + ' day of ' + MONTH_NAMES[m - 1] + ', ' + y;
-}
-
-/** The signed waiver as one HTML document, for the PDF. f.signedIso, f.signedText, f.hash and f.id are set by the caller. */
+/** The signed waiver as one HTML document for the PDF, laid out like the paper form.
+ *  f.signedText, f.dateText, f.hash and f.id are set by the caller. */
 function waiverDocHtml(w, f) {
   var ink = EMAIL.INK, grey = EMAIL.GREY, rule = EMAIL.RULE;
   var body = w.blocks.map(function (b) {
-    if (b.type === 'h2') return '<h1 style="font-family:' + EMAIL.DISPLAY + ';font-size:20pt;line-height:1.1;margin:0 0 10pt">' + esc(b.text) + '</h1>';
-    if (b.type === 'h3') return '<h2 style="font-family:' + EMAIL.DISPLAY + ';font-size:13pt;margin:14pt 0 6pt">' + esc(b.text) + '</h2>';
-    if (b.type === 'ul') return '<ul style="margin:0 0 8pt;padding-left:16pt">' + b.items.map(function (i) { return '<li style="margin:0 0 3pt">' + waiverInline(i, f.participant) + '</li>'; }).join('') + '</ul>';
-    return '<p style="margin:0 0 8pt">' + waiverInline(b.text, f.participant) + '</p>';
+    if (b.type === 'h1') return '<h1 style="font-family:' + EMAIL.DISPLAY + ';font-size:20pt;line-height:1.1;margin:0">' + esc(b.text) + '</h1>';
+    if (b.type === 'h2') return '<h2 style="font-family:' + EMAIL.DISPLAY + ';font-size:14pt;line-height:1.15;margin:2pt 0 10pt">' + esc(b.text) + '</h2>';
+    if (b.type === 'h3') return '<h3 style="font-family:' + EMAIL.DISPLAY + ';font-size:12pt;margin:0 0 5pt">' + esc(b.text) + '</h3>';
+    if (b.type === 'hr') return '<hr style="border:0;border-top:1px solid ' + rule + ';margin:10pt 0">';
+    if (b.type === 'ul') return '<ul style="margin:0 0 7pt;padding-left:16pt">' + b.items.map(function (i) { return '<li style="margin:0 0 2pt">' + waiverInline(i) + '</li>'; }).join('') + '</ul>';
+    return '<p style="margin:0 0 7pt">' + waiverInline(b.text) + '</p>';
   }).join('');
+  var section = function (title) {
+    return '<hr style="border:0;border-top:1px solid ' + rule + ';margin:10pt 0"><h3 style="font-family:' + EMAIL.DISPLAY + ';font-size:12pt;margin:0 0 5pt">' + esc(title) + '</h3>';
+  };
+  var cell = 'padding:3pt 10pt 3pt 0;vertical-align:bottom';
   var row = function (k, v) {
-    return '<tr><td style="padding:3pt 8pt 3pt 0;color:' + grey + ';white-space:nowrap;vertical-align:top">' + esc(k) + '</td><td style="padding:3pt 0;vertical-align:top">' + esc(v) + '</td></tr>';
+    return '<tr><td style="' + cell + ';color:' + grey + ';white-space:nowrap;width:1%">' + esc(k) + '</td><td style="' + cell + '">' + v + '</td></tr>';
   };
-  var sig = function (title, img, name) {
-    return '<div style="margin:10pt 0 0"><div style="font-size:9pt;color:' + grey + '">' + esc(title) + '</div>' +
-      '<img src="' + img + '" style="display:block;height:60pt;max-width:260pt;border-bottom:1px solid ' + ink + '">' +
-      '<div style="font-size:9pt">' + esc(name) + '</div></div>';
+  var text = function (v) { return v ? esc(v) : '<div style="border-bottom:1px solid ' + ink + ';height:14pt;width:200pt"></div>'; };
+  var sig = function (img, typed) {
+    return img
+      ? '<img src="' + img + '" style="display:block;height:48pt;max-width:220pt;border-bottom:1px solid ' + ink + '">' + (typed ? '<div style="font-size:7.5pt;color:' + grey + '">Typed signature</div>' : '')
+      : text('');
   };
+  var table = function (rows) { return '<table style="border-collapse:collapse;font-size:9.5pt">' + rows.join('') + '</table>'; };
+  var html = body +
+    section('Participant') + table([
+      row('Name', text(f.participant)),
+      row('Date of birth', text(f.dob)),
+      row('Signature', sig(f.sig, f.method === 'typed')),
+      row('Date', text(f.dateText)),
+      row('Signed at (place)', text(f.place)),
+      row('Email', text(f.email)),
+      row('Phone', text(f.phone)),
+      row('Address', text(f.address)),
+      row('Emergency contact name', text(f.emergencyName)),
+      row('Emergency contact phone', text(f.emergencyPhone))
+    ]) +
+    section('Witness') + table([
+      row('Name', text(f.witness)),
+      row('Signature', sig(f.witnessSig, f.witnessMethod === 'typed'))
+    ]) +
+    section('Parent or guardian (required if the participant is under ' + WAIVER.GUARDIAN_UNDER + ')') +
+    (f.guardianSig
+      ? '<p style="margin:0 0 7pt">' + esc(w.guardianConsent) + '</p>' + table([
+        row('Name', text(f.guardian)),
+        row('Relationship', text(f.relationship)),
+        row('Signature', sig(f.guardianSig, f.guardianMethod === 'typed')),
+        row('Date', text(f.dateText)),
+        row('Phone', text(f.guardianPhone))
+      ])
+      : '<p style="margin:0 0 7pt;color:' + grey + '">Not required: the participant was ' + esc(f.age) + ' on the date signed.</p>') +
+    '<hr style="border:0;border-top:1px solid ' + rule + ';margin:10pt 0">' +
+    '<p style="margin:0 0 7pt"><em>' + esc(w.privacy) + '</em></p>';
   return '<!doctype html><html><head><meta charset="utf-8"><style>@page{size:letter;margin:16mm 16mm}</style></head>' +
-    '<body style="font-family:' + EMAIL.BODY + ';font-size:9.5pt;line-height:1.42;color:' + ink + '">' + body +
-    '<p style="margin:12pt 0 0">SIGNED at ' + esc(f.place) + ' on the ' + esc(dayOfMonth(f.signedIso)) + '.</p>' +
-    sig('Participant signature' + (f.method === 'typed' ? ' (typed)' : ''), f.sig, f.participant) +
-    (f.guardianSig ? sig('Guardian signature (18 and under)' + (f.guardianMethod === 'typed' ? ' (typed)' : ''), f.guardianSig, f.guardian) : '') +
-    '<table style="margin:12pt 0 0;border-collapse:collapse;font-size:9.5pt">' +
-    row('Print name', f.participant) +
-    row('Date of birth', f.dob + ' (age ' + f.age + ')') +
-    row('Email', f.email) +
-    row('Address', f.address) +
-    row('Phone', f.phone) +
-    row('Emergency contact name', f.emergencyName) +
-    row('Emergency contact phone', f.emergencyPhone) +
-    '</table>' +
-    '<div style="margin:14pt 0 0;padding:6pt 0 0;border-top:1px solid ' + rule + ';font-size:7.5pt;line-height:1.4;color:' + grey + '">' +
+    '<body style="font-family:' + EMAIL.BODY + ';font-size:9.5pt;line-height:1.42;color:' + ink + '">' + html +
+    '<div style="margin:12pt 0 0;padding:6pt 0 0;border-top:1px solid ' + rule + ';font-size:7.5pt;line-height:1.4;color:' + grey + '">' +
     'Signed online at pagsc.ca/waiver on ' + esc(f.signedText) + ' (Saskatchewan time). Waiver version ' + esc(f.version) +
     '. SHA-256 of the text signed: ' + esc(f.hash) + '. Device: ' + esc(f.device || 'not given') + '. Record ' + esc(f.id) + '.</div>' +
     '</body></html>';
@@ -145,7 +185,7 @@ function waiverEmail(f, links) {
     para('Thanks for signing the club\'s waiver' + (f.guardian ? ' for ' + esc(first) : '') + '. A signed copy is attached for your records.') +
     panel(label('Signed') +
       '<div style="font-family:' + EMAIL.BODY + ';font-size:16px;line-height:1.45;color:' + EMAIL.INK + '">' + esc(f.participant) + (f.guardian ? ', with ' + esc(f.guardian) + ' as parent or guardian' : '') + '<br>' + esc(f.signedText) + '</div>') +
-    para('It stays in force while ' + (f.guardian ? esc(first) + ' flies' : 'you fly') + ' with the club, so there is nothing more to sign next time.') +
+    para('It covers ' + (f.guardian ? esc(first) + '\'s' : 'your') + ' gliding with the club until it is cancelled in writing, so there is nothing more to sign next time.') +
     para('<span style="font-size:14px;color:' + EMAIL.GREY + '">Questions? Just reply to this email.</span>');
   return {
     subject: 'Your signed PAGSC waiver: ' + f.participant,
@@ -153,7 +193,7 @@ function waiverEmail(f, links) {
     text: [
       'Thanks for signing the club\'s waiver' + (f.guardian ? ' for ' + first : '') + '. A signed copy is attached for your records.', '',
       'Signed: ' + f.participant + (f.guardian ? ', with ' + f.guardian + ' as parent or guardian' : '') + ', ' + f.signedText, '',
-      'It stays in force while ' + (f.guardian ? first + ' flies' : 'you fly') + ' with the club, so there is nothing more to sign next time.', '',
+      'It covers ' + (f.guardian ? first + '\'s' : 'your') + ' gliding with the club until it is cancelled in writing, so there is nothing more to sign next time.', '',
       EMAIL.CLUB
     ].join('\n')
   };
@@ -210,9 +250,9 @@ function waiverPost(p) {
   if (f.version !== WAIVER_TEXT.version) {
     return json({ ok: false, error: 'The waiver has been updated since this page was opened. Reload the page, read it again and sign.' });
   }
-  f.signedIso = today;
+  f.dateText = Utilities.formatDate(now, BOOKING.TZ, 'MMMM d, yyyy');
   f.signedText = Utilities.formatDate(now, BOOKING.TZ, 'MMMM d, yyyy, h:mm a');
-  f.hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, waiverPlain(WAIVER_TEXT, f.participant), Utilities.Charset.UTF_8)
+  f.hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, waiverPlain(WAIVER_TEXT, !!f.guardianSig), Utilities.Charset.UTF_8)
     .map(function (b) { return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
   f.id = Utilities.getUuid();
 
@@ -229,8 +269,9 @@ function waiverPost(p) {
     var bi = bookingForKey(brows, f.key);
     if (bi >= 0) flightDate = isoOf(brows[bi][1]);
     var wsh = waiversSheet();
-    wsh.appendRow([now, f.participant, "'" + f.dob, f.age, f.guardian, f.email, f.phone, f.address,
-      f.emergencyName, f.emergencyPhone, f.place, f.method + (f.guardian ? ', guardian ' + f.guardianMethod : ''), bi >= 0 ? f.key : '', flightDate,
+    wsh.appendRow([now, f.participant, "'" + f.dob, f.age, f.email, f.phone, f.address,
+      f.emergencyName, f.emergencyPhone, f.place, f.method, f.witness,
+      f.guardian, f.relationship, f.guardianPhone, bi >= 0 ? f.key : '', flightDate,
       f.version, f.hash, f.device, file.getUrl(), f.id]);
     if (bi >= 0) {
       signed = signedCount(wsh.getDataRange().getValues(), f.key);

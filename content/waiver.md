@@ -2,46 +2,69 @@
 # The club's waiver, signed online at /waiver/. The wording is the club's; change it only when the club
 # changes the waiver, and raise the version when you do: every signature records the version and a hash
 # of the exact text signed. After a change, run `npm run waiver` (it rewrites apps-script/WaiverText.gs)
-# and deploy the script. {participant} is replaced by the signer's name.
-version: 2026-10
+# and deploy the script. The body below is the agreement; the signing fields come from the page.
+version: 2026-10-16
+# Shown and signed with the guardian's signature when the participant is under 18.
+guardian_consent: I am the parent or legal guardian of the participant. I have read this agreement. I consent to the participant taking part in gliding activities, I accept the risks described above, and I agree to the terms of this agreement on my own behalf and, as far as the law allows, on behalf of the participant.
+# The note at the foot of the form.
+privacy: The personal information on this form is used only for safety, emergency contact, and club records.
 ---
 
-## Prince Albert Gliding and Soaring Club Inc. - Waiver & Assumption of Risk
+# Prince Albert Gliding and Soaring Club Inc.
 
-We strive to make your gliding instruction safe and enjoyable. However, certain risks are inherent in gliding activities:
+## Release of Liability, Assumption of Risk and Indemnity Agreement
 
-* Your instructor, fellow pilots, club members, and others involved in making your flying possible are human beings who can make mistakes. So can you.
-* Your equipment is made by humans and can malfunction.
-* The air you fly in is not perfectly predictable or visible.
-* Gliding is NOT perfectly safe. We cannot offer any guarantees. We do not guarantee flawless performance by our equipment or anyone involved in making your flight possible. You may be injured even if we and you do everything correctly.
+**READ THIS CAREFULLY BEFORE YOU SIGN. By signing, you give up legal rights, including your right to sue the Club and its people if you are injured or killed, even if they were negligent. Do not sign unless you understand and agree.**
 
-We require you to read and sign this “informed consent, assumption of risk, and release of liability” agreement before your instruction begins.
+---
 
-### INFORMED CONSENT, ASSUMPTION OF RISK, INDEMNITY, AND WAIVER OF LIABILITY
+### Gliding has real risks
 
-**This is a legally binding contract** between me, {participant}, and Prince Albert Gliding and Soaring Club Inc., including all pilots, instructors, officers, directors, club members, agents, ground crew, winch operators, tow pilots, volunteers, landowners, equipment owners, and operators (collectively “Prince Albert Gliding and Soaring Club Inc.”).
+Gliding is a form of general aviation. It carries the same kinds of risks as flying other small aircraft. We work hard to make it safe and enjoyable, but no form of flying is risk-free:
 
-**By signing this document, I agree that it is part of the price I am paying** for being allowed to engage in gliding activities, which include launching, flying, or landing a glider, as a student, pilot, passenger, assistant, or spectator, riding or driving club vehicles/ATVs, or any other activity incidental to instruction or participation in gliding. I will conduct myself responsibly and safely to minimize danger to my life, property, and that of others.
+* Instructors, pilots, crew, other members, and you are all human and can make mistakes.
+* Gliders, tow planes, winches, vehicles, and other equipment can fail.
+* Weather and air conditions can't be fully predicted or seen.
+* You can be seriously injured or killed even when everyone does everything right.
 
-**I understand and accept that gliding is dangerous**. I voluntarily accept all risks of participation in gliding activities, including known and unknown dangers, foreseeable and unforeseeable risks, even if caused by the action, inaction, or negligence of Prince Albert Gliding and Soaring Club Inc. I acknowledge that no amount of care, caution, instruction, or expertise can eliminate all risks. I accept that as a result of these risks, I may be injured, my property may be damaged or destroyed, and I may even die.
+We ask everyone who takes part to read and sign this agreement first.
 
-**I recognize that landowners and their leaseholders**, upon whose property gliding activities are conducted, are separate and fully removed from Prince Albert Gliding and Soaring Club Inc. They are merely allowing the club permission to enter their land and carry zero responsibility or discretion for any gliding-related practices, procedures, actions, and decisions. I specifically indemnify them for any loss or injury incidental to my entering their land for gliding activities.
+---
 
-**I exempt, release, and indemnify Prince Albert Gliding and Soaring Club Inc**. from any and all liability, claims, demands, or causes of action arising from any property damage, bodily injury, or death as a result of gliding activities. No damages, compensation, or other award will be payable to me or my estate by Prince Albert Gliding and Soaring Club Inc., either individually or collectively, in respect of any loss, damage, injury, or death. I will not sue or start any action that directly or indirectly requires compensation or defense by Prince Albert Gliding and Soaring Club Inc. This is binding on my estate, heirs, survivors, assigns, executors, administrators, and legal representatives.
+### Who and what this agreement covers
 
-**I assume full and sole financial responsibility** for any damages I may suffer or cause while participating in gliding activities. I waive and repudiate the protection of any law or legal principle that would limit the effect of this contract.
+**"The Club"** means Prince Albert Gliding and Soaring Club Inc. and its officers, directors, members, instructors, pilots, tow pilots, winch operators, ground crew, volunteers, and agents, and the owners and operators of any aircraft, vehicles, or equipment used in club activities.
 
-**I indemnify and hold harmless Prince Albert Gliding and Soaring Club Inc**. from any damages or losses caused to any other person resulting from my gliding activities.
+**"Landowners"** means the owners and leaseholders of any land the Club uses, including the airfield. Landowners are not part of the Club. They only allow the Club onto their land and have no control over how the Club operates.
 
-**I agree that this consent, assumption of risk, indemnity, and waiver of liability remains in full force** and effect so long as I continue to engage in gliding activities with Prince Albert Gliding and Soaring Club Inc. This contract remains in full legal force indefinitely unless revoked in writing.
+**"Gliding activities"** means anything connected to gliding with the Club, whether I am a student, pilot, passenger, crew member, helper, or spectator. This includes launching, flying, and landing gliders; riding in or driving club vehicles and ATVs; and being on the airfield or the Landowners' property.
 
-THIS DOCUMENT IS EVIDENCE IN A COURT OF LAW
+---
 
-* My signature on this document constitutes an irrevocable admission of the facts stated herein.
-* This document is my own statement in every respect.
-* I have made no statements to Prince Albert Gliding and Soaring Club Inc. that conflict with, limit, or modify this contract, and Prince Albert Gliding and Soaring Club Inc. has said nothing to me that conflicts with the statements in this contract.
-* I have had the unhurried opportunity to ask questions of Prince Albert Gliding and Soaring Club Inc. and have been given satisfactory answers.
-* I have had sufficient time to reflect and consider the full implications of entering into this contract.
-* I acknowledge that I either have had independent legal advice or have decided, after reflection, to decline independent legal advice before signing.
+### What I agree to
 
-Any legal issue arising from this contract shall be dealt with in the Court of King's Bench for Saskatchewan. I attorn to the jurisdiction of that court.
+**1. I accept the risks.** I understand gliding is dangerous. I freely accept all risks of gliding activities, known or unknown, including risks caused by the negligence of the Club or the Landowners. I understand I could be injured, my property could be damaged, or I could die.
+
+**2. I give up my right to sue.** I release the Club and the Landowners from all claims for injury, death, or loss or damage to property arising from gliding activities, **including claims caused by their negligence**. I will not sue or make a claim against them for any of these things.
+
+**3. I am responsible for harm I cause.** I am responsible for my own losses. If anyone else makes a claim against the Club or the Landowners because of something I did during gliding activities, I will cover the Club's and the Landowners' costs and losses from that claim.
+
+**4. I will take part responsibly.** I am fit to take part. I will tell my instructor or pilot about any medical condition or medication that could affect my safety. I will follow the instructions of club instructors, pilots, and officials.
+
+**5. How long this lasts.** This agreement covers all my gliding activities with the Club from the date I sign until I cancel it in writing. Cancelling does not affect anything that happened before.
+
+**6. Other terms.**
+
+* This agreement binds me, my estate, my heirs, and anyone who claims on my behalf, as far as the law allows.
+* If a court finds any part of this agreement unenforceable, that part is removed and the rest still applies.
+* Saskatchewan law applies. Any legal dispute will be heard in the Court of King's Bench for Saskatchewan.
+* This is the full agreement. Nothing anyone told me changes or limits it.
+
+---
+
+### I confirm that
+
+* I have read and understood this entire agreement.
+* I had enough time to think about it, and my questions were answered to my satisfaction.
+* I had the chance to get independent legal advice, and I either got it or chose not to.
+* I am signing voluntarily.

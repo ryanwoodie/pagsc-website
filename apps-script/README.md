@@ -183,11 +183,12 @@ Signing up for any weekend again replaces their earlier waiting rows (`Replaced`
 ## The waiver (Waivers.gs, WaiverText.gs)
 
 Guests read and sign the club's waiver at `/waiver/`: name, date of birth, contact, address, emergency contact,
-where they are signing, and a signature drawn with a finger or typed. Anyone 18 or under (`WAIVER.GUARDIAN_MAX_AGE`,
-`waiver.guardian_max_age` in `content/club-facts.yaml`) also needs a parent or guardian's name and signature.
+where they are signing, and a signature drawn with a finger or typed. A witness (name and signature) is optional; without
+one the PDF leaves the witness lines blank. Anyone under 18 (`WAIVER.GUARDIAN_UNDER`, `waiver.guardian_under` in
+`content/club-facts.yaml`) also needs a parent or guardian's name, relationship, phone, agreement and signature.
 
 - Each signature adds a row to the **Waivers** tab and files a signed PDF (the full text, both signatures, the details,
-  the time, the waiver version, a SHA-256 hash of the exact text signed and the browser) in the Drive folder
+  laid out like the paper form, with the time, the waiver version, a SHA-256 hash of the exact text signed and the browser) in the Drive folder
   **PAGSC signed waivers** (created on first use; set `WAIVER_FOLDER_ID` to use another). The signer is emailed the PDF;
   the club gets a note with the link.
 - Every booking gets a **Waiver key** (Bookings tab). The confirmation and reminder emails, and the calendar's
