@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { guestOpening, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
+const { guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -220,7 +220,7 @@ test('standby: opens when the day is on (or the other weekend day, if either wor
   assert.ok(e.html.includes('https://x/off') && e.html.includes('Buy a Discovery Flight'));
   const link = standbyLink('https://www.pagsc.ca', '2026-10-18', []);
   const o = standbyOpenEmail({ name: 'Sam Lee', codes: [] }, [{ date: '2026-10-18', remaining: 5, link }], links);
-  assert.equal(o.subject, 'Flying is on Sunday, October 18: spots are open');
+  assert.equal(o.subject, 'Spots are open: Sunday, October 18');
   assert.ok(o.html.includes('?date=2026-10-18#request') && o.html.includes('pay at the field'));
 });
 
@@ -239,6 +239,15 @@ test('standby: any weekend we fly', () => {
   assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17']).map((d) => d.date), ['2026-10-18']);
   assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, ['2026-10-17', '2026-10-18']), []);
 
+  // 'Days notified' read back as text, or as the Date Sheets made of a lone entry: no repeat emails.
+  assert.deepEqual([...standbyNotifiedList('2026-10-17, 2026-10-18')], ['2026-10-17', '2026-10-18']);
+  assert.deepEqual([...standbyNotifiedList('')], []);
+  // A Date as Apps Script hands it back (built inside the script's context, with a stand-in for Utilities).
+  ctx.Utilities = { formatDate: (d) => d.toISOString().slice(0, 10) };
+  const sheetDate = vm.runInContext("new Date('2026-10-17T12:00:00Z')", ctx);
+  assert.deepEqual([...standbyNotifiedList(sheetDate)], ['2026-10-17']);
+  assert.deepEqual(standbyAnyOpenDays({ people: 1 }, avail, standbyNotifiedList(sheetDate)).map((d) => d.date), ['2026-10-18']);
+  delete ctx.Utilities;
   // Every 10th email asks whether they would like to come off the list; nobody is removed.
   assert.deepEqual([1, 9, 10, 11, 20].map(standbyAskToStay), [false, false, true, false, true]);
 
@@ -249,7 +258,7 @@ test('standby: any weekend we fly', () => {
   assert.ok(e.html.includes('Any weekend we fly') && e.html.includes('?code=PAGSC-7KQ2-XM9D') && !e.html.includes('Buy a Discovery Flight'));
   const days = ['2026-10-17', '2026-10-18'].map((date) => ({ date, remaining: 3, link: standbyLink(links.site, date, codes) }));
   const o = standbyOpenEmail({ name: 'Sam Lee', codes }, days, links);
-  assert.equal(o.subject, 'Flying is on Saturday, October 17 and Sunday, October 18: spots are open');
+  assert.equal(o.subject, 'Spots are open: Saturday, October 17 and Sunday, October 18');
   assert.ok(o.html.includes('?date=2026-10-18&amp;code=PAGSC-7KQ2-XM9D#request') && o.html.includes('Book a spot on Saturday'));
   assert.ok(!o.html.includes('Still want these emails?'));
   const tenth = standbyOpenEmail({ name: 'Sam Lee', codes }, days, links, 10);
