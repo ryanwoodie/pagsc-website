@@ -22,6 +22,7 @@ location:
   airfield: Birch Hills Airport
   town: Birch Hills, Saskatchewan
   highway: Highway 3
+  entrance: "52.99105,-105.438512"   # the airfield entrance (latitude,longitude), from links.airfield_entrance; every map and directions link uses it
   drive_times:
     prince_albert: 25 minutes
     saskatoon: 1.5 hours

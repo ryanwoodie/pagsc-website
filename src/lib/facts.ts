@@ -29,6 +29,7 @@ const schema = z
       airfield: z.string(),
       town: z.string(),
       highway: z.string(),
+      entrance: z.string().regex(/^-?\d+\.\d+,-?\d+\.\d+$/),
       drive_times: z.strictObject({ prince_albert: z.string(), saskatoon: z.string() }),
       distance_note: z.string(),
       carpool_from: z.array(z.string()).min(1),
@@ -234,22 +235,21 @@ export function listJoin(items: string[]): string {
   return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
 }
 
-/** Google Maps search link for the airfield */
-export const mapHref =
-  'https://www.google.com/maps/search/?api=1&query=' +
-  encodeURIComponent(`${facts.location.airfield}, ${facts.location.town}`);
+// Every map points at the airfield entrance, not Google's general pin for the airport, which leads somewhere odd.
 
-/** Google Maps directions from a town to the airfield */
+/** Google Maps link to the airfield entrance */
+export const mapHref = facts.links.airfield_entrance;
+
+/** Google Maps directions from a town to the airfield entrance */
 export function directionsHref(from: string): string {
   return (
     'https://www.google.com/maps/dir/?api=1&origin=' +
     encodeURIComponent(`${from}, Saskatchewan`) +
     '&destination=' +
-    encodeURIComponent(`${facts.location.airfield}, ${facts.location.town}`)
+    encodeURIComponent(facts.location.entrance)
   );
 }
 
-/** Embeddable map of the airfield (loaded only when the visitor asks for it) */
+/** Embeddable map centred on the airfield entrance (loaded only when the visitor asks for it) */
 export const mapEmbedSrc =
-  'https://www.google.com/maps?output=embed&q=' +
-  encodeURIComponent(`${facts.location.airfield}, ${facts.location.town}`);
+  'https://www.google.com/maps?output=embed&z=15&q=' + encodeURIComponent(facts.location.entrance);
