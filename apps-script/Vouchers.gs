@@ -11,7 +11,9 @@
  * Booking with a code (Booking.gs) marks it Booked; cancelling returns it to Issued. The club sets
  * Flown by hand. Certificates never expire.
  *
- * Manual certificates (cash, e-transfer): add a row to the Vouchers tab with Type "manual",
+ * E-transfer purchases (Etransfer.gs) add rows of Type "etransfer", Status "Awaiting e-transfer", until the payment arrives.
+ *
+ * Manual certificates (cash, or an e-transfer sent without an order): add a row to the Vouchers tab with Type "manual",
  * Buyer name, Buyer email and optionally For and Message, and leave Code empty. Within the hour
  * the script fills in the code and emails the certificate. One row per flight.
  *
@@ -22,7 +24,7 @@
 var VOUCHER = {
   TAB: 'Vouchers',
   HEADERS: ['Code', 'Session ID', 'Payment ID', 'Issued', 'Buyer name', 'Buyer email', 'For', 'Message',
-    'Type', 'Value', 'Status', 'Booking token', 'Booked date', 'Flown date', 'Notes'],
+    'Type', 'Value', 'Status', 'Booking token', 'Booked date', 'Flown date', 'Notes', 'Pay by'],
   PRICE: 50,              // keep in step with discovery_flight.price in content/club-facts.yaml (manual certificates)
   ALPHABET: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', // no 0/O, 1/I/L
   SYNC_DAYS: 7,           // how far back the hourly job looks for paid sessions and refunds
@@ -480,7 +482,8 @@ function moveCodesDate(token, date) {
   var sh = vouchersSheet();
   var rows = sh.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
-    if (rows[i][VC['Booking token'] - 1] === token && rows[i][VC['Status'] - 1] === 'Booked') sh.getRange(i + 1, VC['Booked date']).setValue(date);
+    var st = rows[i][VC['Status'] - 1];
+    if (rows[i][VC['Booking token'] - 1] === token && (st === 'Booked' || st === ETRANSFER.STATUS)) sh.getRange(i + 1, VC['Booked date']).setValue(date);
   }
 }
 
@@ -490,7 +493,15 @@ function releaseCodes(token) {
   var sh = vouchersSheet();
   var rows = sh.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
-    if (rows[i][VC['Booking token'] - 1] !== token || rows[i][VC['Status'] - 1] !== 'Booked') continue;
+    if (rows[i][VC['Booking token'] - 1] !== token) continue;
+    var st = rows[i][VC['Status'] - 1];
+    if (st === ETRANSFER.STATUS) { // an unpaid e-transfer order loses its booking but can still be paid
+      sh.getRange(i + 1, VC['Booking token']).setValue('');
+      sh.getRange(i + 1, VC['Booked date']).setValue('');
+      sh.getRange(i + 1, VC['Pay by']).setValue('');
+      continue;
+    }
+    if (st !== 'Booked') continue;
     sh.getRange(i + 1, VC['Status']).setValue('Issued');
     sh.getRange(i + 1, VC['Booking token']).setValue('');
     sh.getRange(i + 1, VC['Booked date']).setValue('');

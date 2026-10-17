@@ -28,6 +28,9 @@ const config = {
   paid,
   snapshot,
   buyUrl: href('/discovery-flight/'),
+  price: df.price,
+  groupPrice: df.group_price_each,
+  groupMin: df.group_minimum,
 };
 ---
 <div class="booking" data-config={JSON.stringify(config)}>
@@ -49,7 +52,7 @@ const config = {
   type Slot = { time: string; free: boolean };
   type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; open?: boolean; confirmed?: boolean; statusText: string; remaining: number; slots: Slot[] };
   type Snapshot = { updated: string | null; days: Day[] };
-  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string };
+  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string; price: number; groupPrice: number; groupMin: number };
   const CACHE_KEY = 'pagsc-availability';
   const MAX_AGE = 24 * 3600 * 1000;
   const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Regina' }).format(new Date());
@@ -243,7 +246,7 @@ const config = {
         field('bk-name', 'Name', el('input', { id: 'bk-name', name: 'name', type: 'text', autocomplete: 'name', required: '' })),
         field('bk-email', 'Email', el('input', { id: 'bk-email', name: 'email', type: 'email', autocomplete: 'email', required: '' })),
         field('bk-phone', 'Phone', el('input', { id: 'bk-phone', name: 'phone', type: 'tel', autocomplete: 'tel', required: '' }), el('span', { class: 'optional', hidden: '' }, ' (optional)')),
-        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['Pay at the field', isStandbyDay(day) ? `I'll pay at the field (${cfg.guestPayment}): put me on the standby list` : `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
+        radios('payment', 'How are you paying?', [['Paid online', "I've paid online"], ['Gift', "It's a gift: someone bought it for me"], ['E-transfer', `I'll pay now by e-transfer ($${state.people * (state.people >= cfg.groupMin ? cfg.groupPrice : cfg.price)})`], ['Pay at the field', isStandbyDay(day) ? `I'll pay at the field (${cfg.guestPayment}): put me on the standby list` : `I'll pay at the field (${cfg.guestPayment})`]], cfg.paid ? 'Paid online' : state.codes.length ? 'Gift' : ''),
         codeField,
         // After payment: paying at the field on an unconfirmed weekend adds "Any weekend we fly" here.
         ...flexQuestion(day),
@@ -349,7 +352,7 @@ const config = {
         }
         track(`booking/${day.kind}/${body.get('interest') === 'First lesson' ? 'first-lesson' : 'discovery'}`, `${day.date} ${state.start} x${state.people}`);
         adsBooking();
-        done(data.kind === 'Held', day, end, data.waiver, !!data.confirmed);
+        done(data.kind === 'Held', day, end, data.waiver, !!data.confirmed, data.etransfer);
       } catch {
         err.replaceChildren('That did not go through. Email us at ', el('a', { href: `mailto:${cfg.email}` }, cfg.email), ' or call ', el('a', { href: cfg.tel }, cfg.phone), ' and we will book you in.');
         err.hidden = false;
@@ -367,7 +370,7 @@ const config = {
       box.focus();
     }
 
-    function done(held: boolean, day: Day, end: string, waiverKey?: string, confirmed = false) {
+    function done(held: boolean, day: Day, end: string, waiverKey?: string, confirmed = false, etransfer?: { reference: string; amount: number; payBy: string; to: string } | null) {
       const when = `${fmtLong.format(asDate(day.date))}, ${clock(state.start)} to ${clock(end)}`;
       const box = el('div', { class: 'bk-done', tabindex: '-1' },
         el('h3', {}, held ? (confirmed ? "You're booked in." : "You're pencilled in.") : 'Your request is in.'),
@@ -377,6 +380,14 @@ const config = {
           : held
           ? "We've emailed you the details, a map of the airfield and a link to change or cancel up to 24 hours before. Flying depends on the weather and volunteers: check the day is on before you leave home, and we'll email you if it changes."
           : "Weekday flying depends on who is free. A club member will email you to confirm, or to suggest another day."));
+      if (etransfer) {
+        box.append(el('div', { class: 'bk-etransfer' },
+          el('p', { class: 'bk-etransfer__label' }, 'Pay by e-transfer'),
+          el('p', {}, `Send $${etransfer.amount} to `, el('strong', { class: 'bk-etransfer__to' }, etransfer.to)),
+          el('p', {}, 'Put this in the message:'),
+          el('p', { class: 'bk-etransfer__ref' }, etransfer.reference),
+          el('p', {}, `Please send it by ${etransfer.payBy}, or the spot is released. We email you when it arrives.`)));
+      }
       if (waiverKey) {
         const link = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/waiver/?b=${encodeURIComponent(waiverKey)}`;
         box.append(
@@ -615,6 +626,32 @@ const config = {
     background: var(--orange-tint);
     padding: 12px 16px;
     font-weight: 600;
+  }
+  .booking :global(.bk-etransfer) {
+    background: var(--orange-tint);
+    border-top: 2px solid var(--ink);
+    padding: 12px 16px;
+    margin: 0 0 16px;
+  }
+  .booking :global(.bk-etransfer p) {
+    margin: 0 0 6px;
+  }
+  .booking :global(.bk-etransfer__label) {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--orange-dark);
+  }
+  .booking :global(.bk-etransfer__to) {
+    overflow-wrap: anywhere;
+  }
+  .booking :global(.bk-etransfer__ref) {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
   }
   .booking :global(.bk-done) {
     background: var(--sky);

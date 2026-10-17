@@ -80,6 +80,7 @@ function runReminders() {
   } finally {
     lock.releaseLock();
   }
+  try { checkEtransfers(); } catch (err) { console.error(err); }
   try { refreshAvailabilityCache(); } catch (err) { /* visitors fall back to a fresh read */ }
 }
 

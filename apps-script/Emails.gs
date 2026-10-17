@@ -169,6 +169,7 @@ function confirmationEmail(b, held, links) {
   var body = heading(title) +
     para('Hi ' + esc(first) + ',') +
     whenPanel(b, held ? 'Discovery Flight' : 'Weekday request') +
+    (b.etransfer ? etransferHtml(b.etransfer, links) : '') +
     (booked
       ? para('The club has confirmed flying that day. If the weather or anything else changes, we will email you straight away, and we will send you a reminder before the day with any arrival time the club has posted.')
       : held
@@ -190,6 +191,7 @@ function confirmationEmail(b, held, links) {
       booked
         ? 'The club has confirmed flying that day. If the weather or anything else changes, we will email you straight away, and we will send you a reminder before the day with any arrival time the club has posted.'
         : 'Gliding depends on the weather and on volunteers, so this is not a guaranteed time. We will send you a reminder before the day, with any arrival time the club has posted, and let you know if anything changes.',
+      b.etransfer ? '\n' + etransferText(b.etransfer, links) : '',
       '', waiverText(b, links), '', EARLY, '', BRING, '',
       held ? 'Arriving at the airfield: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '',

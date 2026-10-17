@@ -513,14 +513,15 @@ function bookingPost(p) {
     codes: [],
     flexible: p.flexible === 'yes' ? 'Yes' : p.flexible === 'no' ? 'No' : ''
   };
-  var prepaid = b.payment === 'Paid online' || b.payment === 'Gift';
+  var etransfer = b.payment === 'E-transfer';
+  var prepaid = b.payment === 'Paid online' || b.payment === 'Gift' || etransfer; // an e-transfer booking is held like a paid one until its Pay by time
   var problems = [];
   if (!b.name) problems.push('your name');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(b.email)) problems.push('a valid email address');
   if (!/\d{3}.*\d{4}/.test(b.phone)) problems.push('a phone number');
   if (!b.weightOk) problems.push('the weight confirmation');
   if (problems.length) return json({ ok: false, error: 'We still need ' + problems.join(', ') + '.' });
-  if (prepaid) {
+  if (prepaid && !etransfer) {
     var parsed = parseCodes(p.codes);
     if (parsed.bad.length) return json({ ok: false, error: '"' + clean(parsed.bad[0]) + '" is not a certificate code. Codes look like PAGSC-7KQ2-XM9D.' });
     b.codes = parsed.codes.slice(0, VOUCHER.MAX_CODES + 1);
@@ -566,6 +567,11 @@ function bookingPost(p) {
       b.flexible, '', '', b.waiverKey, 0
     ]);
     markCodesBooked(codeCheck.rows, token, b.date);
+    if (etransfer) {
+      var payBy = payByMs(Date.now(), b.date, b.start);
+      var order = addEtransferOrder({ name: b.name, email: b.email, quantity: b.people }, { token: token, date: b.date, payBy: new Date(payBy) });
+      b.etransfer = { reference: order.reference, amount: order.amount, payBy: payByText(payBy) };
+    }
     clearAvailabilityCache();
     result = { ok: true, kind: kind, date: b.date, start: b.start, people: b.people, range: timeRange(b.start, b.people), token: token, day: day };
   } finally {
@@ -574,7 +580,7 @@ function bookingPost(p) {
 
   sendBookingEmails(b, result);
   try { standbyBooked(b.email); } catch (err) { /* the booking stands; the standby row can be tidied by hand */ }
-  return json({ ok: true, kind: result.kind, confirmed: !!b.confirmed, date: result.date, range: result.range, people: result.people, waiver: emailLinks('').waiver ? b.waiverKey : '' });
+  return json({ ok: true, kind: result.kind, confirmed: !!b.confirmed, date: result.date, range: result.range, people: result.people, etransfer: b.etransfer ? { reference: b.etransfer.reference, amount: b.etransfer.amount, payBy: b.etransfer.payBy, to: prop('CLUB_EMAIL') } : null, waiver: emailLinks('').waiver ? b.waiverKey : '' });
 }
 
 /** "Jane 13:30 (2) web (or Sun)": first name and time only; the note shows the other weekend day works. */
@@ -657,6 +663,7 @@ function sendBookingEmails(b, r) {
 
 /** For the club: which certificates cover the booking, and how many people still need to pay. */
 function paymentNote(b) {
+  if (b.etransfer) return ' (' + dollars(b.etransfer.amount) + ' awaited with ' + b.etransfer.reference + ', by ' + b.etransfer.payBy + '; confirmed automatically when it arrives)';
   if (b.payment !== 'Paid online' && b.payment !== 'Gift') return '';
   var rest = b.people - b.codes.length;
   if (!b.codes.length) return ' (no certificate code given: check how they paid)';
@@ -732,6 +739,24 @@ function confirmMove(token) {
   return HtmlService.createHtmlOutput(cancelPageHtml('Booking not found', 'We could not find that booking.', calendar));
 }
 
+/** Cancel the booking at Bookings row index i: status, certificates, schedule cell, cached availability. */
+function cancelBookingRow(sh, rows, i) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    sh.getRange(i + 1, 6).setValue('Cancelled');
+    releaseCodes(rows[i][12]);
+    clearAvailabilityCache();
+    var a1 = rows[i][13], text = rows[i][14];
+    if (a1) {
+      var cell = scheduleSheet().getRange(a1);
+      if (String(cell.getDisplayValue()) === String(text)) cell.clearContent();
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function cancelBooking(token) {
   token = String(token || '');
   var calendar = siteOrigin() + '/discovery-flight/#request';
@@ -755,20 +780,7 @@ function cancelBooking(token) {
         return page('Less than 24 hours to go', 'Your flight is less than 24 hours away, so it can no longer be changed online. Our volunteers are already planning the day around you. If you can\'t make it, please call us at ' + emailLinks('').phone + ' or reply to your confirmation email.', false);
       }
     }
-    var lock = LockService.getScriptLock();
-    lock.waitLock(15000);
-    try {
-      sh.getRange(i + 1, 6).setValue('Cancelled');
-      releaseCodes(token);
-      clearAvailabilityCache();
-      var a1 = rows[i][13], text = rows[i][14];
-      if (a1) {
-        var cell = scheduleSheet().getRange(a1);
-        if (String(cell.getDisplayValue()) === String(text)) cell.clearContent();
-      }
-    } finally {
-      lock.releaseLock();
-    }
+    cancelBookingRow(sh, rows, i);
     MailApp.sendEmail({
       to: prop('CLUB_EMAIL'),
       subject: 'Guest cancelled: ' + rows[i][6] + ', ' + longDate(isoOf(rows[i][1])) + ' at ' + clock12(hhmmOf(rows[i][2])),

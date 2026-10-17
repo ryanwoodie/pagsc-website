@@ -30,7 +30,7 @@ const weekdays = lcfirst(df.weekdays);
       <BookButton showPrice />
       <a class="more" href="#standby">or join the standby list</a>
     </div>
-    <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>.</p>
+    <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>. Prefer e-transfer? <a href={href('/discovery-flight/e-transfer/')}>Pay by e-transfer</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 

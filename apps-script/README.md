@@ -204,6 +204,33 @@ Approve it in the editor first (run `waiverFolder` once), or the web app stops u
 The waiver links in booking emails and the calendar stay off until the Script Property `WAIVER_LINKS` is `on`; set it
 once the site with `/waiver/` is live and the script is deployed.
 
+## Paying by e-transfer (Etransfer.gs)
+
+Guests can pay by Interac e-transfer in two places: the calendar's "I'll pay now by e-transfer" option, and
+`/discovery-flight/e-transfer/` (certificates without booking a day). Either way they get a reference like
+`ET-7KQ2-XM9D` to put in the e-transfer message, on screen and by email, and the order goes in the **Vouchers** tab as
+Type `etransfer`, Status `Awaiting e-transfer`, with no code yet. $50 each, or $40 each for 4 or more.
+
+- **Matching.** Every 10 minutes the regular check reads new Interac emails in the club Gmail (from
+  `notify@payments.interac.ca`, signed by Interac), finds the reference in the message and checks the amount.
+  A match fills in the certificate codes. A booking's codes become **Booked**, its Payment column reads
+  "E-transfer (paid)" and the guest gets "Payment received". An order without a booking gets the usual certificate email.
+  The club gets "E-transfer received".
+- **Every e-transfer seen** goes in the **E-transfers** tab with the sender, amount, message and result ("Paid…",
+  "No reference", "Short…", "Unknown reference"), so membership dues and transfers sent without the reference can be
+  spotted. A short payment emails the club and confirms nothing. Transfers that need accepting by hand (not
+  automatically deposited) are logged, not confirmed.
+- **Holds.** A booking paid by e-transfer holds its spot like a paid flight for 48 hours, or until 30 minutes before
+  the flight, whichever comes first (the Vouchers tab's **Pay by** column). If nothing arrives by then, the booking is
+  cancelled, the slot freed, and the guest and the club are emailed. The reference still works: paying later issues
+  certificates to book another day.
+- **By hand.** For an e-transfer that arrived without the reference, find the order's rows in the Vouchers tab and change
+  their Type from `etransfer` to `manual`. Within the hour each gets a code and the certificate is emailed, and a booked
+  order is no longer released. Set the booking's Payment to "E-transfer (paid)" for your own records.
+
+**Setup (once):** the script now reads the club Gmail. After pushing, open the editor, pick `checkEtransfers` and Run,
+and approve Gmail access as the club account. Until that is approved, the 10-minute check stops running.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

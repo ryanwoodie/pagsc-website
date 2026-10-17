@@ -1,0 +1,196 @@
+---
+// Buy Discovery Flights by Interac e-transfer. Copy: content/pages/e-transfer.md.
+// Posts to the Apps Script (apps-script/Etransfer.gs), which records the order and answers with a reference for the
+// e-transfer message. When the e-transfer arrives the script matches it from the club's Gmail and emails the certificates.
+import Base from '../../../layouts/Base.astro';
+import PageHero from '../../../components/PageHero.astro';
+import Section from '../../../components/Section.astro';
+import Button from '../../../components/Button.astro';
+import { FORM_ENDPOINT } from '../../../config';
+import { facts, df, money, telHref } from '../../../lib/facts';
+import { href } from '../../../lib/url';
+
+const max = 10; // ETRANSFER.MAX_QUANTITY in apps-script/Etransfer.gs
+const each = (n: number) => (n >= df.group_minimum ? df.group_price_each : df.price);
+---
+<Base
+  title="Pay by e-transfer"
+  description={`Buy a Discovery Flight with the ${facts.club.name} by Interac e-transfer: ${money(df.price)}, or ${money(df.group_price_each)} each for ${df.group_minimum} or more.`}
+  noindex
+>
+  <PageHero title="Pay by e-transfer">
+    <p class="lead">Choose how many flights and we give you a reference. Send the e-transfer with the reference in the message, and we email your certificates when it arrives. Then pick your day on the calendar.</p>
+    <div class="actions"><Button href="#buy">Get my e-transfer details</Button></div>
+  </PageHero>
+
+  <Section id="buy" variant="plain" labelledby="buy-h">
+    <h2 id="buy-h">Your flights</h2>
+    <div class="et" data-endpoint={FORM_ENDPOINT} data-email={facts.contact.email} data-phone={facts.contact.phone} data-tel={telHref} hidden>
+      <form class="et__form" novalidate>
+        <input type="hidden" name="form" value="etransfer" />
+        <div class="hp" aria-hidden="true">
+          <label for="et-website">Leave this empty</label>
+          <input id="et-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+        <div class="field field--short">
+          <label for="et-quantity">How many flights?</label>
+          <select id="et-quantity" name="quantity">
+            {Array.from({ length: max }, (_, i) => i + 1).map((n) => <option value={n} data-total={n * each(n)}>{n} ({money(n * each(n))})</option>)}
+          </select>
+          <p class="hint">{money(df.price)} each, or {money(df.group_price_each)} each for {df.group_minimum} or more.</p>
+        </div>
+        <div class="field">
+          <label for="et-name">Your name</label>
+          <input id="et-name" name="name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="et-email">Email</label>
+          <input id="et-email" name="email" type="email" autocomplete="email" required aria-describedby="et-email-hint" />
+          <p class="hint" id="et-email-hint">We email your certificates here.</p>
+        </div>
+        <div class="field">
+          <label for="et-for">Name on the certificate <span class="optional">(if it's a gift)</span></label>
+          <input id="et-for" name="recipient" type="text" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="et-msg">Message on the certificate <span class="optional">(optional)</span></label>
+          <input id="et-msg" name="gift_message" type="text" autocomplete="off" maxlength="200" />
+        </div>
+        <div class="et__error" role="alert" tabindex="-1" hidden></div>
+        <button class="btn" type="submit">Get my e-transfer details</button>
+      </form>
+
+      <div class="et__done" tabindex="-1" hidden>
+        <h2>Send your e-transfer</h2>
+        <dl class="et__details">
+          <dt>Amount</dt><dd class="et__amount"></dd>
+          <dt>Send to</dt><dd class="et__to"></dd>
+          <dt>In the message</dt><dd class="et__ref"></dd>
+        </dl>
+        <p class="et__note"></p>
+        <p>When it arrives, we email your certificates, each with a booking code. Then pick your flying day on the <a href={href('/discovery-flight/#request')}>calendar</a>. Certificates never expire.</p>
+      </div>
+    </div>
+    <noscript><p>To buy by e-transfer, turn on JavaScript, or email us at <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p></noscript>
+  </Section>
+</Base>
+
+<script>
+  const root = document.querySelector<HTMLElement>('.et');
+  if (root && root.dataset.endpoint) {
+    const endpoint = root.dataset.endpoint;
+    const form = root.querySelector<HTMLFormElement>('form')!;
+    const err = root.querySelector<HTMLElement>('.et__error')!;
+    const done = root.querySelector<HTMLElement>('.et__done')!;
+    const submit = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
+    root.hidden = false;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.hidden = true;
+      if (!form.reportValidity()) return;
+      submit.disabled = true;
+      submit.textContent = 'Getting your details…';
+      try {
+        const body = new URLSearchParams(new FormData(form) as unknown as Record<string, string>);
+        const res = await fetch(endpoint, { method: 'POST', body, signal: AbortSignal.timeout(45000) });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || 'Something went wrong.');
+        done.querySelector('.et__amount')!.textContent = `$${out.amount}`;
+        done.querySelector('.et__to')!.textContent = out.to;
+        done.querySelector('.et__ref')!.textContent = out.reference;
+        done.querySelector('.et__note')!.textContent = `We've also emailed these details to ${out.email}.`;
+        form.hidden = true;
+        done.hidden = false;
+        done.focus();
+      } catch (x) {
+        const message = x instanceof Error && x.name === 'Error' && x.message ? x.message + ' ' : 'That did not go through. ';
+        err.replaceChildren(message, 'Or email us at ', Object.assign(document.createElement('a'), { href: `mailto:${root.dataset.email}`, textContent: root.dataset.email }),
+          ' or call ', Object.assign(document.createElement('a'), { href: root.dataset.tel, textContent: root.dataset.phone }), '.');
+        err.hidden = false;
+        err.focus();
+      } finally {
+        submit.disabled = false;
+        submit.textContent = 'Get my e-transfer details';
+      }
+    });
+  }
+</script>
+
+<style>
+  .et {
+    max-width: 36rem;
+  }
+  .et [hidden] {
+    display: none !important;
+  }
+  .et__form {
+    display: grid;
+    gap: 18px;
+  }
+  .field {
+    display: grid;
+    gap: 6px;
+  }
+  .field label {
+    font-weight: 600;
+  }
+  .optional {
+    font-weight: 400;
+    color: var(--grey);
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--grey);
+    border-radius: 0;
+  }
+  .field--short select {
+    max-width: 14rem;
+  }
+  .hint {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--grey);
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  .et__error {
+    background: var(--orange-tint);
+    padding: 12px 16px;
+  }
+  .et__done {
+    background: var(--orange-tint);
+    border-top: 2px solid var(--ink);
+    padding: 16px 18px;
+  }
+  .et__done h2 {
+    margin-top: 0;
+  }
+  .et__details {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+    margin: 0 0 14px;
+  }
+  .et__details dt {
+    font-weight: 600;
+  }
+  .et__details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .et__ref {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+</style>
