@@ -7,7 +7,8 @@ import { FORM_ENDPOINT } from '../../config';
 import { facts } from '../../lib/facts';
 ---
 <Base title="Club admin" description={`Bookings, standby and waivers for the ${facts.club.name}.`} noindex>
-  <section class="adm wrap" data-endpoint={FORM_ENDPOINT} data-max={facts.booking.max_group}>
+  <section class="adm wrap" data-endpoint={FORM_ENDPOINT} data-max={facts.booking.max_group} data-price={facts.discovery_flight.price}
+    data-group-price={facts.discovery_flight.group_price_each} data-group-min={facts.discovery_flight.group_minimum}>
     <h1>Club admin</h1>
     <div class="adm__app" aria-live="polite"><p class="adm__muted">Loading…</p></div>
   </section>
@@ -31,8 +32,8 @@ import { facts } from '../../lib/facts';
   };
   type Attention = {
     requests: { row: number; received: string; name: string; email: string; phone: string; flyers: number; dates: string; message: string; payment: string }[];
-    weekday: Booking[]; etransfers: { row: number; received: string; from: string; amount: number; message: string; result: string }[];
-    unpaid: Booking[]; waivers: Booking[];
+    weekday: Booking[]; etransfers: { row: number; received: string; from: string; amount: number; message: string; result: string; reference: string; deposited: boolean }[];
+    unpaid: Booking[]; waivers: Booking[]; orders: { reference: string; name: string; email: string; amount: number; flights: number; booked: string }[];
   };
   type All = { ok: boolean; error?: string; today: string; days: DayData[]; attention: Attention; waivers: Waiver[]; loaded?: string };
 
@@ -40,6 +41,9 @@ import { facts } from '../../lib/facts';
   const app = root.querySelector<HTMLElement>('.adm__app')!;
   const endpoint = root.dataset.endpoint!;
   const maxGroup = Number(root.dataset.max) || 4;
+  const price = Number(root.dataset.price) || 50;
+  const groupPrice = Number(root.dataset.groupPrice) || 40;
+  const groupMin = Number(root.dataset.groupMin) || 4;
   const KEY = 'pagsc-admin';
   const DATA = 'pagsc-admin-data';
   // The last full load, kept on this device so the page shows at once while the latest loads.
@@ -231,12 +235,54 @@ import { facts } from '../../lib/facts';
           r.message ? h('p', { class: 'adm__muted' }, r.message) : null,
           h('p', { class: 'adm__muted' }, `${r.payment} · received ${new Date(r.received).toLocaleString('en-CA')}`),
           dismiss('request', r.row)))),
-        ...sec('E-transfers to check', a.etransfers.map((t) => h('div', { class: 'adm__card' },
-          h('p', {}, h('strong', {}, `$${t.amount}`), ` from ${t.from}`),
-          h('p', { class: 'adm__muted' }, `${t.result}${t.message ? ` · "${t.message}"` : ''} · ${new Date(t.received).toLocaleDateString('en-CA')}`),
-          dismiss('etransfer', t.row)))),
+        ...sec('E-transfers to check', a.etransfers.map((t) => {
+          const panel = h('div', { class: 'adm__panel' });
+          const open = (fill: (p: HTMLElement) => void) => { panel.replaceChildren(); fill(panel); };
+          return h('div', { class: 'adm__card' },
+            h('p', {}, h('strong', {}, `$${t.amount}`), ` from ${t.from}`),
+            h('p', { class: 'adm__muted' }, `${t.result}${t.message ? ` · "${t.message}"` : ''} · ${new Date(t.received).toLocaleDateString('en-CA')}`),
+            h('div', { class: 'adm__actions' },
+              btn('Issue certificates', () => open((p) => issueForm(p, t))),
+              a.orders.length ? btn('Apply to an order', () => open((p) => applyForm(p, t, a.orders))) : '',
+              dismiss('etransfer', t.row)),
+            panel);
+        })),
         a.weekday.length + a.waivers.length + a.unpaid.length + a.requests.length + a.etransfers.length ? '' : h('p', {}, 'Nothing needs attention.'));
     });
+  }
+
+  /** Certificates from an e-transfer: the sender is the buyer; the email is taken from their message if it has one. */
+  function issueForm(p: HTMLElement, t: Attention['etransfers'][number]) {
+    const field = (label: string, input: HTMLElement) => h('label', { class: 'adm__field' }, label, input);
+    const guess = /[^\s@"]+@[^\s@"]+\.[A-Za-z]{2,}/.exec(t.message)?.[0] || '';
+    // How many flights the amount pays for: $50 each, or the group price for 4 or more.
+    let n = 1, each = t.amount;
+    if (t.amount % price === 0 && t.amount / price < groupMin) { n = t.amount / price; each = price; }
+    else if (t.amount % groupPrice === 0 && t.amount / groupPrice >= groupMin) { n = t.amount / groupPrice; each = groupPrice; }
+    const name = h('input', { type: 'text', value: t.from, required: '' }) as HTMLInputElement;
+    const email = h('input', { type: 'email', value: guess, required: '' }) as HTMLInputElement;
+    const qty = h('select', {}, ...Array.from({ length: 10 }, (_, i) => h('option', { value: String(i + 1) }, String(i + 1)))) as HTMLSelectElement;
+    qty.value = String(Math.min(n, 10));
+    const value = h('input', { type: 'number', min: '1', step: '1', value: String(each) }) as HTMLInputElement;
+    const forName = h('input', { type: 'text', placeholder: 'Name on the certificate, if a gift' }) as HTMLInputElement;
+    const msg = h('input', { type: 'text', placeholder: 'Message on the certificate (optional)' }) as HTMLInputElement;
+    const total = h('p', { class: 'adm__muted' });
+    const sum = () => { total.textContent = `${qty.value} × $${value.value} = $${Number(qty.value) * Number(value.value)} (received $${t.amount})`; };
+    qty.addEventListener('change', sum); value.addEventListener('input', sum); sum();
+    const go = btn('Issue and email the certificates', () => {
+      if (!name.value.trim() || !email.checkValidity() || !email.value) { email.reportValidity(); return; }
+      act(go, 'etransfer-issue', { row: String(t.row), name: name.value, email: email.value, quantity: qty.value, value: value.value, recipient: forName.value, message: msg.value }, refresh);
+    });
+    p.append(field('Buyer', name), field('Email the certificates to', email), h('div', { class: 'adm__row' }, field('Flights', qty), field('Value each ($)', value)),
+      total, field('For', forName), field('Message', msg), go);
+  }
+
+  /** An e-transfer sent without its reference, counted against the order it was for. */
+  function applyForm(p: HTMLElement, t: Attention['etransfers'][number], orders: Attention['orders']) {
+    const sel = h('select', { 'aria-label': 'Order' }, h('option', { value: '' }, 'Choose the order…'),
+      ...orders.map((o) => h('option', { value: o.reference }, `${o.name} · $${o.amount} · ${o.flights} flight${o.flights === 1 ? '' : 's'}${o.booked ? ` · booked ${fmtDay.format(asDate(o.booked))}` : ''} · ${o.reference}`))) as HTMLSelectElement;
+    const go = btn('Apply', () => sel.value && act(go, 'etransfer-apply', { row: String(t.row), reference: sel.value }, refresh));
+    p.append(h('p', { class: 'adm__muted' }, `Counts this $${t.amount} as the payment for the order: the certificates are issued and any booking is marked paid.`), sel, go);
   }
 
   // ---------- one day ----------

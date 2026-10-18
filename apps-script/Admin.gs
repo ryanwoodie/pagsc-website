@@ -22,6 +22,9 @@
  *   flyer-remove {booking, flyer}       take a flyer off a booking (its waiver goes back to the unlinked list)
  *   standby-message {tokens, subject, body}   email standby sign-ups
  *   dismiss {kind, row}                 mark a plain-form request or an unmatched e-transfer as dealt with
+ *   etransfer-issue {row, name, email, quantity, value, recipient, message}   certificates (and a contact) from an
+ *                                       e-transfer that came without a reference; emails the certificate PDF
+ *   etransfer-apply {row, reference}    count an e-transfer sent without its reference against that waiting order
  */
 
 var ADMIN = {
@@ -163,6 +166,8 @@ function adminPost(p) {
       case 'flyer-remove': out = adminFlyerRemove(p.booking, clean(p.flyer), user); break;
       case 'standby-message': out = adminStandbyMessage(String(p.tokens || '').split(','), clean(p.subject), String(p.body || '').slice(0, 5000), user); break;
       case 'dismiss': out = adminDismiss(p.kind, Number(p.row), user); break;
+      case 'etransfer-issue': out = adminEtransferIssue(p, user); break;
+      case 'etransfer-apply': out = adminEtransferApply(Number(p.row), clean(p.reference), user); break;
       default: out = { ok: false, error: 'Unknown action.' };
     }
     return json(out);
@@ -306,7 +311,7 @@ function dayView(date, ctx) {
 }
 
 function adminAttention(ctx, today) {
-  var out = { requests: [], weekday: [], etransfers: [], unpaid: [], waivers: [] };
+  var out = { requests: [], weekday: [], etransfers: [], unpaid: [], waivers: [], orders: [] };
   var since = Date.now() - ADMIN.ATTENTION_DAYS * 86400000;
   Object.keys(ctx.bookingsByDate).forEach(function (date) {
     if (date < today) return;
@@ -328,8 +333,20 @@ function adminAttention(ctx, today) {
   for (var e = 0; e < et.rows.length; e++) {
     var when = et.row(e, 'Received'), result = String(et.row(e, 'Result'));
     if (!(when instanceof Date) || when.getTime() < since || et.row(e, 'Reviewed') || /^(Paid|Ignored|Already paid)/.test(result)) continue;
-    out.etransfers.push({ row: e, received: when.toISOString(), from: String(et.row(e, 'From')), amount: et.row(e, 'Amount'), message: String(et.row(e, 'Message')), result: result });
+    out.etransfers.push({ row: e, received: when.toISOString(), from: String(et.row(e, 'From')), amount: et.row(e, 'Amount'), message: String(et.row(e, 'Message')),
+      result: result, reference: String(et.row(e, 'Interac reference')), deposited: et.row(e, 'Deposited') === 'Yes' });
   }
+  // E-transfer orders still waiting, for applying a transfer sent without its reference.
+  var vr = vouchersSheet().getDataRange().getValues(), orders = {};
+  for (var v = 1; v < vr.length; v++) {
+    if (vr[v][VC['Status'] - 1] !== ETRANSFER.STATUS) continue;
+    var ref = String(vr[v][VC['Session ID'] - 1]);
+    var o = orders[ref] = orders[ref] || { reference: ref, name: String(vr[v][VC['Buyer name'] - 1]), email: String(vr[v][VC['Buyer email'] - 1]), amount: 0, flights: 0,
+      booked: vr[v][VC['Booked date'] - 1] ? isoOf(vr[v][VC['Booked date'] - 1]) : '' };
+    o.amount += Number(vr[v][VC['Value'] - 1]) || 0;
+    o.flights++;
+  }
+  out.orders = Object.keys(orders).map(function (k) { return orders[k]; });
   return out;
 }
 
@@ -618,4 +635,72 @@ function adminFlyerRemove(id, flyerId, user) {
     recountWaivers(bk, i, id);
     return { ok: true };
   });
+}
+
+/** The E-transfers row an admin action is about, as matchEtransfer reads it. */
+function etransferRow(row) {
+  var et = tab(ETRANSFER.TAB, ETRANSFER.HEADERS.concat(['Reviewed']));
+  if (!(row >= 0 && row < et.rows.length)) throw new Error('That e-transfer was not found. Reload the page.');
+  return { et: et, t: { amount: Number(et.row(row, 'Amount')), from: String(et.row(row, 'From')), deposited: et.row(row, 'Deposited') === 'Yes',
+    reference: String(et.row(row, 'Interac reference')), message: String(et.row(row, 'Message')) } };
+}
+
+function markEtransfer(et, row, result, user) {
+  et.set(row, 'Result', result);
+  et.set(row, 'Reviewed', Utilities.formatDate(new Date(), BOOKING.TZ, 'yyyy-MM-dd') + ' ' + user.split('@')[0]);
+}
+
+/**
+ * Certificates for an e-transfer that arrived without an order (a gift bought by e-transfer): a contact for the buyer,
+ * one Vouchers row per flight (Type "etransfer", paid by that Interac transfer) and the usual certificate email.
+ */
+function adminEtransferIssue(p, user) {
+  var name = clean(p.name), email = clean(p.email).toLowerCase();
+  var quantity = parseInt(p.quantity, 10), value = Number(p.value);
+  var recipient = clean(p.recipient), message = clean(p.message);
+  if (!name) return { ok: false, error: 'Enter the buyer\'s name.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: 'Enter an email address for the certificate.' };
+  if (!(quantity >= 1 && quantity <= ETRANSFER.MAX_QUANTITY)) return { ok: false, error: 'Choose how many flights.' };
+  if (!(value > 0)) return { ok: false, error: 'Enter the value of each flight.' };
+  var row = Number(p.row), codes = [];
+  withLock(function () {
+    var r = etransferRow(row);
+    upsertPerson(tab(CRM.PEOPLE, CRM.PEOPLE_HEADERS), { name: name, email: email }, 'E-transfer');
+    var sh = vouchersSheet();
+    var existing = {};
+    sh.getDataRange().getValues().forEach(function (x) { if (x[0]) existing[x[0]] = true; });
+    var now = new Date(), add = [];
+    for (var i = 0; i < quantity; i++) {
+      var code = randomCode(existing);
+      codes.push(code);
+      var v = new Array(VOUCHER.HEADERS.length).fill('');
+      v[VC['Code'] - 1] = code;
+      v[VC['Payment ID'] - 1] = 'Interac ' + r.t.reference;
+      v[VC['Issued'] - 1] = now;
+      v[VC['Buyer name'] - 1] = name;
+      v[VC['Buyer email'] - 1] = email;
+      v[VC['For'] - 1] = recipient;
+      v[VC['Message'] - 1] = message;
+      v[VC['Type'] - 1] = 'etransfer';
+      v[VC['Value'] - 1] = value;
+      v[VC['Status'] - 1] = 'Issued';
+      v[VC['Notes'] - 1] = 'Issued from an e-transfer from ' + r.t.from + ' by ' + user.split('@')[0];
+      add.push(v);
+    }
+    sh.getRange(sh.getLastRow() + 1, 1, add.length, add[0].length).setValues(add);
+    markEtransfer(r.et, row, 'Paid: certificates issued (' + codes.join(', ') + ')', user);
+  });
+  sendVouchers({ name: name, email: email, recipient: recipient }, codes.map(function (c) { return { code: c, recipient: recipient, message: message, value: value }; }));
+  logMessage(email, 'Certificate' + (codes.length > 1 ? 's ' : ' ') + codes.join(', '), '', user);
+  return { ok: true, codes: codes };
+}
+
+/** An e-transfer sent without its reference, counted against an order that is waiting for it. */
+function adminEtransferApply(row, reference, user) {
+  var r = etransferRow(row);
+  var result = matchEtransfer(reference, r.t);
+  if (!/^Paid/.test(result)) return { ok: false, error: result + '.' };
+  var again = etransferRow(row);
+  markEtransfer(again.et, row, result + ' (' + reference + ', applied by hand)', user);
+  return { ok: true };
 }

@@ -224,9 +224,10 @@ Type `etransfer`, Status `Awaiting e-transfer`, with no code yet. $50 each, or $
   the flight, whichever comes first (the Vouchers tab's **Pay by** column). If nothing arrives by then, the booking is
   cancelled, the slot freed, and the guest and the club are emailed. The reference still works: paying later issues
   certificates to book another day.
-- **By hand.** For an e-transfer that arrived without the reference, find the order's rows in the Vouchers tab and change
-  their Type from `etransfer` to `manual`. Within the hour each gets a code and the certificate is emailed, and a booked
-  order is no longer released. Set the booking's Payment to "E-transfer (paid)" for your own records.
+- **By hand, on the admin page.** Each e-transfer under "Needs attention" has **Issue certificates** (a contact for the
+  buyer, codes in the Vouchers tab and the certificate email; name, email and number of flights are filled in from the
+  transfer) and **Apply to an order** (for someone who ordered or booked by e-transfer but left out the reference: the
+  order is paid as if the reference had been there).
 
 **Setup (once):** the script now reads the club Gmail. After pushing, open the editor, pick `checkEtransfers` and Run,
 and approve Gmail access as the club account. Until that is approved, the 10-minute check stops running.
