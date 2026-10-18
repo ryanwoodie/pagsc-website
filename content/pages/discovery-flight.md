@@ -8,7 +8,9 @@ primary_action: Buy a Discovery Flight
 
 A winch launch to about 1,500 feet in a two-seat glider, with an experienced club pilot at the controls. **$50.**
 
-[Buy a Discovery Flight, $50] · or join the standby list
+[Buy a Discovery Flight, $50]
+
+[Pay by e-transfer] (smaller, outlined) · or join the standby list
 
 For yourself or as a gift. Groups of 4 or more: $40 each (group checkout link).
 
@@ -27,7 +29,7 @@ The winch pulls the glider into the air in seconds. At about 1,500 feet your pil
 ## How it works
 
 ### 1. Buy your flight
-$50 online, for yourself or as a gift.
+$50 by card or by e-transfer, for yourself or as a gift.
 
 ### 2. Pick your day
 Book ahead on the booking calendar below, or join the standby list and we email you when the weather is good and flying is confirmed.

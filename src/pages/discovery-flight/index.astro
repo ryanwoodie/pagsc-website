@@ -5,6 +5,7 @@ import Section from '../../components/Section.astro';
 import Steps from '../../components/Steps.astro';
 import Callout from '../../components/Callout.astro';
 import BookButton from '../../components/BookButton.astro';
+import Button from '../../components/Button.astro';
 import Qa from '../../components/Qa.astro';
 import BookingCalendar from '../../components/BookingCalendar.astro';
 import StandbyForm from '../../components/StandbyForm.astro';
@@ -26,11 +27,14 @@ const weekdays = lcfirst(df.weekdays);
 >
   <PageHero label="Discovery Flight" title="Your first flight in a glider">
     <p class="lead">A winch launch to about {launchHeight} in a two-seat glider, with an experienced club pilot at the controls. <strong class="inline-price">{money(df.price)}.</strong></p>
-    <div class="actions">
+    <div class="buy">
       <BookButton showPrice />
-      <a class="more" href="#standby">or join the standby list</a>
+      <div class="buy__alt">
+        <Button href={href('/discovery-flight/e-transfer/')} variant="ghost" small>Pay by e-transfer</Button>
+        <a class="more" href="#standby">or join the standby list</a>
+      </div>
     </div>
-    <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>. Prefer e-transfer? <a href={href('/discovery-flight/e-transfer/')}>Pay by e-transfer</a>.</p>
+    <p class="fine">For yourself or as a gift. Groups of {df.group_minimum} or more: <a href={facts.links.discovery_flight_group_payment} rel="noopener">{money(df.group_price_each)} each</a>.</p>
     <Photo slot="media" src={guestPhoto} alt="A smiling guest in the front seat of the club's two-seat glider, canopy open, with the pilot in the back seat" crop="4 / 3" position="center 55%" eager />
   </PageHero>
 
@@ -59,7 +63,7 @@ const weekdays = lcfirst(df.weekdays);
     <Steps
       row
       items={[
-        { title: 'Buy your flight', text: `<a href="${facts.links.discovery_flight_payment}" rel="noopener">${money(df.price)} online</a>, for yourself or as a gift.` },
+        { title: 'Buy your flight', text: `${money(df.price)} <a href="${facts.links.discovery_flight_payment}" rel="noopener">by card</a> or <a href="${href('/discovery-flight/e-transfer/')}">by e-transfer</a>, for yourself or as a gift.` },
         { title: 'Pick your day', text: 'Book ahead on the <a href="#request">booking calendar</a> below, or join the <a href="#standby">standby list</a> and we email you when the weather is good and flying is confirmed.' },
         { title: 'Come out and fly', text: 'Check the day is on before you leave home, then meet us at the field.' },
       ]}
@@ -105,7 +109,10 @@ const weekdays = lcfirst(df.weekdays);
     <h2 id="gift-h">Give a flight as a gift</h2>
     <p class="lead">A Discovery Flight makes a good present for anyone who has looked up and wondered.</p>
     <p>Buy it online and we email you a printable certificate with its own code. Gift flights don't expire. The person flying books their date with the code on the <a href="#request">booking calendar</a> above, or by emailing <a href={`mailto:${facts.contact.email}`}>{facts.contact.email}</a>.</p>
-    <div class="actions"><BookButton label="Buy a gift flight" showPrice buy /></div>
+    <div class="buy">
+      <BookButton label="Buy a gift flight" showPrice buy />
+      <div class="buy__alt"><Button href={href('/discovery-flight/e-transfer/')} variant="ghost" small>Pay by e-transfer</Button></div>
+    </div>
   </Section>
 
   <Section labelledby="faq-h">
@@ -115,6 +122,20 @@ const weekdays = lcfirst(df.weekdays);
 </Base>
 
 <style>
+  .buy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .buy__alt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+  }
+
   .fine {
     margin: 10px 0 0;
     font-size: 0.95rem;
