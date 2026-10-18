@@ -22,25 +22,30 @@ import { facts } from '../../lib/facts';
   };
   type Slot = { time: string; free: boolean };
   type Standby = { token: string; name: string; email: string; phone: string; people: number; scope: string; status: string; codes: string };
-  type Waiver = { id: string; name: string; email: string; signed: string };
+  type Waiver = { id: string; name: string; email: string; phone: string; age: number; guardian: string; signed: string; signedDate: string };
   type DayData = {
     ok: boolean; date: string; error?: string;
     day: { status: string; weather: string; instructor: boolean; students: number; manual: number } | null;
     avail: { remaining: number; open: boolean; confirmed: boolean; kind: string; slots: Slot[] } | null;
-    bookings: Booking[]; standby: Standby[]; waivers: Waiver[];
+    bookings: Booking[]; standby: Standby[]; waivers?: Waiver[]; people?: number;
   };
   type Attention = {
     requests: { row: number; received: string; name: string; email: string; phone: string; flyers: number; dates: string; message: string; payment: string }[];
     weekday: Booking[]; etransfers: { row: number; received: string; from: string; amount: number; message: string; result: string }[];
     unpaid: Booking[]; waivers: Booking[];
   };
-  type Overview = { ok: boolean; error?: string; today: string; days: { date: string; bookings: number; people: number; status: string }[]; attention: Attention };
+  type All = { ok: boolean; error?: string; today: string; days: DayData[]; attention: Attention; waivers: Waiver[]; loaded?: string };
 
   const root = document.querySelector<HTMLElement>('.adm')!;
   const app = root.querySelector<HTMLElement>('.adm__app')!;
   const endpoint = root.dataset.endpoint!;
   const maxGroup = Number(root.dataset.max) || 4;
   const KEY = 'pagsc-admin';
+  const DATA = 'pagsc-admin-data';
+  // The last full load, kept on this device so the page shows at once while the latest loads.
+  let data: All | null = null;
+  let view: () => void = () => overview();
+  let fresh = false;
 
   // ---------- helpers ----------
   function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string | null | false)[]) {
@@ -96,6 +101,8 @@ import { facts } from '../../lib/facts';
     button.textContent = 'Saving…';
     try {
       await api(action, data);
+      button.textContent = 'Saved ✓';
+      for (const f of app.querySelectorAll('.adm__panel, .adm__add')) f.replaceChildren();
       after();
     } catch (e) {
       if (e instanceof Error && e.message === 'signin') return;
@@ -107,7 +114,8 @@ import { facts } from '../../lib/facts';
 
   // ---------- sign-in ----------
   function signIn(note = '') {
-    try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
+    try { localStorage.removeItem(KEY); localStorage.removeItem(DATA); } catch { /* storage blocked */ }
+    data = null;
     const email = h('input', { type: 'email', id: 'adm-email', autocomplete: 'email', required: '' }) as HTMLInputElement;
     const send = h('button', { type: 'submit', class: 'btn' }, 'Email me a sign-in link');
     const form = h('form', { class: 'adm__signin' },
@@ -130,64 +138,131 @@ import { facts } from '../../lib/facts';
     app.replaceChildren(form);
   }
 
-  // ---------- overview ----------
-  async function overview() {
-    loading();
-    let data: Overview;
-    try { data = await api('overview'); } catch (e) { if (!(e instanceof Error && e.message === 'signin')) app.replaceChildren(errorBox(e)); return; }
-    const a = data.attention;
-    const count = a.requests.length + a.weekday.length + a.etransfers.length + a.unpaid.length + a.waivers.length;
-    const list = h('ul', { class: 'adm__days' });
-    for (const d of data.days) {
-      const li = h('li', {}, btn(`${fmtDay.format(asDate(d.date))}`, () => day(d.date), 'adm__day'),
-        h('span', { class: 'adm__daymeta' }, d.bookings ? `${d.bookings} booking${d.bookings === 1 ? '' : 's'}, ${d.people} ${d.people === 1 ? 'person' : 'people'}` : 'No bookings'),
-        d.status ? h('span', { class: 'adm__status' }, d.status) : null);
-      list.append(li);
+  // ---------- loading ----------
+  /** Load everything (one request), keep it, and redraw the current view. */
+  async function refresh() {
+    fresh = false;
+    banner();
+    try {
+      const out: All = await api('all');
+      out.loaded = new Date().toISOString();
+      data = out;
+      fresh = true;
+      try { localStorage.setItem(DATA, JSON.stringify(out)); } catch { /* storage full or blocked */ }
+      // Someone typing or with a form open keeps what they have; the banner offers the latest.
+      const busy = app.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement!.tagName)
+        || [...app.querySelectorAll('.adm__panel, .adm__add')].some((x) => x.childElementCount);
+      if (busy) { banner('', true); return; }
+      view();
+    } catch (e) {
+      if (e instanceof Error && e.message === 'signin') return;
+      if (!data) app.replaceChildren(errorBox(e), btn('Try again', () => refresh()));
+      else banner(e instanceof Error ? e.message : 'Could not load the latest.');
     }
-    const pick = h('input', { type: 'date', 'aria-label': 'Go to a date', value: data.today }) as HTMLInputElement;
-    pick.addEventListener('change', () => pick.value && day(pick.value));
-    app.replaceChildren(
-      h('div', { class: 'adm__bar' }, btn(count ? `Needs attention (${count})` : 'Nothing needs attention', () => attention(a), count ? 'adm__btn adm__btn--warn' : 'adm__btn'), pick),
-      h('h2', {}, 'Next four weeks'),
-      list,
-      h('p', { class: 'adm__muted' }, btn('Sign out', () => signIn(), 'adm__link')));
+  }
+
+  /** A line at the top saying whether what is shown is the latest. */
+  function banner(problem = '', waiting = false) {
+    const old = root.querySelector('.adm__fresh');
+    const line = waiting
+      ? h('p', { class: 'adm__fresh' }, 'The latest is loaded. ', btn('Show it', () => view(), 'adm__link'))
+      : h('p', { class: 'adm__fresh' + (problem ? ' adm__fresh--bad' : '') },
+        problem ? `${problem} ` : fresh || !data ? '' : `Updating… (showing the copy from ${new Date(data.loaded || Date.now()).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })})`,
+        problem || fresh ? btn('Refresh', () => refresh(), 'adm__link') : '');
+    if (old) old.replaceWith(line); else app.before(line);
+  }
+
+  function show(render: () => void) {
+    view = render;
+    render();
+    banner();
+  }
+
+  // ---------- overview ----------
+  function overview() {
+    show(() => {
+      if (!data) { loading(); return; }
+      const all = data;
+      const a = all.attention;
+      const count = a.requests.length + a.weekday.length + a.etransfers.length + a.unpaid.length + a.waivers.length;
+      const row = (d: DayData) => {
+        const active = d.bookings.filter((b) => b.status !== 'Cancelled');
+        return h('li', {}, btn(fmtDay.format(asDate(d.date)), () => day(d.date), 'adm__day'),
+          h('span', { class: 'adm__daymeta' }, active.length ? `${active.length} booking${active.length === 1 ? '' : 's'}, ${d.people} ${d.people === 1 ? 'person' : 'people'}` : 'No bookings'),
+          d.day?.status ? h('span', { class: 'adm__status' }, d.day.status) : null);
+      };
+      const ahead = all.days.filter((d) => d.date >= all.today);
+      const past = all.days.filter((d) => d.date < all.today && d.bookings.length).reverse();
+      const pick = h('input', { type: 'date', 'aria-label': 'Go to a date', value: all.today }) as HTMLInputElement;
+      pick.addEventListener('change', () => pick.value && day(pick.value));
+      app.replaceChildren(
+        h('div', { class: 'adm__bar' }, btn(count ? `Needs attention (${count})` : 'Nothing needs attention', () => attention(), count ? 'adm__btn adm__btn--warn' : 'adm__btn'),
+          btn('Today', () => day(all.today)), pick),
+        h('h2', {}, 'Next four weeks'),
+        h('ul', { class: 'adm__days' }, ...ahead.map(row)),
+        past.length ? h('h2', {}, 'Last week') : '',
+        past.length ? h('ul', { class: 'adm__days' }, ...past.map(row)) : '',
+        h('p', { class: 'adm__muted' }, btn('Sign out', () => signIn(), 'adm__link')));
+    });
   }
 
   // ---------- needs attention ----------
-  function attention(a: Attention) {
-    const sec = (title: string, items: HTMLElement[]) => items.length ? [h('h2', {}, title), ...items] : [];
-    const bookingLine = (b: Booking, extra: string) => h('div', { class: 'adm__card' },
-      h('p', {}, h('strong', {}, `${fmtDay.format(asDate(b.date))}, ${clock(b.start)}`), ` ${b.name} (${b.people})`),
-      h('p', { class: 'adm__muted' }, extra), btn('Open the day', () => day(b.date)));
-    const dismiss = (kind: string, row: number) => {
-      const b = btn('Mark done', () => act(b, 'dismiss', { kind, row: String(row) }, () => overview()));
-      return b;
-    };
-    app.replaceChildren(
-      btn('← Back', () => overview(), 'adm__link'),
-      h('h2', {}, 'Needs attention'),
-      ...sec('Weekday requests to confirm', a.weekday.map((b) => bookingLine(b, b.phone))),
-      ...sec('Waivers missing (next 2 days)', a.waivers.map((b) => bookingLine(b, `${b.waivers} of ${b.people} signed`))),
-      ...sec('Waiting for an e-transfer', a.unpaid.map((b) => bookingLine(b, b.payment))),
-      ...sec('Requests from the plain form', a.requests.map((r) => h('div', { class: 'adm__card' },
-        h('p', {}, h('strong', {}, r.name), ` (${r.flyers}), ${r.dates}`),
-        h('p', {}, h('a', { href: `tel:${r.phone}` }, r.phone), ' · ', h('a', { href: `mailto:${r.email}` }, r.email)),
-        r.message ? h('p', { class: 'adm__muted' }, r.message) : null,
-        h('p', { class: 'adm__muted' }, `${r.payment} · received ${new Date(r.received).toLocaleString('en-CA')}`),
-        dismiss('request', r.row)))),
-      ...sec('E-transfers to check', a.etransfers.map((t) => h('div', { class: 'adm__card' },
-        h('p', {}, h('strong', {}, `$${t.amount}`), ` from ${t.from}`),
-        h('p', { class: 'adm__muted' }, `${t.result}${t.message ? ` · "${t.message}"` : ''} · ${new Date(t.received).toLocaleDateString('en-CA')}`),
-        dismiss('etransfer', t.row)))),
-      a.weekday.length + a.waivers.length + a.unpaid.length + a.requests.length + a.etransfers.length ? '' : h('p', {}, 'Nothing needs attention.'));
+  function attention() {
+    show(() => {
+      if (!data) { loading(); return; }
+      const a = data.attention;
+      const sec = (title: string, items: HTMLElement[]) => items.length ? [h('h2', {}, title), ...items] : [];
+      const bookingLine = (b: Booking, extra: string) => h('div', { class: 'adm__card' },
+        h('p', {}, h('strong', {}, `${fmtDay.format(asDate(b.date))}, ${clock(b.start)}`), ` ${b.name} (${b.people})`),
+        h('p', { class: 'adm__muted' }, extra), btn('Open the day', () => day(b.date)));
+      const dismiss = (kind: string, row: number) => {
+        const b = btn('Mark done', () => act(b, 'dismiss', { kind, row: String(row) }, refresh));
+        return b;
+      };
+      app.replaceChildren(
+        btn('← Back', () => overview(), 'adm__link'),
+        h('h2', {}, 'Needs attention'),
+        ...sec('Weekday requests to confirm', a.weekday.map((b) => bookingLine(b, b.phone))),
+        ...sec('Waivers missing (next 2 days)', a.waivers.map((b) => bookingLine(b, `${b.waivers} of ${b.people} signed`))),
+        ...sec('Waiting for an e-transfer', a.unpaid.map((b) => bookingLine(b, b.payment))),
+        ...sec('Requests from the plain form', a.requests.map((r) => h('div', { class: 'adm__card' },
+          h('p', {}, h('strong', {}, r.name), ` (${r.flyers}), ${r.dates}`),
+          h('p', {}, h('a', { href: `tel:${r.phone}` }, r.phone), ' · ', h('a', { href: `mailto:${r.email}` }, r.email)),
+          r.message ? h('p', { class: 'adm__muted' }, r.message) : null,
+          h('p', { class: 'adm__muted' }, `${r.payment} · received ${new Date(r.received).toLocaleString('en-CA')}`),
+          dismiss('request', r.row)))),
+        ...sec('E-transfers to check', a.etransfers.map((t) => h('div', { class: 'adm__card' },
+          h('p', {}, h('strong', {}, `$${t.amount}`), ` from ${t.from}`),
+          h('p', { class: 'adm__muted' }, `${t.result}${t.message ? ` · "${t.message}"` : ''} · ${new Date(t.received).toLocaleDateString('en-CA')}`),
+          dismiss('etransfer', t.row)))),
+        a.weekday.length + a.waivers.length + a.unpaid.length + a.requests.length + a.etransfers.length ? '' : h('p', {}, 'Nothing needs attention.'));
+    });
   }
 
   // ---------- one day ----------
-  async function day(date: string) {
-    loading(`Loading ${fmtLong.format(asDate(date))}…`);
+  /** A day from the full load, or (outside its range) its own request. */
+  async function dayData(date: string): Promise<DayData> {
+    const have = data?.days.find((d) => d.date === date);
+    if (have) return have;
+    const d: DayData = await api('day', { date });
+    return d;
+  }
+
+  function day(date: string) {
+    show(() => { renderDay(date); });
+  }
+
+  async function renderDay(date: string) {
+    if (!data) { loading(); return; }
     let d: DayData;
-    try { d = await api('day', { date }); } catch (e) { if (!(e instanceof Error && e.message === 'signin')) app.replaceChildren(btn('← Back', () => overview(), 'adm__link'), errorBox(e)); return; }
-    const reload = () => day(date);
+    const inRange = data.days.find((x) => x.date === date);
+    if (inRange) d = inRange;
+    else {
+      loading(`Loading ${fmtLong.format(asDate(date))}…`);
+      try { d = await dayData(date); } catch (e) { if (!(e instanceof Error && e.message === 'signin')) app.replaceChildren(btn('← Back', () => overview(), 'adm__link'), errorBox(e)); return; }
+    }
+    const waivers = data.waivers;
+    const reload = () => refresh();
     const head = h('div', { class: 'adm__dayhead' },
       btn('←', () => day(shift(date, -1)), 'adm__btn adm__btn--small'),
       h('h2', {}, fmtLong.format(asDate(date))),
@@ -195,26 +270,64 @@ import { facts } from '../../lib/facts';
     const info = h('div', { class: 'adm__info' },
       h('p', {}, h('strong', {}, 'Status: '), d.day?.status || 'Nothing posted'),
       d.day ? h('p', { class: 'adm__muted' }, `${d.day.weather ? 'Forecast: ' + d.day.weather + ' · ' : ''}${d.day.instructor ? 'Instructor signed up' : 'No instructor yet'} · ${d.day.students} student${d.day.students === 1 ? '' : 's'}${d.day.manual ? ` · ${d.day.manual} guest entr${d.day.manual === 1 ? 'y' : 'ies'} typed on the schedule` : ''}`) : null,
-      d.avail ? h('p', { class: 'adm__muted' }, `${d.avail.remaining} guest spot${d.avail.remaining === 1 ? '' : 's'} left${d.avail.kind === 'weekend' ? (d.avail.open ? ' · open to pay at the field' : ' · paid flights only until opened') : ''}${d.avail.confirmed ? ' · confirmed' : ''}`) : h('p', { class: 'adm__muted' }, 'Not bookable online (outside the next 4 weeks, past, or not on the schedule).'));
+      d.avail ? h('p', { class: 'adm__muted' }, `${d.avail.remaining} guest spot${d.avail.remaining === 1 ? '' : 's'} left${d.avail.kind === 'weekend' ? (d.avail.open ? ' · open to pay at the field' : ' · paid flights only until opened') : ''}${d.avail.confirmed ? ' · confirmed' : ''}`) : h('p', { class: 'adm__muted' }, 'Not bookable online (past, more than 4 weeks out, or not on the schedule).'));
 
     const active = d.bookings.filter((b) => b.status !== 'Cancelled');
     const cancelled = d.bookings.filter((b) => b.status === 'Cancelled');
-    const cards = active.map((b) => bookingCard(b, d, reload));
-    const add = d.avail ? btn('+ Add a booking', () => addForm(d, addBox, reload)) : null;
     const addBox = h('div', {});
+    const add = d.avail ? btn('+ Add a booking', () => addForm(d, addBox, reload)) : null;
 
     app.replaceChildren(
       btn('← All days', () => overview(), 'adm__link'),
       head, info,
       h('h3', {}, active.length ? `Bookings (${active.reduce((s, b) => s + b.people, 0)} people)` : 'No bookings'),
-      ...cards,
+      ...active.map((b) => bookingCard(b, waivers, reload)),
       add || '', addBox,
+      walkinSection(date, waivers, reload),
       standbySection(d, reload),
       cancelled.length ? h('details', { class: 'adm__cancelled' }, h('summary', {}, `${cancelled.length} cancelled`),
         ...cancelled.map((b) => h('p', { class: 'adm__muted' }, `${clock(b.start)} ${b.name} (${b.people})${b.notes ? ' · ' + b.notes.split('\n').pop() : ''}`))) : '');
   }
 
-  function bookingCard(b: Booking, d: DayData, reload: () => void) {
+  /** Walk-ins: tick the waivers signed for one flight, give the time, and it becomes a booking. */
+  function walkinSection(date: string, waivers: Waiver[], reload: () => void) {
+    const sec = h('section', { class: 'adm__walkin' }, h('h3', {}, 'Walk-in from waivers'));
+    if (!waivers.length) { sec.append(h('p', { class: 'adm__muted' }, 'No recent waivers waiting to be put on a booking.')); return sec; }
+    const today = data?.today || '';
+    const boxes: HTMLInputElement[] = [];
+    const item = (w: Waiver) => {
+      const c = h('input', { type: 'checkbox', value: w.id }) as HTMLInputElement;
+      boxes.push(c);
+      return h('li', {}, h('label', { class: 'adm__check' }, c,
+        ` ${w.name}${w.age < 18 && w.guardian ? ` (${w.age}, with ${w.guardian})` : ''} · signed ${fmtDay.format(asDate(w.signedDate))} ${new Date(w.signed).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}`));
+    };
+    const thatDay = waivers.filter((w) => w.signedDate === date);
+    const other = waivers.filter((w) => w.signedDate !== date);
+    const now = new Date();
+    const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(Math.floor(now.getMinutes() / 5) * 5).padStart(2, '0')}`;
+    const time = h('input', { type: 'time', value: date === today ? nowTime : '12:00', 'aria-label': 'Time of the flight', step: '300' }) as HTMLInputElement;
+    const status = h('select', { 'aria-label': 'Status' }, h('option', { value: 'Flown' }, 'Flown'), h('option', { value: 'Held' }, 'Booked, not flown yet')) as HTMLSelectElement;
+    if (date > today) status.value = 'Held';
+    const payment = h('select', { 'aria-label': 'Payment' }, ...['Paid at the field', 'Pay at the field', 'E-transfer (paid)', 'Paid online', 'Gift'].map((v) => h('option', { value: v }, v))) as HTMLSelectElement;
+    const interest = h('select', { 'aria-label': 'Interest' }, h('option', { value: 'Discovery flight' }, 'Discovery flight'), h('option', { value: 'First lesson' }, 'First lesson')) as HTMLSelectElement;
+    const thanks = h('input', { type: 'checkbox', checked: '' }) as HTMLInputElement;
+    const go = btn('Make the booking', () => {
+      const ids = boxes.filter((b) => b.checked).map((b) => b.value);
+      if (!ids.length || !time.value) return;
+      act(go, 'walkin', { date, start: time.value, waivers: ids.join(','), status: status.value, payment: payment.value, interest: interest.value, thanks: thanks.checked ? 'yes' : 'no' }, reload);
+    });
+    sec.append(
+      h('p', { class: 'adm__muted' }, 'Tick everyone on the same flight. The first one ticked is the contact.'),
+      thatDay.length ? h('ul', { class: 'adm__standby' }, ...thatDay.map(item)) : h('p', { class: 'adm__muted' }, 'No waivers signed on this day yet.'),
+      other.length ? h('details', {}, h('summary', {}, `Other recent waivers (${other.length})`), h('ul', { class: 'adm__standby' }, ...other.map(item))) : '',
+      h('div', { class: 'adm__row' }, h('label', { class: 'adm__field' }, 'Time', time), h('label', { class: 'adm__field' }, 'Status', status)),
+      h('div', { class: 'adm__row' }, h('label', { class: 'adm__field' }, 'Payment', payment), h('label', { class: 'adm__field' }, 'Interest', interest)),
+      date < today ? h('label', { class: 'adm__check' }, thanks, ' Send the thank-you note now') : h('p', { class: 'adm__muted' }, 'The thank-you note goes the evening after the flight.'),
+      go);
+    return sec;
+  }
+
+  function bookingCard(b: Booking, waivers: Waiver[], reload: () => void) {
     const panel = h('div', { class: 'adm__panel' });
     const open = (fill: (p: HTMLElement) => void) => { panel.replaceChildren(); fill(panel); };
     const badge = (t: string, cls = '') => h('span', { class: `adm__badge ${cls}` }, t);
@@ -238,9 +351,9 @@ import { facts } from '../../lib/facts';
     const flyers = h('ul', { class: 'adm__flyers' }, ...b.flyers.map((f) => h('li', {}, f.name || 'Unnamed', ' ',
       f.waiver ? badge('Waiver ✓', 'adm__badge--good') : badge('No waiver', 'adm__badge--warn'), f.flown === 'No' ? badge('Did not fly', 'adm__badge--bad') : '')));
     let link: HTMLElement | null = null;
-    if (b.waivers < b.people && d.waivers.length) {
+    if (b.waivers < b.people && waivers.length) {
       const sel = h('select', { 'aria-label': 'Recent waiver to link' }, h('option', { value: '' }, 'Link a recent waiver…'),
-        ...d.waivers.map((w) => h('option', { value: w.id }, `${w.name} (${new Date(w.signed).toLocaleDateString('en-CA')})`))) as HTMLSelectElement;
+        ...waivers.map((w) => h('option', { value: w.id }, `${w.name} (${new Date(w.signed).toLocaleDateString('en-CA')})`))) as HTMLSelectElement;
       const go = btn('Link', () => sel.value && act(go, 'link-waiver', { booking: b.id, waiver: sel.value }, reload));
       link = h('div', { class: 'adm__row' }, sel, go);
     }
@@ -288,7 +401,7 @@ import { facts } from '../../lib/facts';
     const fill = async () => {
       times.replaceChildren(h('option', { value: '' }, 'Loading times…'));
       try {
-        const d: DayData = await api('day', { date: date.value });
+        const d: DayData = await dayData(date.value);
         const free = (d.avail?.slots || []).filter((_s, i, all) => all.slice(i, i + b.people).length === b.people && all.slice(i, i + b.people).every((x) => x.free || (date.value === b.date && x.time >= b.start && x.time < endOf(b.start, b.people))));
         times.replaceChildren(...(free.length ? free.map((s) => h('option', { value: s.time }, clock(s.time))) : [h('option', { value: '' }, 'No free times that day')]));
       } catch (e) {
@@ -354,7 +467,11 @@ import { facts } from '../../lib/facts';
     try { localStorage.setItem(KEY, m[1]); } catch { /* storage blocked */ }
     history.replaceState(null, '', location.pathname);
   }
-  if (token()) overview(); else signIn();
+  if (token()) {
+    try { data = JSON.parse(localStorage.getItem(DATA) || 'null'); } catch { data = null; }
+    overview();
+    refresh();
+  } else signIn();
 </script>
 
 <style>
@@ -554,11 +671,30 @@ import { facts } from '../../lib/facts';
   .adm :global(.adm__check input) {
     width: 20px;
     height: 20px;
+    flex: none;
   }
   .adm :global(.adm__signin) {
     display: grid;
     gap: 8px;
     max-width: 24rem;
+  }
+  .adm :global(.adm__fresh) {
+    font-size: 0.88rem;
+    color: var(--grey);
+    margin: 0 0 6px;
+    min-height: 1.4em;
+  }
+  .adm :global(.adm__fresh--bad) {
+    color: #8a1c0a;
+  }
+  .adm :global(.adm__walkin) {
+    background: var(--cell);
+    padding: 10px 14px;
+    margin: 16px 0;
+  }
+  .adm :global(.adm__walkin .adm__field) {
+    flex: 1;
+    min-width: 9rem;
   }
   .adm :global(.adm__info) {
     background: var(--sky);

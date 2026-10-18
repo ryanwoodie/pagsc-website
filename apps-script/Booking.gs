@@ -429,9 +429,10 @@ function nowOnField() {
 // The Flying Schedule (public). A SCHEDULE_ID Script Property overrides it.
 var DEFAULT_SCHEDULE_ID = '18n3c3T0eJh9exZWXCKhG1IhYb_GXY45IwfDZP-xshwc';
 
+var SCHEDULE_SHEET = null;
 function scheduleSheet() {
   var id = PropertiesService.getScriptProperties().getProperty('SCHEDULE_ID') || DEFAULT_SCHEDULE_ID;
-  return SpreadsheetApp.openById(id).getSheets()[0];
+  return SCHEDULE_SHEET || (SCHEDULE_SHEET = SpreadsheetApp.openById(id).getSheets()[0]);
 }
 
 function activeBookings() {
@@ -450,7 +451,7 @@ function hhmmOf(v) {
 }
 
 function guestCaps() {
-  var ss = SpreadsheetApp.openById(prop('SHEET_ID'));
+  var ss = requestsSpreadsheet();
   var sh = ss.getSheetByName(BOOKING.CAPS_TAB);
   var caps = {};
   if (!sh) return caps;

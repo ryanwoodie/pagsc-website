@@ -8,8 +8,9 @@
  *
  * Actions:
  *   login {email}                       email a sign-in link (always answers ok)
- *   overview {}                         the next 4 weeks: bookings, people and status per day, and what needs attention
- *   day {date}                          one day: schedule status, bookings with flyers and waivers, standby, recent unlinked waivers
+ *   all {}                              everything the page shows: a week back to 4 weeks ahead, attention, unlinked waivers
+ *   day {date}                          one day outside that range
+ *   walkin {date, start, waivers, payment, status, interest, thanks}   a booking made from signed waivers
  *   status {booking, status}            Confirmed (weekday requests; emails the guest), Flown, No-show, Held (undo)
  *   cancel {booking, notify, message}   cancel and free the slot; optionally email the guest
  *   move {booking, date, start}         move to another free time; emails the guest
@@ -146,7 +147,8 @@ function adminPost(p) {
   try {
     var out;
     switch (p.action) {
-      case 'overview': out = adminOverview(); break;
+      case 'all': out = adminAll(); break;
+      case 'walkin': out = adminWalkin(p, user); break;
       case 'day': out = adminDay(String(p.date || todayOnField())); break;
       case 'status': out = adminStatus(p.booking, p.status, user); break;
       case 'cancel': out = adminCancel(p.booking, p.notify === 'yes', clean(p.message), user); break;
@@ -213,42 +215,103 @@ function flyersByBooking() {
   return out;
 }
 
-function adminOverview() {
-  ensureCrm();
+/**
+ * Everything the admin page shows, in one request: each day from a week ago to four weeks ahead that has bookings, a
+ * status or is a weekend, with its bookings, standby and spots; what needs attention; and recent waivers not on a booking.
+ * The page keeps this and switches days without asking again.
+ */
+function adminAll() {
   var today = todayOnField();
-  var bk = bookingTab();
-  var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
-  var byDate = {};
-  days.forEach(function (d) { byDate[d.date] = d; });
-  var list = [], counts = {};
-  for (var i = 0; i < bk.rows.length; i++) {
-    var date = isoOf(bk.row(i, 'Date'));
-    if (!date || date < today || bk.row(i, 'Status') === 'Cancelled') continue;
-    var c = counts[date] = counts[date] || { bookings: 0, people: 0 };
-    c.bookings++;
-    c.people += Number(bk.row(i, 'People')) || 1;
+  var ctx = adminContext(today);
+  var dates = {};
+  Object.keys(ctx.bookingsByDate).forEach(function (d) { dates[d] = true; });
+  for (var n = -7; n < BOOKING.DAYS_AHEAD; n++) {
+    var dt = addDays(today, n), wd = weekdayOf(dt);
+    if (wd === 0 || wd === 6 || (ctx.dayByDate[dt] && ctx.dayByDate[dt].statusText)) dates[dt] = true;
   }
-  for (var n = 0; n < BOOKING.DAYS_AHEAD; n++) {
-    var dt = addDays(today, n), d = byDate[dt];
-    var wd = weekdayOf(dt);
-    if (!counts[dt] && !(d && d.statusText) && wd !== 0 && wd !== 6) continue;
-    list.push({ date: dt, bookings: (counts[dt] || {}).bookings || 0, people: (counts[dt] || {}).people || 0, status: d ? d.statusText : '' });
-  }
-  return { ok: true, today: today, days: list, attention: adminAttention(bk, today) };
+  var from = addDays(today, -7), to = addDays(today, BOOKING.DAYS_AHEAD);
+  var days = Object.keys(dates).filter(function (d) { return d >= from && d < to; }).sort().map(function (d) { return dayView(d, ctx); });
+  return { ok: true, today: today, days: days, attention: adminAttention(ctx, today), waivers: ctx.unlinked };
 }
 
-function adminAttention(bk, today) {
-  var out = { requests: [], weekday: [], etransfers: [], unpaid: [], waivers: [] };
-  var since = Date.now() - ADMIN.ATTENTION_DAYS * 86400000;
+/** One day, for dates outside adminAll's range. */
+function adminDay(date) {
+  var ctx = adminContext(todayOnField());
+  var v = dayView(date, ctx);
+  v.ok = true;
+  v.waivers = ctx.unlinked;
+  return v;
+}
+
+/** Every sheet the admin page needs, read once. */
+function adminContext(today) {
+  var bk = bookingTab();
   var fl = flyersByBooking();
+  var days = scheduleDays(scheduleSheet().getDataRange().getDisplayValues());
+  var dayByDate = {}, availByDate = {}, bookingsByDate = {}, active = [];
+  days.forEach(function (d) { dayByDate[d.date] = d; });
   for (var i = 0; i < bk.rows.length; i++) {
     var date = isoOf(bk.row(i, 'Date'));
-    if (!date || date < today || bk.row(i, 'Status') === 'Cancelled') continue;
-    var v = bookingView(bk, i, fl);
-    if (v.status === 'Requested') out.weekday.push(v);
-    if (daysBetween(today, date) <= 2 && v.waivers < v.people) out.waivers.push(v);
-    if (/^E-transfer$/.test(v.payment)) out.unpaid.push(v);
+    if (!date || !bk.row(i, 'Booking ID')) continue;
+    (bookingsByDate[date] = bookingsByDate[date] || []).push(bookingView(bk, i, fl));
+    if (bk.row(i, 'Status') !== 'Cancelled') active.push({ date: date, start: hhmmOf(bk.row(i, 'Start')), people: Number(bk.row(i, 'People')) || 1 });
   }
+  computeAvailability(days, active, guestCaps(), today, nowOnField()).forEach(function (a) { availByDate[a.date] = a; });
+
+  var sb = tab(STANDBY.TAB, STANDBY.HEADERS), standby = [];
+  for (var s = 0; s < sb.rows.length; s++) {
+    var st = String(sb.row(s, 'Status'));
+    if (st !== 'Waiting' && st !== 'Notified') continue;
+    standby.push({ token: String(sb.row(s, 'Token')), name: String(sb.row(s, 'Name')), email: String(sb.row(s, 'Email')), phone: String(sb.row(s, 'Phone')),
+      people: Number(sb.row(s, 'People')) || 1, scope: standbyScope(sb.row(s, 'Scope'), sb.row(s, 'Either weekend day')), status: st,
+      codes: String(sb.row(s, 'Codes')), date: sb.row(s, 'Date') ? isoOf(sb.row(s, 'Date')) : '' });
+  }
+
+  var linked = {};
+  Object.keys(fl).forEach(function (k) { fl[k].forEach(function (f) { if (f.waiver) linked[f.waiver] = true; }); });
+  var wv = tab(WAIVER.TAB, WAIVER.HEADERS), unlinked = [];
+  var since = Date.now() - ADMIN.WAIVER_DAYS * 86400000;
+  for (var w = wv.rows.length - 1; w >= 0; w--) {
+    var signed = wv.row(w, 'Signed');
+    if (!(signed instanceof Date) || signed.getTime() < since) continue;
+    var id = String(wv.row(w, 'ID'));
+    if (!id || linked[id]) continue;
+    unlinked.push({ id: id, name: String(wv.row(w, 'Participant')), email: String(wv.row(w, 'Email')), phone: String(wv.row(w, 'Phone')),
+      age: Number(wv.row(w, 'Age')), guardian: String(wv.row(w, 'Guardian') || ''), signed: signed.toISOString(),
+      signedDate: Utilities.formatDate(signed, BOOKING.TZ, 'yyyy-MM-dd') });
+  }
+  return { bk: bk, fl: fl, dayByDate: dayByDate, availByDate: availByDate, bookingsByDate: bookingsByDate, standby: standby, unlinked: unlinked };
+}
+
+function dayView(date, ctx) {
+  var d = ctx.dayByDate[date], a = ctx.availByDate[date];
+  var bookings = (ctx.bookingsByDate[date] || []).slice().sort(function (x, y) { return x.start < y.start ? -1 : 1; });
+  var partner = weekendPartner(date), weekend = weekdayOf(date) === 0 || weekdayOf(date) === 6;
+  var standby = ctx.standby.filter(function (s) {
+    return s.scope === 'Any' ? weekend : s.date === date || (s.scope === 'Weekend' && s.date === partner);
+  });
+  var people = 0;
+  bookings.forEach(function (b) { if (b.status !== 'Cancelled') people += b.people; });
+  return {
+    date: date,
+    day: d ? { status: d.statusText, weather: d.weather, instructor: d.instructor, students: d.students, manual: (d.manual || []).length } : null,
+    avail: a ? { remaining: a.remaining, open: a.open, confirmed: a.confirmed, kind: a.kind, slots: a.slots } : null,
+    bookings: bookings, standby: standby, people: people
+  };
+}
+
+function adminAttention(ctx, today) {
+  var out = { requests: [], weekday: [], etransfers: [], unpaid: [], waivers: [] };
+  var since = Date.now() - ADMIN.ATTENTION_DAYS * 86400000;
+  Object.keys(ctx.bookingsByDate).forEach(function (date) {
+    if (date < today) return;
+    ctx.bookingsByDate[date].forEach(function (v) {
+      if (v.status === 'Cancelled') return;
+      if (v.status === 'Requested') out.weekday.push(v);
+      if (daysBetween(today, date) <= 2 && v.waivers < v.people) out.waivers.push(v);
+      if (/^E-transfer$/.test(v.payment)) out.unpaid.push(v);
+    });
+  });
   var gr = tab(TAB, HEADERS.concat(['Handled']));
   for (var g = 0; g < gr.rows.length; g++) {
     var got = gr.row(g, 'Received');
@@ -263,52 +326,6 @@ function adminAttention(bk, today) {
     out.etransfers.push({ row: e, received: when.toISOString(), from: String(et.row(e, 'From')), amount: et.row(e, 'Amount'), message: String(et.row(e, 'Message')), result: result });
   }
   return out;
-}
-
-function adminDay(date) {
-  var bk = bookingTab();
-  var fl = flyersByBooking();
-  var grid = scheduleSheet().getDataRange().getDisplayValues();
-  var days = scheduleDays(grid);
-  var d = null;
-  days.forEach(function (x) { if (x.date === date) d = x; });
-  var avail = null;
-  computeAvailability(days, activeBookings(), guestCaps(), todayOnField(), nowOnField()).forEach(function (a) { if (a.date === date) avail = a; });
-  var bookings = [];
-  for (var i = 0; i < bk.rows.length; i++) if (isoOf(bk.row(i, 'Date')) === date) bookings.push(bookingView(bk, i, fl));
-  bookings.sort(function (a, b) { return a.start < b.start ? -1 : 1; });
-
-  var sb = tab(STANDBY.TAB, STANDBY.HEADERS), standby = [];
-  var partner = weekendPartner(date);
-  for (var s = 0; s < sb.rows.length; s++) {
-    var st = String(sb.row(s, 'Status'));
-    if (st !== 'Waiting' && st !== 'Notified') continue;
-    var scope = standbyScope(sb.row(s, 'Scope'), sb.row(s, 'Either weekend day'));
-    var sd = sb.row(s, 'Date') ? isoOf(sb.row(s, 'Date')) : '';
-    var mine = scope === 'Any' ? (weekdayOf(date) === 0 || weekdayOf(date) === 6) : sd === date || (scope === 'Weekend' && sd === partner);
-    if (!mine) continue;
-    standby.push({ token: String(sb.row(s, 'Token')), name: String(sb.row(s, 'Name')), email: String(sb.row(s, 'Email')), phone: String(sb.row(s, 'Phone')),
-      people: Number(sb.row(s, 'People')) || 1, scope: scope, status: st, codes: String(sb.row(s, 'Codes')) });
-  }
-
-  var linked = {};
-  Object.keys(fl).forEach(function (k) { fl[k].forEach(function (f) { if (f.waiver) linked[f.waiver] = true; }); });
-  var wv = tab(WAIVER.TAB, WAIVER.HEADERS), waivers = [];
-  var since = Date.now() - ADMIN.WAIVER_DAYS * 86400000;
-  for (var w = wv.rows.length - 1; w >= 0; w--) {
-    var signed = wv.row(w, 'Signed');
-    if (!(signed instanceof Date) || signed.getTime() < since) continue;
-    var id = String(wv.row(w, 'ID'));
-    if (!id || linked[id]) continue;
-    waivers.push({ id: id, name: String(wv.row(w, 'Participant')), email: String(wv.row(w, 'Email')), signed: signed.toISOString() });
-  }
-
-  return {
-    ok: true, date: date,
-    day: d ? { status: d.statusText, weather: d.weather, instructor: d.instructor, students: d.students, manual: (d.manual || []).length } : null,
-    avail: avail ? { remaining: avail.remaining, open: avail.open, confirmed: avail.confirmed, kind: avail.kind, slots: avail.slots } : null,
-    bookings: bookings, standby: standby, waivers: waivers
-  };
 }
 
 // ---------- Changes ----------
@@ -482,4 +499,70 @@ function adminDismiss(kind, row, user) {
   if (!t || !(row >= 0 && row < t.rows.length)) return { ok: false, error: 'Not found.' };
   t.set(row, kind === 'request' ? 'Handled' : 'Reviewed', Utilities.formatDate(new Date(), BOOKING.TZ, 'yyyy-MM-dd') + ' ' + user.split('@')[0]);
   return { ok: true };
+}
+
+/**
+ * A walk-in: a booking made from waivers signed at the field (or before), at any time the volunteer types.
+ * The flyers are the waivers' participants; the contact is the first one's (their parent or guardian for a minor).
+ * Nothing is written on the Flying Schedule and no confirmation is sent. thanks = "yes" sends the thank-you note
+ * now for a flight before today; otherwise it goes the evening after, as for any booking.
+ */
+function adminWalkin(p, user) {
+  var date = clean(p.date), start = clean(p.start);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Pick the day of the flight.' };
+  if (!/^\d{2}:\d{2}$/.test(start)) return { ok: false, error: 'Enter the time of the flight.' };
+  var ids = String(p.waivers || '').split(',').map(function (x) { return x.trim(); }).filter(String);
+  if (!ids.length) return { ok: false, error: 'Tick at least one waiver.' };
+  var status = p.status === 'Held' ? 'Held' : 'Flown';
+  var payment = clean(p.payment) || 'Paid at the field';
+  var today = todayOnField();
+  var out = withLock(function () {
+    var wv = tab(WAIVER.TAB, WAIVER.HEADERS), people = tab(CRM.PEOPLE, CRM.PEOPLE_HEADERS);
+    var flyers = [];
+    ids.forEach(function (id) {
+      for (var k = 0; k < wv.rows.length; k++) if (String(wv.row(k, 'ID')) === id) { flyers.push(k); return; }
+      throw new Error('A waiver was not found. Reload the page.');
+    });
+    var w0 = flyers[0];
+    var minor = Number(wv.row(w0, 'Age')) < WAIVER.GUARDIAN_UNDER && wv.row(w0, 'Guardian');
+    var contact = {
+      name: String(minor ? wv.row(w0, 'Guardian') : wv.row(w0, 'Participant')),
+      email: String(wv.row(w0, 'Email')),
+      phone: String(minor ? (wv.row(w0, 'Guardian phone') || wv.row(w0, 'Phone')) : wv.row(w0, 'Phone'))
+    };
+    var bookingId = newId('B'), waiverKey = Utilities.getUuid().replace(/-/g, '').slice(0, 20);
+    var personId = upsertPerson(people, contact, 'Walk-in');
+    var wd = weekdayOf(date), past = date <= today;
+    var bk = bookingTab();
+    bk.add({
+      'Received': new Date(), 'Date': date, 'Start': "'" + start, 'People': flyers.length,
+      'Kind': wd === 0 || wd === 6 ? 'weekend' : 'weekday', 'Status': status,
+      'Name': contact.name, 'Email': contact.email, 'Phone': contact.phone,
+      'Interest': clean(p.interest) || 'Discovery flight', 'Payment': payment, 'Token': Utilities.getUuid(),
+      'Reminders sent': past ? '7,3,1' : '', // no reminders for a flight already under way
+      'Waiver key': waiverKey, 'Waivers signed': flyers.length, 'Booking ID': bookingId, 'Person ID': personId,
+      'Notes': Utilities.formatDate(new Date(), BOOKING.TZ, 'MMM d') + ' ' + user.split('@')[0] + ': walk-in from waivers'
+    });
+    var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS), to = [];
+    flyers.forEach(function (k) {
+      var pid = String(wv.row(k, 'Person ID') || '') || upsertPerson(people, { name: wv.row(k, 'Participant'), email: wv.row(k, 'Email'), phone: wv.row(k, 'Phone') }, 'Waiver');
+      fl.add({ 'Booking ID': bookingId, 'Person ID': pid, 'Name': wv.row(k, 'Participant'), 'Email': wv.row(k, 'Email'), 'Waiver ID': wv.row(k, 'ID'),
+        'Flown': status === 'Flown' ? 'Yes' : '', 'Added': new Date() });
+      wv.set(k, 'Booking key', waiverKey);
+      wv.set(k, 'Flight date', date);
+      to.push({ email: String(wv.row(k, 'Email')), name: String(minor && k === w0 ? contact.name : wv.row(k, 'Participant')) });
+    });
+    clearAvailabilityCache();
+    var thanks = p.thanks === 'yes' && date < today;
+    if (thanks) bk.set(bk.rows.length - 1, 'Follow-up sent', new Date());
+    return { bookingId: bookingId, to: thanks ? to : [], date: date };
+  });
+  var seen = {}, links = emailLinks('');
+  out.to.forEach(function (x) {
+    var e = x.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen[e]) return;
+    seen[e] = true;
+    sendGuestEmail(x.email.trim(), thankYouEmail(x.name.split(/\s+/)[0], out.date, links), { bookingId: out.bookingId, by: user });
+  });
+  return { ok: true, booking: out.bookingId };
 }

@@ -155,8 +155,14 @@ function clean(v) {
     .replace(/^[=+\-@]/, "'$&");
 }
 
+// Opening a spreadsheet takes most of a second, so each run opens the requests sheet once.
+var REQUESTS_SS = null;
+function requestsSpreadsheet() {
+  return REQUESTS_SS || (REQUESTS_SS = SpreadsheetApp.openById(prop('SHEET_ID')));
+}
+
 function sheet(tab, headers) {
-  var ss = SpreadsheetApp.openById(prop('SHEET_ID'));
+  var ss = requestsSpreadsheet();
   var sh = ss.getSheetByName(tab);
   if (!sh) {
     sh = ss.insertSheet(tab);
@@ -166,8 +172,9 @@ function sheet(tab, headers) {
   return sh;
 }
 
+var PROPS = null;
 function prop(key) {
-  var v = PropertiesService.getScriptProperties().getProperty(key);
+  var v = (PROPS || (PROPS = PropertiesService.getScriptProperties().getProperties()))[key];
   if (!v) throw new Error('Script property ' + key + ' is not set');
   return v;
 }

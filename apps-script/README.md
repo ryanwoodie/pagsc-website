@@ -258,6 +258,14 @@ or without an email), message the guest, add a phone-in booking, link a waiver, 
 sign-ups. "Needs attention" lists weekday requests, waivers missing for the next 2 days, e-transfers awaited or
 unmatched, and plain-form requests, each with "Mark done" where it applies. Changes record who made them.
 
+**Walk-ins.** Each day has "Walk-in from waivers": tick the waivers signed for one flight (the first ticked is the contact,
+or their parent or guardian for a minor), type the time it happened, and choose the status and payment. It becomes a
+booking with those people as its flyers. Nothing goes on the Flying Schedule and no confirmation is sent. The thank-you
+note follows the evening after, or straight away (if ticked) for a flight on an earlier day.
+
+**Speed.** The page loads everything in one request (a week back to four weeks ahead) and keeps the last copy on the
+device, so it opens at once and updates in the background; switching days needs no further loading.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then
