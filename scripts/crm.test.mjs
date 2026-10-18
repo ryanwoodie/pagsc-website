@@ -59,7 +59,11 @@ test('thank-you email links match club-facts.yaml', () => {
   const m = thankYouEmail('Sam', '2026-10-17', links);
   assert.equal(m.subject, 'Thanks for flying with us');
   assert.ok(m.html.includes(facts.links.google_review) && m.html.includes('https://www.pagsc.ca/learn-to-fly/'));
-  assert.match(m.text, /Saturday, October 17/);
+  assert.match(m.text, /on Saturday\./);
+  const soon = thankYouEmail('Sam', '2026-10-17', links, '2026-10-18');
+  assert.match(soon.text, /Birch Hills Airport on Saturday\. We hope/);
+  const late = thankYouEmail('Sam', '2026-10-17', links, '2026-10-26');
+  assert.match(late.text, /on Saturday, October 17\. We hope/);
 });
 
 test('only listed emails may sign in', () => {

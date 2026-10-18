@@ -398,13 +398,20 @@ var THANKS = {
   LICENCE_AGE: 16    // training.licence_age
 };
 
-/** The thank-you note the evening after a flight. */
-function thankYouEmail(first, date, links) {
+/** "on Saturday" within a week of the flight, "on Saturday, October 17" after that. */
+function flightDay(date, today) {
+  var ago = today ? daysBetween(date, today) : 0;
+  return ago >= 0 && ago <= 7 ? DAY_NAMES[weekdayOf(date)] : longDate(date);
+}
+
+/** The thank-you note the evening after a flight. today (yyyy-mm-dd) decides how the day is named. */
+function thankYouEmail(first, date, links, today) {
+  var when = flightDay(date, today);
   var learn = links.site + '/learn-to-fly/';
   var sub = function (t) { return '<h2 style="margin:18px 0 6px;font-family:' + EMAIL.DISPLAY + ';font-size:22px;line-height:1.1;font-weight:700;color:' + EMAIL.INK + '">' + esc(t) + '</h2>'; };
   var body = heading('Thanks for flying with us') +
     para('Hi ' + esc(first) + ',') +
-    para('Thanks for coming out to Birch Hills Airport on ' + esc(longDate(date)) + '. We hope you enjoyed your first flight in a glider.') +
+    para('Thanks for coming out to Birch Hills Airport on ' + esc(when) + '. We hope you enjoyed your first flight in a glider.') +
     sub('Enjoyed it?') +
     para('A short Google review helps other people find the club. It takes a minute.') +
     button('Leave a Google review', THANKS.REVIEW) +
@@ -418,7 +425,7 @@ function thankYouEmail(first, date, links) {
     subject: 'Thanks for flying with us',
     html: layout('How was your first flight?', body, links),
     text: ['Hi ' + first + ',', '',
-      'Thanks for coming out to Birch Hills Airport on ' + longDate(date) + '. We hope you enjoyed your first flight in a glider.', '',
+      'Thanks for coming out to Birch Hills Airport on ' + when + '. We hope you enjoyed your first flight in a glider.', '',
       'Enjoyed it? A short Google review helps other people find the club: ' + THANKS.REVIEW, '',
       'Something we could do better? Reply to this email and tell us. It comes straight to the club.', '',
       'Want to keep going? Your Discovery Flight counts as your first lesson. Students fly solo from age ' + THANKS.SOLO_AGE + ' and can earn a licence from ' + THANKS.LICENCE_AGE + '.',

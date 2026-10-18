@@ -17,6 +17,7 @@
  *   add {…booking form fields}          a phone-in booking (no weekend paid-only rule); the guest gets the usual emails
  *   message {booking, subject, body}    email the booker
  *   note {booking, notes}               set the booking's notes
+ *   thanks {booking}                    send the thank-you note now (booker and flyers) and record it
  *   link-waiver {booking, waiver, flyer?}   attach a signed waiver to a booking (to one flyer, if given)
  *   flyer-merge {booking, keep, drop}   two flyers are one person: keep one row (with the waiver) and merge the contacts
  *   flyer-remove {booking, flyer}       take a flyer off a booking (its waiver goes back to the unlinked list)
@@ -161,6 +162,7 @@ function adminPost(p) {
       case 'add': out = adminAdd(p, user); break;
       case 'message': out = adminMessage(p.booking, clean(p.subject), String(p.body || '').slice(0, 5000), user); break;
       case 'note': out = adminNote(p.booking, clean(p.notes)); break;
+      case 'thanks': out = adminThanks(p.booking, user); break;
       case 'link-waiver': out = adminLinkWaiver(p.booking, clean(p.waiver), clean(p.flyer)); break;
       case 'flyer-merge': out = adminFlyerMerge(p.booking, clean(p.keep), clean(p.drop), user); break;
       case 'flyer-remove': out = adminFlyerRemove(p.booking, clean(p.flyer), user); break;
@@ -703,4 +705,15 @@ function adminEtransferApply(row, reference, user) {
   var again = etransferRow(row);
   markEtransfer(again.et, row, result + ' (' + reference + ', applied by hand)', user);
   return { ok: true };
+}
+
+function adminThanks(id, user) {
+  var sh = bookingsSheet(), rows = sh.getDataRange().getValues(), col = BOOKING.HEADERS.indexOf('Booking ID');
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][col]) !== String(id)) continue;
+    if (rows[i][5] === 'Cancelled') return { ok: false, error: 'That booking is cancelled.' };
+    sendThankYou(sh, i, rows[i], { date: isoOf(rows[i][1]), name: String(rows[i][6]), email: String(rows[i][7]) }, user);
+    return { ok: true };
+  }
+  return { ok: false, error: 'Booking not found. Reload the page.' };
 }

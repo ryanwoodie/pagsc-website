@@ -389,6 +389,10 @@ import { facts } from '../../lib/facts';
     if (b.status !== 'Flown') actions.append(setStatus('Flown', 'Flown'));
     if (b.status !== 'No-show') actions.append(setStatus('No-show', 'No-show'));
     if (b.status === 'Flown' || b.status === 'No-show') actions.append(setStatus('Undo', 'Held'));
+    if (data && b.date <= data.today && b.status !== 'No-show') {
+      const ty = btn(b.followUp ? 'Send thank-you again' : 'Send thank-you', () => act(ty, 'thanks', { booking: b.id }, reload));
+      actions.append(ty);
+    }
     actions.append(
       btn('Move', () => open((p) => moveForm(p, b, reload))),
       btn('Message', () => open((p) => messageForm(p, 'message', { booking: b.id }, `To ${b.email}`, reload))),

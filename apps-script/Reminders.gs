@@ -107,9 +107,8 @@ function sendSampleEmails() {
   ].forEach(function (m) { sendGuestEmail(to, { subject: '[SAMPLE] ' + m.subject, html: m.html, text: m.text }); });
 }
 
-/** The thank-you note to the booker and every flyer with a different email (from their waivers). */
-function sendThankYou(sh, i, r, b) {
-  var bookingId = String(r[BOOKING.HEADERS.indexOf('Booking ID')] || '');
+/** Who gets a booking's thank-you note: the booker and every flyer with a different email (from their waivers). */
+function thankYouRecipients(bookingId, b) {
   var to = [{ email: b.email, name: b.name }];
   if (bookingId) {
     var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS);
@@ -117,12 +116,51 @@ function sendThankYou(sh, i, r, b) {
       if (fl.row(k, 'Booking ID') === bookingId && fl.row(k, 'Flown') !== 'No') to.push({ email: String(fl.row(k, 'Email')), name: String(fl.row(k, 'Name')) });
     }
   }
-  var seen = {}, links = emailLinks('');
+  var seen = {}, out = [];
   to.forEach(function (p) {
-    var e = p.email.trim().toLowerCase();
+    var e = String(p.email).trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen[e]) return;
     seen[e] = true;
-    sendGuestEmail(p.email.trim(), thankYouEmail(String(p.name).split(/\s+/)[0], b.date, links), { bookingId: bookingId });
+    out.push({ email: String(p.email).trim(), first: String(p.name).split(/\s+/)[0] });
+  });
+  return out;
+}
+
+/** Send a booking's thank-you note and record it (Bookings row index i, its values r). by = who sent it by hand. */
+function sendThankYou(sh, i, r, b, by) {
+  var bookingId = String(r[BOOKING.HEADERS.indexOf('Booking ID')] || '');
+  var links = emailLinks(''), today = todayOnField();
+  thankYouRecipients(bookingId, b).forEach(function (p) {
+    sendGuestEmail(p.email, thankYouEmail(p.first, b.date, links, today), { bookingId: bookingId, by: by });
   });
   sh.getRange(i + 1, BOOKING.HEADERS.indexOf('Follow-up sent') + 1).setValue(new Date());
+}
+
+/** Bookings from yesterday still due a thank-you note (not cancelled, a no-show, an unconfirmed request, or sent). */
+function yesterdaysThankYous() {
+  var sh = bookingsSheet(), rows = sh.getDataRange().getValues();
+  var yesterday = addDays(todayOnField(), -1), follow = BOOKING.HEADERS.indexOf('Follow-up sent'), out = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[1] || isoOf(r[1]) !== yesterday || r[follow] || ['Held', 'Confirmed', 'Flown'].indexOf(String(r[5])) < 0) continue;
+    out.push({ i: i, r: r, b: { date: yesterday, name: String(r[6]), email: String(r[7]) } });
+  }
+  return { sh: sh, list: out };
+}
+
+/** In the editor: list who would get yesterday's thank-you notes, without sending. */
+function previewYesterdaysThankYous() {
+  var y = yesterdaysThankYous();
+  y.list.forEach(function (x) {
+    var to = thankYouRecipients(String(x.r[BOOKING.HEADERS.indexOf('Booking ID')] || ''), x.b);
+    Logger.log(x.b.name + ' (' + x.r[3] + ' people, ' + x.r[5] + '): ' + to.map(function (p) { return p.first + ' <' + p.email + '>'; }).join(', '));
+  });
+  Logger.log(y.list.length + ' booking(s).');
+}
+
+/** In the editor: send yesterday's thank-you notes now, and mark them sent so the evening run skips them. */
+function sendYesterdaysThankYous() {
+  var y = yesterdaysThankYous();
+  y.list.forEach(function (x) { sendThankYou(y.sh, x.i, x.r, x.b, 'sent by hand'); });
+  Logger.log('Sent for ' + y.list.length + ' booking(s).');
 }
