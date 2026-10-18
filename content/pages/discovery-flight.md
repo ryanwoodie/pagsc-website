@@ -6,7 +6,7 @@ primary_action: Buy a Discovery Flight
 
 # Your first flight in a glider
 
-A winch launch to about 1,500 feet in a two-seat glider, with a club pilot beside you the whole time. **$50.**
+A winch launch to about 1,500 feet in a two-seat glider, with an experienced club pilot at the controls. **$50.**
 
 [Buy a Discovery Flight, $50] · or join the standby list
 
@@ -70,7 +70,7 @@ Button: Join the standby list
 **How the day runs**
 
 1. Meet the crew and get a safety briefing.
-2. Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time.
+2. Fly: a winch launch to about 1,500 feet, with an experienced club pilot at the controls.
 3. Stay, watch and learn.
 
 ## Weather

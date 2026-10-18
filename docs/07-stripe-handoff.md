@@ -86,7 +86,7 @@ Test card: 4242 4242 4242 4242, any future date, any CVC. The site still uses th
 
 Same settings as the sandbox links, except the wording, revised 4 October 2026 to match the site:
 - Single product description: "Your first flight in a glider: a winch launch to about 1,500 feet in a two-seat
-  glider, with a club pilot beside you the whole time. At Birch Hills Airport, 25 minutes from Prince Albert.
+  glider, with an experienced club pilot at the controls. At Birch Hills Airport, 25 minutes from Prince Albert.
   We email you a certificate for each flight, and it never expires." Group: the same for "a group of 4 or more".
 - Field labels: "Name on the certificate (if it's a gift)", "Message on the certificate" (plural on the group link).
 - Above the Pay button: "We email you a certificate with a booking code for each flight. Then pick your flying

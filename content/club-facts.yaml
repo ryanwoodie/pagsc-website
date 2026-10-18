@@ -79,7 +79,7 @@ discovery_flight:
     - A phone or camera, if you like
   day:
     - Meet the crew and get a safety briefing.
-    - "Fly: a winch launch to about 1,500 feet, with a club pilot beside you the whole time."
+    - "Fly: a winch launch to about 1,500 feet, with an experienced club pilot at the controls."
     - Stay, watch and learn.
 
 booking:   # the online calendar; keep in step with BOOKING in apps-script/Booking.gs
