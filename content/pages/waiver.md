@@ -1,12 +1,12 @@
 ---
 title: Sign the club's waiver
-description: Everyone who flies with the Prince Albert Gliding and Soaring Club, guests and members, signs the club's waiver before flying. Read it and sign online in a few minutes.
+description: Sign the Prince Albert Gliding and Soaring Club waiver online before your first flight.
 primary_action: Sign the waiver
 ---
 
 # Sign the club's waiver
 
-Everyone who flies with the club, guests and members alike, signs this waiver before their first flight. You sign it once: it covers all your gliding with the club until you cancel it in writing. Anyone under 18 signs with a parent or guardian.
+Needed before your first flight with the club. Anyone under 18 signs with a parent or guardian.
 
 [Read and sign]
 
@@ -14,15 +14,13 @@ Everyone who flies with the club, guests and members alike, signs this waiver be
 
 ## What gliding is
 
-(Background above the agreement; not part of the signed text.)
-
 - **Gliding is regulated aviation.** Glider pilots, gliders and flight training in Canada come under Transport Canada's Canadian Aviation Regulations, the same rules that cover other small aircraft.
 - **The club's gliders are certified aircraft.** Like other certified aircraft, they are designed and tested to airworthiness standards, and each one is inspected every year.
 - **Pilots and instructors are licensed and trained.** Every club pilot who flies a guest holds a Transport Canada glider pilot licence. Instructors also hold a Transport Canada instructor rating.
 
 ### Why there is still a waiver
 
-Anything that leaves the ground carries risks no one can fully remove: gravity, weather, speed and motion, equipment, and people. The agreement below says so plainly, and the club asks everyone who takes part to sign it. Please read it in full. It, not this summary, is what you agree to.
+Anything that leaves the ground carries risks no one can fully remove: gravity, weather, speed and motion, equipment, and people. That is why everyone who flies with the club signs the waiver below.
 
 ## The waiver
 
