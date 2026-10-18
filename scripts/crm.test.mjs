@@ -27,6 +27,13 @@ test('a waiver fills the flyer named after them, else the first placeholder', ()
   assert.equal(flyerSlot(rows, 'sam example'), 0);
   assert.equal(flyerSlot(rows, 'Jo Other'), 1);
   assert.equal(flyerSlot([{ name: 'Sam', waiverId: 'w1' }], 'Jo'), -1);
+  // The booker typed a first name; the waiver has the full name.
+  const braeden = [{ name: 'Braeden', waiverId: '' }, { name: 'Guest 2', waiverId: '' }];
+  assert.equal(flyerSlot(braeden, 'Braeden Whatcott'), 0);
+  assert.equal(flyerSlot(braeden, 'Sara Katalenic'), 1);
+  assert.equal(ctx.sameFirstName('Braeden', 'Braeden Whatcott'), true);
+  assert.equal(ctx.sameFirstName('Sam Example', 'Sam Other'), false);
+  assert.equal(ctx.sameFirstName('Sam', 'Samantha'), false);
   assert.equal(isPlaceholderName('Guest 4'), true);
   assert.equal(isPlaceholderName('Guestly'), false);
 });

@@ -17,7 +17,9 @@
  *   add {…booking form fields}          a phone-in booking (no weekend paid-only rule); the guest gets the usual emails
  *   message {booking, subject, body}    email the booker
  *   note {booking, notes}               set the booking's notes
- *   link-waiver {booking, waiver}       attach a signed waiver to a booking
+ *   link-waiver {booking, waiver, flyer?}   attach a signed waiver to a booking (to one flyer, if given)
+ *   flyer-merge {booking, keep, drop}   two flyers are one person: keep one row (with the waiver) and merge the contacts
+ *   flyer-remove {booking, flyer}       take a flyer off a booking (its waiver goes back to the unlinked list)
  *   standby-message {tokens, subject, body}   email standby sign-ups
  *   dismiss {kind, row}                 mark a plain-form request or an unmatched e-transfer as dealt with
  */
@@ -156,7 +158,9 @@ function adminPost(p) {
       case 'add': out = adminAdd(p, user); break;
       case 'message': out = adminMessage(p.booking, clean(p.subject), String(p.body || '').slice(0, 5000), user); break;
       case 'note': out = adminNote(p.booking, clean(p.notes)); break;
-      case 'link-waiver': out = adminLinkWaiver(p.booking, clean(p.waiver)); break;
+      case 'link-waiver': out = adminLinkWaiver(p.booking, clean(p.waiver), clean(p.flyer)); break;
+      case 'flyer-merge': out = adminFlyerMerge(p.booking, clean(p.keep), clean(p.drop), user); break;
+      case 'flyer-remove': out = adminFlyerRemove(p.booking, clean(p.flyer), user); break;
       case 'standby-message': out = adminStandbyMessage(String(p.tokens || '').split(','), clean(p.subject), String(p.body || '').slice(0, 5000), user); break;
       case 'dismiss': out = adminDismiss(p.kind, Number(p.row), user); break;
       default: out = { ok: false, error: 'Unknown action.' };
@@ -210,7 +214,8 @@ function flyersByBooking() {
   var out = {};
   for (var i = 0; i < fl.rows.length; i++) {
     var id = String(fl.row(i, 'Booking ID'));
-    (out[id] = out[id] || []).push({ name: String(fl.row(i, 'Name')), email: String(fl.row(i, 'Email')), waiver: String(fl.row(i, 'Waiver ID')), flown: String(fl.row(i, 'Flown')) });
+    (out[id] = out[id] || []).push({ id: String(fl.row(i, 'Flyer ID')), name: String(fl.row(i, 'Name')), email: String(fl.row(i, 'Email')),
+      waiver: String(fl.row(i, 'Waiver ID')), flown: String(fl.row(i, 'Flown')), person: String(fl.row(i, 'Person ID')) });
   }
   return out;
 }
@@ -464,7 +469,7 @@ function adminNote(id, notes) {
   });
 }
 
-function adminLinkWaiver(id, waiverId) {
+function adminLinkWaiver(id, waiverId, flyerId) {
   return withLock(function () {
     var bk = bookingTab(), i = findBooking(bk, id);
     var wv = tab(WAIVER.TAB, WAIVER.HEADERS), w = -1;
@@ -473,9 +478,8 @@ function adminLinkWaiver(id, waiverId) {
     var key = String(bk.row(i, 'Waiver key') || '');
     if (key) wv.set(w, 'Booking key', key);
     wv.set(w, 'Flight date', isoOf(bk.row(i, 'Date')));
-    linkWaiverToFlyer(id, { id: waiverId, name: String(wv.row(w, 'Participant')), email: String(wv.row(w, 'Email')), personId: String(wv.row(w, 'Person ID') || '') });
-    var n = (flyersByBooking()[id] || []).filter(function (f) { return f.waiver; }).length;
-    bk.set(i, 'Waivers signed', n);
+    linkWaiverToFlyer(id, { id: waiverId, name: String(wv.row(w, 'Participant')), email: String(wv.row(w, 'Email')), personId: String(wv.row(w, 'Person ID') || '') }, flyerId);
+    recountWaivers(bk, i, id);
     return { ok: true };
   });
 }
@@ -547,7 +551,7 @@ function adminWalkin(p, user) {
     flyers.forEach(function (k) {
       var pid = String(wv.row(k, 'Person ID') || '') || upsertPerson(people, { name: wv.row(k, 'Participant'), email: wv.row(k, 'Email'), phone: wv.row(k, 'Phone') }, 'Waiver');
       fl.add({ 'Booking ID': bookingId, 'Person ID': pid, 'Name': wv.row(k, 'Participant'), 'Email': wv.row(k, 'Email'), 'Waiver ID': wv.row(k, 'ID'),
-        'Flown': status === 'Flown' ? 'Yes' : '', 'Added': new Date() });
+        'Flown': status === 'Flown' ? 'Yes' : '', 'Added': new Date(), 'Flyer ID': newId('F') });
       wv.set(k, 'Booking key', waiverKey);
       wv.set(k, 'Flight date', date);
       to.push({ email: String(wv.row(k, 'Email')), name: String(minor && k === w0 ? contact.name : wv.row(k, 'Participant')) });
@@ -565,4 +569,53 @@ function adminWalkin(p, user) {
     sendGuestEmail(x.email.trim(), thankYouEmail(x.name.split(/\s+/)[0], out.date, links), { bookingId: out.bookingId, by: user });
   });
   return { ok: true, booking: out.bookingId };
+}
+
+function recountWaivers(bk, i, id) {
+  bk.set(i, 'Waivers signed', (flyersByBooking()[id] || []).filter(function (f) { return f.waiver; }).length);
+}
+
+function flyerRows(fl, bookingId) {
+  var out = {};
+  for (var i = 0; i < fl.rows.length; i++) if (fl.row(i, 'Booking ID') === bookingId) out[fl.row(i, 'Flyer ID')] = i;
+  return out;
+}
+
+function adminFlyerMerge(id, keepId, dropId, user) {
+  return withLock(function () {
+    var bk = bookingTab(), i = findBooking(bk, id);
+    var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS), rows = flyerRows(fl, id);
+    var keep = rows[keepId], drop = rows[dropId];
+    if (keep == null || drop == null || keep === drop) throw new Error('Those flyers were not found. Reload the page.');
+    if (fl.row(keep, 'Waiver ID') && fl.row(drop, 'Waiver ID')) throw new Error('Both have a waiver. Remove one instead.');
+    if (!fl.row(keep, 'Waiver ID') && fl.row(drop, 'Waiver ID')) { var t = keep; keep = drop; drop = t; } // the row with the waiver stays
+    var keepName = String(fl.row(keep, 'Name')), dropName = String(fl.row(drop, 'Name'));
+    var keepPerson = String(fl.row(keep, 'Person ID') || ''), dropPerson = String(fl.row(drop, 'Person ID') || '');
+    ['Email', 'Flown'].forEach(function (h) { if (!fl.row(keep, h) && fl.row(drop, h)) fl.set(keep, h, fl.row(drop, h)); });
+    if (dropPerson && keepPerson && dropPerson !== keepPerson) mergePeople(dropPerson, keepPerson);
+    else if (dropPerson && !keepPerson) fl.set(keep, 'Person ID', dropPerson);
+    // The booker's name follows the fuller one ("Braeden" becomes "Braeden Whatcott").
+    if (String(bk.row(i, 'Name')).trim().toLowerCase() === dropName.trim().toLowerCase() && keepName.length > dropName.length) bk.set(i, 'Name', keepName);
+    fl.del(drop);
+    addNote(bk, i, 'merged flyer ' + dropName + ' into ' + keepName, user);
+    recountWaivers(bk, i, id);
+    return { ok: true };
+  });
+}
+
+function adminFlyerRemove(id, flyerId, user) {
+  return withLock(function () {
+    var bk = bookingTab(), i = findBooking(bk, id);
+    var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS), k = flyerRows(fl, id)[flyerId];
+    if (k == null) throw new Error('That flyer was not found. Reload the page.');
+    var waiverId = String(fl.row(k, 'Waiver ID') || ''), name = String(fl.row(k, 'Name'));
+    if (waiverId) {
+      var wv = tab(WAIVER.TAB, WAIVER.HEADERS);
+      for (var w = 0; w < wv.rows.length; w++) if (String(wv.row(w, 'ID')) === waiverId) { wv.set(w, 'Booking key', ''); wv.set(w, 'Flight date', ''); }
+    }
+    fl.del(k);
+    addNote(bk, i, 'removed flyer ' + name, user);
+    recountWaivers(bk, i, id);
+    return { ok: true };
+  });
 }

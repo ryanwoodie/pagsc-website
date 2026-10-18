@@ -14,7 +14,7 @@ import { facts } from '../../lib/facts';
 </Base>
 
 <script>
-  type Flyer = { name: string; email: string; waiver: string; flown: string };
+  type Flyer = { id: string; name: string; email: string; waiver: string; flown: string; person: string };
   type Booking = {
     id: string; date: string; start: string; people: number; kind: string; status: string; name: string; email: string; phone: string;
     interest: string; payment: string; certificates: string; message: string; notes: string; flexible: string; movedFrom: string; followUp: string;
@@ -348,15 +348,36 @@ import { facts } from '../../lib/facts';
       btn('Message', () => open((p) => messageForm(p, 'message', { booking: b.id }, `To ${b.email}`, reload))),
       btn('Cancel', () => open((p) => cancelForm(p, b, reload)), 'adm__btn adm__btn--bad'));
 
-    const flyers = h('ul', { class: 'adm__flyers' }, ...b.flyers.map((f) => h('li', {}, f.name || 'Unnamed', ' ',
-      f.waiver ? badge('Waiver ✓', 'adm__badge--good') : badge('No waiver', 'adm__badge--warn'), f.flown === 'No' ? badge('Did not fly', 'adm__badge--bad') : '')));
-    let link: HTMLElement | null = null;
-    if (b.waivers < b.people && waivers.length) {
-      const sel = h('select', { 'aria-label': 'Recent waiver to link' }, h('option', { value: '' }, 'Link a recent waiver…'),
-        ...waivers.map((w) => h('option', { value: w.id }, `${w.name} (${new Date(w.signed).toLocaleDateString('en-CA')})`))) as HTMLSelectElement;
-      const go = btn('Link', () => sel.value && act(go, 'link-waiver', { booking: b.id, waiver: sel.value }, reload));
-      link = h('div', { class: 'adm__row' }, sel, go);
-    }
+    // Each flyer: their waiver, or a way to give them one: link a recent waiver, or say they are the same person as
+    // a flyer who has one (merges the two and their contacts). Any flyer can be taken off the booking.
+    const withWaiver = b.flyers.filter((f) => f.waiver);
+    const flyers = h('ul', { class: 'adm__flyers' }, ...b.flyers.map((f) => {
+      const li = h('li', {}, h('span', {}, f.name || 'Unnamed', ' ',
+        f.waiver ? badge('Waiver ✓', 'adm__badge--good') : badge('No waiver', 'adm__badge--warn'), f.flown === 'No' ? badge('Did not fly', 'adm__badge--bad') : ''));
+      const tools = h('div', { class: 'adm__flyertools' });
+      if (!f.waiver && (waivers.length || withWaiver.length)) {
+        const sel = h('select', { 'aria-label': `Waiver for ${f.name}` }, h('option', { value: '' }, 'Give a waiver…'),
+          waivers.length ? h('optgroup', { label: 'Link a recent waiver' }, ...waivers.map((w) => h('option', { value: 'w:' + w.id }, `${w.name} (${new Date(w.signed).toLocaleDateString('en-CA')})`))) : '',
+          withWaiver.length ? h('optgroup', { label: 'Same person as' }, ...withWaiver.map((o) => h('option', { value: 'm:' + o.id }, o.name))) : '') as HTMLSelectElement;
+        const go = btn('Apply', () => {
+          const [kind, val] = [sel.value.slice(0, 1), sel.value.slice(2)];
+          if (kind === 'w') act(go, 'link-waiver', { booking: b.id, waiver: val, flyer: f.id }, reload);
+          if (kind === 'm') act(go, 'flyer-merge', { booking: b.id, keep: val, drop: f.id }, reload);
+        }, 'adm__btn adm__btn--small');
+        tools.append(sel, go);
+      }
+      if (b.flyers.length > 1) {
+        const rm = btn('Remove', () => {
+          if (rm.dataset.sure) act(rm, 'flyer-remove', { booking: b.id, flyer: f.id }, reload);
+          else { rm.dataset.sure = '1'; rm.textContent = f.waiver ? 'Remove? Waiver is kept' : 'Remove? Tap again'; }
+        }, 'adm__link');
+        tools.append(rm);
+      }
+      // A lone Remove sits on the name's line; with the waiver picker it goes beside Apply.
+      if (tools.childElementCount === 1 && !tools.querySelector('select')) li.firstElementChild!.append(' ', tools.firstElementChild!);
+      else if (tools.childElementCount) li.append(tools);
+      return li;
+    }));
     const notes = h('textarea', { rows: '2', 'aria-label': 'Notes' }) as HTMLTextAreaElement;
     notes.value = b.notes;
     const saveNotes = btn('Save notes', () => act(saveNotes, 'note', { booking: b.id, notes: notes.value }, reload), 'adm__btn adm__btn--small');
@@ -371,7 +392,7 @@ import { facts } from '../../lib/facts';
       b.message ? h('p', { class: 'adm__muted' }, `“${b.message}”`) : null,
       b.movedFrom ? h('p', { class: 'adm__muted' }, `Moved from ${b.movedFrom}`) : null,
       b.flexible === 'Yes' ? h('p', { class: 'adm__muted' }, 'Either weekend day works') : null,
-      flyers, link,
+      flyers,
       h('div', { class: 'adm__notes' }, notes, saveNotes),
       actions, panel);
   }
@@ -623,6 +644,18 @@ import { facts } from '../../lib/facts';
     list-style: none;
     padding: 0;
     margin: 6px 0;
+  }
+  .adm :global(.adm__flyertools) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin: 4px 0 6px;
+  }
+  .adm :global(.adm__flyertools select) {
+    min-height: 36px;
+    padding: 4px 8px;
+    max-width: 14rem;
   }
   .adm :global(.adm__flyers li),
   .adm :global(.adm__standby li) {

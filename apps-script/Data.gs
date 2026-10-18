@@ -16,7 +16,7 @@ var CRM = {
   PEOPLE: 'People',
   PEOPLE_HEADERS: ['Person ID', 'Name', 'Email', 'Phone', 'First seen', 'Source', 'Tags', 'Notes'],
   FLYERS: 'Flyers',
-  FLYERS_HEADERS: ['Booking ID', 'Person ID', 'Name', 'Email', 'Waiver ID', 'Flown', 'Added'],
+  FLYERS_HEADERS: ['Booking ID', 'Person ID', 'Name', 'Email', 'Waiver ID', 'Flown', 'Added', 'Flyer ID'],
   MESSAGES: 'Messages',
   MESSAGES_HEADERS: ['Sent', 'To', 'Booking ID', 'Subject', 'By'],
   ID_ALPHABET: 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
@@ -41,14 +41,24 @@ function isPlaceholderName(name) {
   return !String(name || '').trim() || /^guest \d+$/i.test(String(name).trim());
 }
 
+/** A short name that is the start of a fuller one: "Braeden" and "Braeden Whatcott". */
+function sameFirstName(a, b) {
+  var x = String(a || '').trim().toLowerCase().split(/\s+/), y = String(b || '').trim().toLowerCase().split(/\s+/);
+  if (!x[0] || x[0] !== y[0]) return false;
+  return x.length === 1 || y.length === 1; // one of them is only a first name
+}
+
 /**
- * Which Flyers row (index into rows, each {name, waiverId}) a new waiver for `name` should fill: the row already
- * named after them, else the first placeholder without a waiver, else -1 (add a row).
+ * Which Flyers row (index into rows, each {name, waiverId}) a new waiver for `name` should fill, or -1
+ * (add a row). In order: the row with their exact name; a row with only their first name ("Braeden" for
+ * "Braeden Whatcott"); a placeholder ("Guest 2"). Rows that already have a waiver are never taken.
  */
 function flyerSlot(rows, name) {
   var want = String(name || '').trim().toLowerCase();
-  for (var i = 0; i < rows.length; i++) if (!rows[i].waiverId && String(rows[i].name).trim().toLowerCase() === want) return i;
-  for (var j = 0; j < rows.length; j++) if (!rows[j].waiverId && isPlaceholderName(rows[j].name)) return j;
+  var free = function (r) { return !r.waiverId; };
+  for (var i = 0; i < rows.length; i++) if (free(rows[i]) && String(rows[i].name).trim().toLowerCase() === want) return i;
+  for (var j = 0; j < rows.length; j++) if (free(rows[j]) && !isPlaceholderName(rows[j].name) && sameFirstName(rows[j].name, name)) return j;
+  for (var k = 0; k < rows.length; k++) if (free(rows[k]) && isPlaceholderName(rows[k].name)) return k;
   return -1;
 }
 
@@ -77,6 +87,10 @@ function tab(name, headers) {
     rows: rows,
     col: function (h) { return idx[h] + 1; },
     row: function (i, h) { return idx[h] == null ? '' : rows[i][idx[h]]; },
+    del: function (i) {
+      sh.deleteRow(i + 2);
+      rows.splice(i, 1);
+    },
     set: function (i, h, v) {
       sh.getRange(i + 2, idx[h] + 1).setValue(v);
       while (rows[i].length <= idx[h]) rows[i].push('');
@@ -115,6 +129,13 @@ function upsertPerson(people, info, source) {
     if (info.phone && !people.row(i, 'Phone')) people.set(i, 'Phone', info.phone);
     return String(people.row(i, 'Person ID'));
   }
+  // Same email and a short form of the name ("Braeden" / "Braeden Whatcott"): the same person; keep the fuller name.
+  for (var j = 0; email && j < people.rows.length; j++) {
+    if (String(people.row(j, 'Email')).trim().toLowerCase() !== email.toLowerCase() || !sameFirstName(people.row(j, 'Name'), name)) continue;
+    if (name.length > String(people.row(j, 'Name')).length) people.set(j, 'Name', name);
+    if (info.phone && !people.row(j, 'Phone')) people.set(j, 'Phone', info.phone);
+    return String(people.row(j, 'Person ID'));
+  }
   var id = newId('P');
   people.add({ 'Person ID': id, 'Name': name, 'Email': email, 'Phone': info.phone || '', 'First seen': new Date(), 'Source': source || '' });
   return id;
@@ -124,26 +145,59 @@ function upsertPerson(people, info, source) {
 function addFlyers(bookingId, people, booker) {
   var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS);
   var now = new Date();
-  fl.add({ 'Booking ID': bookingId, 'Person ID': booker.personId || '', 'Name': booker.name, 'Email': booker.email, 'Added': now });
-  for (var n = 2; n <= people; n++) fl.add({ 'Booking ID': bookingId, 'Name': 'Guest ' + n, 'Added': now });
+  fl.add({ 'Booking ID': bookingId, 'Person ID': booker.personId || '', 'Name': booker.name, 'Email': booker.email, 'Added': now, 'Flyer ID': newId('F') });
+  for (var n = 2; n <= people; n++) fl.add({ 'Booking ID': bookingId, 'Name': 'Guest ' + n, 'Added': now, 'Flyer ID': newId('F') });
 }
 
-/** Put a signed waiver on its booking's Flyers row. w = {id, name, email, personId}. Call inside the script lock. */
-function linkWaiverToFlyer(bookingId, w) {
+/**
+ * Put a signed waiver on its booking's Flyers row. w = {id, name, email, personId}. flyerId (optional) = the row to
+ * fill, chosen by a volunteer; otherwise flyerSlot picks. Call inside the script lock.
+ */
+function linkWaiverToFlyer(bookingId, w, flyerId) {
   var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS);
-  var mine = [], at = [];
+  var mine = [], at = [], target = -1;
   for (var i = 0; i < fl.rows.length; i++) {
     if (fl.row(i, 'Booking ID') !== bookingId) continue;
     if (fl.row(i, 'Waiver ID') === w.id) return;
-    mine.push({ name: fl.row(i, 'Name'), waiverId: fl.row(i, 'Waiver ID') });
+    if (flyerId && fl.row(i, 'Flyer ID') === flyerId) target = i;
+    mine.push({ name: fl.row(i, 'Name'), email: fl.row(i, 'Email'), waiverId: fl.row(i, 'Waiver ID') });
     at.push(i);
   }
   var k = flyerSlot(mine, w.name);
-  var i2 = k >= 0 ? at[k] : fl.add({ 'Booking ID': bookingId, 'Added': new Date() });
+  var i2 = target >= 0 ? target : k >= 0 ? at[k] : fl.add({ 'Booking ID': bookingId, 'Added': new Date(), 'Flyer ID': newId('F') });
+  // The row's earlier contact is the same person only when the names agree ("Braeden" / "Braeden Whatcott");
+  // otherwise (a parent's row given to their child's waiver) the contacts stay separate.
+  var oldPerson = String(fl.row(i2, 'Person ID') || ''), oldName = String(fl.row(i2, 'Name'));
+  var same = oldName.trim().toLowerCase() === String(w.name).trim().toLowerCase() || sameFirstName(oldName, w.name);
+  if (oldPerson && w.personId && oldPerson !== w.personId && same) mergePeople(oldPerson, w.personId);
   fl.set(i2, 'Name', w.name);
   if (w.email) fl.set(i2, 'Email', w.email);
   if (w.personId) fl.set(i2, 'Person ID', w.personId);
   fl.set(i2, 'Waiver ID', w.id);
+}
+
+/**
+ * One person recorded twice ("Braeden" from a booking, "Braeden Whatcott" from a waiver): point every Bookings,
+ * Flyers and Waivers row at keepId, keep the fuller details on the kept People row, and remove the other.
+ * Call inside the script lock.
+ */
+function mergePeople(dropId, keepId) {
+  if (!dropId || !keepId || dropId === keepId) return;
+  [[BOOKING.TAB, BOOKING.HEADERS], [CRM.FLYERS, CRM.FLYERS_HEADERS], [WAIVER.TAB, WAIVER.HEADERS]].forEach(function (x) {
+    var t = tab(x[0], x[1]);
+    for (var i = 0; i < t.rows.length; i++) if (String(t.row(i, 'Person ID')) === dropId) t.set(i, 'Person ID', keepId);
+  });
+  var people = tab(CRM.PEOPLE, CRM.PEOPLE_HEADERS), drop = -1, keep = -1;
+  for (var k = 0; k < people.rows.length; k++) {
+    if (people.row(k, 'Person ID') === dropId) drop = k;
+    if (people.row(k, 'Person ID') === keepId) keep = k;
+  }
+  if (drop < 0) return;
+  if (keep >= 0) {
+    ['Phone', 'Email', 'Notes'].forEach(function (h) { if (!people.row(keep, h) && people.row(drop, h)) people.set(keep, h, people.row(drop, h)); });
+    if (String(people.row(drop, 'Name')).length > String(people.row(keep, 'Name')).length) people.set(keep, 'Name', people.row(drop, 'Name'));
+  }
+  people.del(drop);
 }
 
 /** Note an email in Messages. Never throws: logging must not stop an email. */
@@ -165,7 +219,10 @@ function ensureCrm() {
     var bk = tab(BOOKING.TAB, BOOKING.HEADERS);
     var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS);
     var haveFlyers = {};
-    fl.rows.forEach(function (r, i) { haveFlyers[fl.row(i, 'Booking ID')] = true; });
+    fl.rows.forEach(function (r, i) {
+      haveFlyers[fl.row(i, 'Booking ID')] = true;
+      if (!fl.row(i, 'Flyer ID')) fl.set(i, 'Flyer ID', newId('F'));
+    });
     var byKey = {};
     for (var i = 0; i < bk.rows.length; i++) {
       if (!bk.row(i, 'Date')) continue;

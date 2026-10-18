@@ -263,6 +263,12 @@ or their parent or guardian for a minor), type the time it happened, and choose 
 booking with those people as its flyers. Nothing goes on the Flying Schedule and no confirmation is sent. The thank-you
 note follows the evening after, or straight away (if ticked) for a flight on an earlier day.
 
+**Duplicates.** A waiver fills the flyer with the same name, else one with only that first name ("Braeden" for
+"Braeden Whatcott"), else a "Guest 2" placeholder. People with the same email and a short form of the name are one
+person (the fuller name is kept). On the admin page each flyer without a waiver has "Give a waiver…": link a recent
+waiver to that flyer, or say they are the same person as a flyer who has one (the two rows and their contacts merge).
+Any flyer can be removed; its waiver goes back to the unlinked list.
+
 **Speed.** The page loads everything in one request (a week back to four weeks ahead) and keeps the last copy on the
 device, so it opens at once and updates in the background; switching days needs no further loading.
 
