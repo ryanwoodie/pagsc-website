@@ -12,6 +12,18 @@ Everyone who flies with the club, guests and members alike, signs this waiver be
 
 (With a booking link: "Saturday, October 17: 1 of 2 people have signed." Each person in a group signs their own.)
 
+## What gliding is
+
+(Background above the agreement; not part of the signed text.)
+
+- **Gliding is regulated aviation.** Glider pilots, gliders and flight training in Canada come under Transport Canada's Canadian Aviation Regulations, the same rules that cover other small aircraft.
+- **The club's gliders are certified aircraft.** Like other certified aircraft, they are designed and tested to airworthiness standards, and each one is inspected every year.
+- **Pilots and instructors are licensed and trained.** Every club pilot who flies a guest holds a Transport Canada glider pilot licence. Instructors also hold a Transport Canada instructor rating.
+
+### Why there is still a waiver
+
+Anything that leaves the ground carries risks no one can fully remove: gravity, weather, speed and motion, equipment, and people. The agreement below says so plainly, and the club asks everyone who takes part to sign it. Please read it in full. It, not this summary, is what you agree to.
+
 ## The waiver
 
 The club's waiver, as written (`content/waiver.md`).

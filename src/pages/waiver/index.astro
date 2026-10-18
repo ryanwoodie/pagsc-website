@@ -26,7 +26,19 @@ const guardianUnder = facts.waiver.guardian_under;
     <div class="actions"><Button href="#sign">Read and sign</Button></div>
   </PageHero>
 
-  <Section id="sign" variant="plain" labelledby="waiver-h">
+  <Section id="sign" variant="plain" labelledby="about-h">
+    {/* Background for the reader, outside the agreement: not part of the signed text, the hash or the PDF. */}
+    <div class="wv-about">
+      <h2 id="about-h">What gliding is</h2>
+      <ul>
+        <li><strong>Gliding is regulated aviation.</strong> Glider pilots, gliders and flight training in Canada come under Transport Canada's Canadian Aviation Regulations, the same rules that cover other small aircraft.</li>
+        <li><strong>The club's gliders are certified aircraft.</strong> Like other certified aircraft, they are designed and tested to airworthiness standards, and each one is inspected every year.</li>
+        <li><strong>Pilots and instructors are licensed and trained.</strong> Every club pilot who flies a guest holds a Transport Canada glider pilot licence. Instructors also hold a Transport Canada instructor rating.</li>
+      </ul>
+      <h3>Why there is still a waiver</h3>
+      <p>Anything that leaves the ground carries risks no one can fully remove: gravity, weather, speed and motion, equipment, and people. The agreement below says so plainly, and the club asks everyone who takes part to sign it. Please read it in full. It, not this summary, is what you agree to.</p>
+    </div>
+
     <h2 id="waiver-h">The waiver</h2>
     <article class="wv-doc">
       {waiver.blocks.map((b) =>
@@ -293,6 +305,19 @@ const guardianUnder = facts.waiver.guardian_under;
   }
   .wv-booking[hidden] {
     display: none;
+  }
+  .wv-about {
+    max-width: 44rem;
+    margin: 0 0 32px;
+  }
+  .wv-about ul {
+    padding-left: 1.2em;
+  }
+  .wv-about li + li {
+    margin-top: 8px;
+  }
+  .wv-about h3 {
+    margin: 20px 0 6px;
   }
   .wv-doc {
     max-width: 44rem;
