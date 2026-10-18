@@ -1,0 +1,570 @@
+---
+// The club's admin page: bookings by day, standby, waivers and what needs attention. Not linked from the site
+// and not indexed. Everything is fetched after sign-in from the Apps Script (apps-script/Admin.gs), which checks
+// the sign-in token on every request; this page holds no data of its own.
+import Base from '../../layouts/Base.astro';
+import { FORM_ENDPOINT } from '../../config';
+import { facts } from '../../lib/facts';
+---
+<Base title="Club admin" description={`Bookings, standby and waivers for the ${facts.club.name}.`} noindex>
+  <section class="adm wrap" data-endpoint={FORM_ENDPOINT} data-max={facts.booking.max_group}>
+    <h1>Club admin</h1>
+    <div class="adm__app" aria-live="polite"><p class="adm__muted">Loading…</p></div>
+  </section>
+</Base>
+
+<script>
+  type Flyer = { name: string; email: string; waiver: string; flown: string };
+  type Booking = {
+    id: string; date: string; start: string; people: number; kind: string; status: string; name: string; email: string; phone: string;
+    interest: string; payment: string; certificates: string; message: string; notes: string; flexible: string; movedFrom: string; followUp: string;
+    flyers: Flyer[]; waivers: number;
+  };
+  type Slot = { time: string; free: boolean };
+  type Standby = { token: string; name: string; email: string; phone: string; people: number; scope: string; status: string; codes: string };
+  type Waiver = { id: string; name: string; email: string; signed: string };
+  type DayData = {
+    ok: boolean; date: string; error?: string;
+    day: { status: string; weather: string; instructor: boolean; students: number; manual: number } | null;
+    avail: { remaining: number; open: boolean; confirmed: boolean; kind: string; slots: Slot[] } | null;
+    bookings: Booking[]; standby: Standby[]; waivers: Waiver[];
+  };
+  type Attention = {
+    requests: { row: number; received: string; name: string; email: string; phone: string; flyers: number; dates: string; message: string; payment: string }[];
+    weekday: Booking[]; etransfers: { row: number; received: string; from: string; amount: number; message: string; result: string }[];
+    unpaid: Booking[]; waivers: Booking[];
+  };
+  type Overview = { ok: boolean; error?: string; today: string; days: { date: string; bookings: number; people: number; status: string }[]; attention: Attention };
+
+  const root = document.querySelector<HTMLElement>('.adm')!;
+  const app = root.querySelector<HTMLElement>('.adm__app')!;
+  const endpoint = root.dataset.endpoint!;
+  const maxGroup = Number(root.dataset.max) || 4;
+  const KEY = 'pagsc-admin';
+
+  // ---------- helpers ----------
+  function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Record<string, string> = {}, ...kids: (Node | string | null | false)[]) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    for (const k of kids) if (k) e.append(k);
+    return e;
+  }
+  const btn = (label: string, onClick: () => void, cls = 'adm__btn') => {
+    const b = h('button', { type: 'button', class: cls }, label);
+    b.addEventListener('click', onClick);
+    return b;
+  };
+  const fmtDay = new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const fmtLong = new Intl.DateTimeFormat('en-CA', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const asDate = (iso: string) => new Date(iso + 'T12:00:00Z');
+  const clock = (hhmm: string) => {
+    const [hh, mm] = hhmm.split(':').map(Number);
+    return `${((hh + 11) % 12) + 1}${mm ? ':' + String(mm).padStart(2, '0') : ''} ${hh < 12 ? 'am' : 'pm'}`;
+  };
+  const endOf = (start: string, people: number) => {
+    const [hh, mm] = start.split(':').map(Number);
+    const t = hh * 60 + mm + people * 30;
+    return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+  };
+  const shift = (iso: string, n: number) => new Date(asDate(iso).getTime() + n * 86400000).toISOString().slice(0, 10);
+
+  function token() {
+    try { return localStorage.getItem(KEY) || ''; } catch { return ''; }
+  }
+
+  async function api(action: string, data: Record<string, string> = {}): Promise<any> {
+    const body = new URLSearchParams({ form: 'admin', action, token: token(), ...data });
+    const res = await fetch(endpoint, { method: 'POST', body, signal: AbortSignal.timeout(60000) });
+    const out = await res.json();
+    if (out.error === 'signin') { signIn('Your sign-in has expired. Sign in again.'); throw new Error('signin'); }
+    if (!out.ok) throw new Error(out.error || 'Something went wrong.');
+    return out;
+  }
+
+  function loading(text = 'Loading…') {
+    app.replaceChildren(h('p', { class: 'adm__muted' }, text));
+  }
+
+  function errorBox(e: unknown) {
+    return h('p', { class: 'adm__error', role: 'alert' }, e instanceof Error ? e.message : 'Something went wrong.');
+  }
+
+  /** Run an action from a button, then reload the view. */
+  async function act(button: HTMLButtonElement, action: string, data: Record<string, string>, after: () => void) {
+    const label = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Saving…';
+    try {
+      await api(action, data);
+      after();
+    } catch (e) {
+      if (e instanceof Error && e.message === 'signin') return;
+      button.disabled = false;
+      button.textContent = label;
+      button.after(errorBox(e));
+    }
+  }
+
+  // ---------- sign-in ----------
+  function signIn(note = '') {
+    try { localStorage.removeItem(KEY); } catch { /* storage blocked */ }
+    const email = h('input', { type: 'email', id: 'adm-email', autocomplete: 'email', required: '' }) as HTMLInputElement;
+    const send = h('button', { type: 'submit', class: 'btn' }, 'Email me a sign-in link');
+    const form = h('form', { class: 'adm__signin' },
+      note ? h('p', {}, note) : null,
+      h('label', { for: 'adm-email' }, 'Club email'), email, send);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      send.setAttribute('disabled', '');
+      send.textContent = 'Sending…';
+      try {
+        await fetch(endpoint, { method: 'POST', body: new URLSearchParams({ form: 'admin', action: 'login', email: email.value }) });
+        form.replaceChildren(h('p', {}, `If ${email.value} is on the admin list, a sign-in link is on its way. Open it on this device.`));
+      } catch {
+        send.removeAttribute('disabled');
+        send.textContent = 'Email me a sign-in link';
+        form.append(errorBox(new Error('That did not go through. Try again.')));
+      }
+    });
+    app.replaceChildren(form);
+  }
+
+  // ---------- overview ----------
+  async function overview() {
+    loading();
+    let data: Overview;
+    try { data = await api('overview'); } catch (e) { if (!(e instanceof Error && e.message === 'signin')) app.replaceChildren(errorBox(e)); return; }
+    const a = data.attention;
+    const count = a.requests.length + a.weekday.length + a.etransfers.length + a.unpaid.length + a.waivers.length;
+    const list = h('ul', { class: 'adm__days' });
+    for (const d of data.days) {
+      const li = h('li', {}, btn(`${fmtDay.format(asDate(d.date))}`, () => day(d.date), 'adm__day'),
+        h('span', { class: 'adm__daymeta' }, d.bookings ? `${d.bookings} booking${d.bookings === 1 ? '' : 's'}, ${d.people} ${d.people === 1 ? 'person' : 'people'}` : 'No bookings'),
+        d.status ? h('span', { class: 'adm__status' }, d.status) : null);
+      list.append(li);
+    }
+    const pick = h('input', { type: 'date', 'aria-label': 'Go to a date', value: data.today }) as HTMLInputElement;
+    pick.addEventListener('change', () => pick.value && day(pick.value));
+    app.replaceChildren(
+      h('div', { class: 'adm__bar' }, btn(count ? `Needs attention (${count})` : 'Nothing needs attention', () => attention(a), count ? 'adm__btn adm__btn--warn' : 'adm__btn'), pick),
+      h('h2', {}, 'Next four weeks'),
+      list,
+      h('p', { class: 'adm__muted' }, btn('Sign out', () => signIn(), 'adm__link')));
+  }
+
+  // ---------- needs attention ----------
+  function attention(a: Attention) {
+    const sec = (title: string, items: HTMLElement[]) => items.length ? [h('h2', {}, title), ...items] : [];
+    const bookingLine = (b: Booking, extra: string) => h('div', { class: 'adm__card' },
+      h('p', {}, h('strong', {}, `${fmtDay.format(asDate(b.date))}, ${clock(b.start)}`), ` ${b.name} (${b.people})`),
+      h('p', { class: 'adm__muted' }, extra), btn('Open the day', () => day(b.date)));
+    const dismiss = (kind: string, row: number) => {
+      const b = btn('Mark done', () => act(b, 'dismiss', { kind, row: String(row) }, () => overview()));
+      return b;
+    };
+    app.replaceChildren(
+      btn('← Back', () => overview(), 'adm__link'),
+      h('h2', {}, 'Needs attention'),
+      ...sec('Weekday requests to confirm', a.weekday.map((b) => bookingLine(b, b.phone))),
+      ...sec('Waivers missing (next 2 days)', a.waivers.map((b) => bookingLine(b, `${b.waivers} of ${b.people} signed`))),
+      ...sec('Waiting for an e-transfer', a.unpaid.map((b) => bookingLine(b, b.payment))),
+      ...sec('Requests from the plain form', a.requests.map((r) => h('div', { class: 'adm__card' },
+        h('p', {}, h('strong', {}, r.name), ` (${r.flyers}), ${r.dates}`),
+        h('p', {}, h('a', { href: `tel:${r.phone}` }, r.phone), ' · ', h('a', { href: `mailto:${r.email}` }, r.email)),
+        r.message ? h('p', { class: 'adm__muted' }, r.message) : null,
+        h('p', { class: 'adm__muted' }, `${r.payment} · received ${new Date(r.received).toLocaleString('en-CA')}`),
+        dismiss('request', r.row)))),
+      ...sec('E-transfers to check', a.etransfers.map((t) => h('div', { class: 'adm__card' },
+        h('p', {}, h('strong', {}, `$${t.amount}`), ` from ${t.from}`),
+        h('p', { class: 'adm__muted' }, `${t.result}${t.message ? ` · "${t.message}"` : ''} · ${new Date(t.received).toLocaleDateString('en-CA')}`),
+        dismiss('etransfer', t.row)))),
+      a.weekday.length + a.waivers.length + a.unpaid.length + a.requests.length + a.etransfers.length ? '' : h('p', {}, 'Nothing needs attention.'));
+  }
+
+  // ---------- one day ----------
+  async function day(date: string) {
+    loading(`Loading ${fmtLong.format(asDate(date))}…`);
+    let d: DayData;
+    try { d = await api('day', { date }); } catch (e) { if (!(e instanceof Error && e.message === 'signin')) app.replaceChildren(btn('← Back', () => overview(), 'adm__link'), errorBox(e)); return; }
+    const reload = () => day(date);
+    const head = h('div', { class: 'adm__dayhead' },
+      btn('←', () => day(shift(date, -1)), 'adm__btn adm__btn--small'),
+      h('h2', {}, fmtLong.format(asDate(date))),
+      btn('→', () => day(shift(date, 1)), 'adm__btn adm__btn--small'));
+    const info = h('div', { class: 'adm__info' },
+      h('p', {}, h('strong', {}, 'Status: '), d.day?.status || 'Nothing posted'),
+      d.day ? h('p', { class: 'adm__muted' }, `${d.day.weather ? 'Forecast: ' + d.day.weather + ' · ' : ''}${d.day.instructor ? 'Instructor signed up' : 'No instructor yet'} · ${d.day.students} student${d.day.students === 1 ? '' : 's'}${d.day.manual ? ` · ${d.day.manual} guest entr${d.day.manual === 1 ? 'y' : 'ies'} typed on the schedule` : ''}`) : null,
+      d.avail ? h('p', { class: 'adm__muted' }, `${d.avail.remaining} guest spot${d.avail.remaining === 1 ? '' : 's'} left${d.avail.kind === 'weekend' ? (d.avail.open ? ' · open to pay at the field' : ' · paid flights only until opened') : ''}${d.avail.confirmed ? ' · confirmed' : ''}`) : h('p', { class: 'adm__muted' }, 'Not bookable online (outside the next 4 weeks, past, or not on the schedule).'));
+
+    const active = d.bookings.filter((b) => b.status !== 'Cancelled');
+    const cancelled = d.bookings.filter((b) => b.status === 'Cancelled');
+    const cards = active.map((b) => bookingCard(b, d, reload));
+    const add = d.avail ? btn('+ Add a booking', () => addForm(d, addBox, reload)) : null;
+    const addBox = h('div', {});
+
+    app.replaceChildren(
+      btn('← All days', () => overview(), 'adm__link'),
+      head, info,
+      h('h3', {}, active.length ? `Bookings (${active.reduce((s, b) => s + b.people, 0)} people)` : 'No bookings'),
+      ...cards,
+      add || '', addBox,
+      standbySection(d, reload),
+      cancelled.length ? h('details', { class: 'adm__cancelled' }, h('summary', {}, `${cancelled.length} cancelled`),
+        ...cancelled.map((b) => h('p', { class: 'adm__muted' }, `${clock(b.start)} ${b.name} (${b.people})${b.notes ? ' · ' + b.notes.split('\n').pop() : ''}`))) : '');
+  }
+
+  function bookingCard(b: Booking, d: DayData, reload: () => void) {
+    const panel = h('div', { class: 'adm__panel' });
+    const open = (fill: (p: HTMLElement) => void) => { panel.replaceChildren(); fill(panel); };
+    const badge = (t: string, cls = '') => h('span', { class: `adm__badge ${cls}` }, t);
+    const statusCls = b.status === 'Requested' ? 'adm__badge--warn' : b.status === 'No-show' ? 'adm__badge--bad' : b.status === 'Flown' ? 'adm__badge--good' : '';
+    const pay = /E-transfer$/.test(b.payment) ? badge('E-transfer awaited', 'adm__badge--warn') : badge(b.payment || 'Payment not stated');
+
+    const actions = h('div', { class: 'adm__actions' });
+    const setStatus = (label: string, status: string) => {
+      const x = btn(label, () => act(x, 'status', { booking: b.id, status }, reload));
+      return x;
+    };
+    if (b.status === 'Requested') actions.append(setStatus('Confirm (emails guest)', 'Confirmed'));
+    if (b.status !== 'Flown') actions.append(setStatus('Flown', 'Flown'));
+    if (b.status !== 'No-show') actions.append(setStatus('No-show', 'No-show'));
+    if (b.status === 'Flown' || b.status === 'No-show') actions.append(setStatus('Undo', 'Held'));
+    actions.append(
+      btn('Move', () => open((p) => moveForm(p, b, reload))),
+      btn('Message', () => open((p) => messageForm(p, 'message', { booking: b.id }, `To ${b.email}`, reload))),
+      btn('Cancel', () => open((p) => cancelForm(p, b, reload)), 'adm__btn adm__btn--bad'));
+
+    const flyers = h('ul', { class: 'adm__flyers' }, ...b.flyers.map((f) => h('li', {}, f.name || 'Unnamed', ' ',
+      f.waiver ? badge('Waiver ✓', 'adm__badge--good') : badge('No waiver', 'adm__badge--warn'), f.flown === 'No' ? badge('Did not fly', 'adm__badge--bad') : '')));
+    let link: HTMLElement | null = null;
+    if (b.waivers < b.people && d.waivers.length) {
+      const sel = h('select', { 'aria-label': 'Recent waiver to link' }, h('option', { value: '' }, 'Link a recent waiver…'),
+        ...d.waivers.map((w) => h('option', { value: w.id }, `${w.name} (${new Date(w.signed).toLocaleDateString('en-CA')})`))) as HTMLSelectElement;
+      const go = btn('Link', () => sel.value && act(go, 'link-waiver', { booking: b.id, waiver: sel.value }, reload));
+      link = h('div', { class: 'adm__row' }, sel, go);
+    }
+    const notes = h('textarea', { rows: '2', 'aria-label': 'Notes' }) as HTMLTextAreaElement;
+    notes.value = b.notes;
+    const saveNotes = btn('Save notes', () => act(saveNotes, 'note', { booking: b.id, notes: notes.value }, reload), 'adm__btn adm__btn--small');
+
+    return h('article', { class: 'adm__card' },
+      h('p', { class: 'adm__time' }, `${clock(b.start)} to ${clock(endOf(b.start, b.people))}`),
+      h('p', {}, h('strong', {}, b.name), ` · ${b.people} ${b.people === 1 ? 'person' : 'people'} · ${b.interest}`),
+      h('p', { class: 'adm__badges' }, badge(b.status, statusCls), pay, badge(`Waivers ${b.waivers}/${b.people}`, b.waivers < b.people ? 'adm__badge--warn' : 'adm__badge--good'),
+        b.followUp ? badge('Thank-you sent') : ''),
+      h('p', {}, h('a', { href: `tel:${b.phone}` }, b.phone), ' · ', h('a', { href: `mailto:${b.email}` }, b.email)),
+      b.certificates ? h('p', { class: 'adm__muted' }, `Certificates: ${b.certificates}`) : null,
+      b.message ? h('p', { class: 'adm__muted' }, `“${b.message}”`) : null,
+      b.movedFrom ? h('p', { class: 'adm__muted' }, `Moved from ${b.movedFrom}`) : null,
+      b.flexible === 'Yes' ? h('p', { class: 'adm__muted' }, 'Either weekend day works') : null,
+      flyers, link,
+      h('div', { class: 'adm__notes' }, notes, saveNotes),
+      actions, panel);
+  }
+
+  function messageForm(p: HTMLElement, action: string, data: Record<string, string>, toLine: string, reload: () => void) {
+    const subject = h('input', { type: 'text', 'aria-label': 'Subject', placeholder: 'Subject' }) as HTMLInputElement;
+    const body = h('textarea', { rows: '6', 'aria-label': 'Message', placeholder: 'Message. "Hi <first name>," and the club sign-off are added.' }) as HTMLTextAreaElement;
+    const send = btn('Send', () => {
+      if (!subject.value.trim() || !body.value.trim()) return;
+      act(send, action, { ...data, subject: subject.value, body: body.value }, reload);
+    });
+    p.append(h('p', { class: 'adm__muted' }, toLine), subject, body, send);
+  }
+
+  function cancelForm(p: HTMLElement, b: Booking, reload: () => void) {
+    const notify = h('input', { type: 'checkbox', id: `n-${b.id}`, checked: '' }) as HTMLInputElement;
+    const msg = h('textarea', { rows: '3', 'aria-label': 'Message to the guest', placeholder: 'Optional message to the guest' }) as HTMLTextAreaElement;
+    const go = btn('Yes, cancel this booking', () => act(go, 'cancel', { booking: b.id, notify: notify.checked ? 'yes' : 'no', message: msg.value }, reload), 'adm__btn adm__btn--bad');
+    p.append(h('p', {}, `Cancel ${b.name}'s booking at ${clock(b.start)}? The slot is freed and the schedule cell cleared.`),
+      h('label', { class: 'adm__check' }, notify, ' Email the guest'), msg, go);
+  }
+
+  async function moveForm(p: HTMLElement, b: Booking, reload: () => void) {
+    const date = h('input', { type: 'date', value: b.date, 'aria-label': 'New date' }) as HTMLInputElement;
+    const times = h('select', { 'aria-label': 'New start time' }) as HTMLSelectElement;
+    const go = btn('Move (emails guest)', () => times.value && act(go, 'move', { booking: b.id, date: date.value, start: times.value }, reload));
+    const fill = async () => {
+      times.replaceChildren(h('option', { value: '' }, 'Loading times…'));
+      try {
+        const d: DayData = await api('day', { date: date.value });
+        const free = (d.avail?.slots || []).filter((_s, i, all) => all.slice(i, i + b.people).length === b.people && all.slice(i, i + b.people).every((x) => x.free || (date.value === b.date && x.time >= b.start && x.time < endOf(b.start, b.people))));
+        times.replaceChildren(...(free.length ? free.map((s) => h('option', { value: s.time }, clock(s.time))) : [h('option', { value: '' }, 'No free times that day')]));
+      } catch (e) {
+        times.replaceChildren(h('option', { value: '' }, e instanceof Error ? e.message : 'Could not load times'));
+      }
+    };
+    date.addEventListener('change', fill);
+    p.append(h('p', { class: 'adm__muted' }, 'Pick a new day and time.'), h('div', { class: 'adm__row' }, date, times), go);
+    fill();
+  }
+
+  function addForm(d: DayData, box: HTMLElement, reload: () => void) {
+    const field = (label: string, input: HTMLElement) => h('label', { class: 'adm__field' }, label, input);
+    const people = h('select', { name: 'people' }, ...Array.from({ length: maxGroup }, (_, i) => h('option', { value: String(i + 1) }, String(i + 1)))) as HTMLSelectElement;
+    const start = h('select', { name: 'start' }, ...(d.avail?.slots || []).filter((s) => s.free).map((s) => h('option', { value: s.time }, clock(s.time)))) as HTMLSelectElement;
+    const payment = h('select', { name: 'payment' }, ...['Pay at the field', 'Paid online', 'Gift', 'E-transfer'].map((v) => h('option', { value: v }, v))) as HTMLSelectElement;
+    const interest = h('select', { name: 'interest' }, h('option', { value: 'Discovery flight' }, 'Discovery flight'), h('option', { value: 'First lesson' }, 'First lesson')) as HTMLSelectElement;
+    const form = h('form', { class: 'adm__card adm__add' },
+      h('h3', {}, 'Add a booking'),
+      field('People', people), field('Start', start),
+      field('Name', h('input', { name: 'name', type: 'text', required: '' })),
+      field('Email', h('input', { name: 'email', type: 'email', required: '' })),
+      field('Phone', h('input', { name: 'phone', type: 'tel', required: '' })),
+      field('Payment', payment),
+      field('Certificate codes (if paid online or a gift)', h('input', { name: 'codes', type: 'text' })),
+      field('Interest', interest),
+      h('label', { class: 'adm__check' }, h('input', { name: 'weight_ok', type: 'checkbox', value: 'yes', required: '' }), ' Everyone is under the weight limit'),
+      field('Message (optional)', h('textarea', { name: 'message', rows: '2' })),
+      h('input', { type: 'hidden', name: 'date', value: d.date }),
+      h('p', { class: 'adm__muted' }, 'The guest gets the usual confirmation and reminders.'));
+    const save = h('button', { type: 'submit', class: 'adm__btn' }, 'Add booking') as HTMLButtonElement;
+    form.append(save);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      const data = Object.fromEntries(new FormData(form) as unknown as Iterable<[string, string]>);
+      act(save, 'add', data, reload);
+    });
+    box.replaceChildren(form);
+  }
+
+  function standbySection(d: DayData, reload: () => void) {
+    if (!d.standby.length) return h('p', { class: 'adm__muted' }, 'No one on the standby list for this day.');
+    const boxes: HTMLInputElement[] = [];
+    const panel = h('div', {});
+    const list = h('ul', { class: 'adm__standby' }, ...d.standby.map((s) => {
+      const c = h('input', { type: 'checkbox', value: s.token, checked: '' }) as HTMLInputElement;
+      boxes.push(c);
+      return h('li', {}, h('label', { class: 'adm__check' }, c, ` ${s.name} (${s.people}) · ${s.scope === 'Any' ? 'any weekend' : s.scope === 'Weekend' ? 'either day' : 'this day'} · ${s.status}`),
+        h('p', { class: 'adm__muted' }, h('a', { href: `tel:${s.phone}` }, s.phone), ' · ', h('a', { href: `mailto:${s.email}` }, s.email), s.codes ? ` · paid: ${s.codes}` : ''));
+    }));
+    const msg = btn('Message the ticked people', () => {
+      const tokens = boxes.filter((b) => b.checked).map((b) => b.value).join(',');
+      panel.replaceChildren();
+      messageForm(panel, 'standby-message', { tokens }, `To ${tokens.split(',').filter(Boolean).length} on the standby list`, reload);
+    });
+    return h('section', {}, h('h3', {}, `Standby (${d.standby.length})`), list, msg, panel);
+  }
+
+  // ---------- start ----------
+  const m = /#t=([\w\-=]+)/.exec(location.hash);
+  if (m) {
+    try { localStorage.setItem(KEY, m[1]); } catch { /* storage blocked */ }
+    history.replaceState(null, '', location.pathname);
+  }
+  if (token()) overview(); else signIn();
+</script>
+
+<style>
+  .adm {
+    max-width: 44rem;
+    padding-top: 20px;
+    padding-bottom: 48px;
+  }
+  .adm h1 {
+    margin: 0 0 12px;
+  }
+  .adm :global(h2) {
+    margin: 20px 0 8px;
+    font-size: 1.4rem;
+  }
+  .adm :global(h3) {
+    margin: 18px 0 8px;
+  }
+  .adm :global(.adm__muted) {
+    color: var(--grey);
+    font-size: 0.92rem;
+    margin: 4px 0;
+  }
+  .adm :global(.adm__error) {
+    background: var(--orange-tint);
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+  .adm :global(.adm__btn) {
+    font: 600 0.95rem var(--font-body);
+    min-height: 44px;
+    padding: 8px 14px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    cursor: pointer;
+  }
+  .adm :global(.adm__btn--small) {
+    min-height: 36px;
+    padding: 4px 10px;
+  }
+  .adm :global(.adm__btn--warn) {
+    background: var(--orange-tint);
+    border-color: var(--orange-dark);
+  }
+  .adm :global(.adm__btn--bad) {
+    color: #8a1c0a;
+    border-color: #8a1c0a;
+  }
+  .adm :global(.adm__btn:disabled) {
+    opacity: 0.6;
+    cursor: progress;
+  }
+  .adm :global(.adm__link) {
+    font: inherit;
+    background: none;
+    border: 0;
+    padding: 8px 0;
+    color: var(--blue);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .adm :global(.adm__bar),
+  .adm :global(.adm__row),
+  .adm :global(.adm__actions),
+  .adm :global(.adm__dayhead) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0;
+  }
+  .adm :global(.adm__dayhead h2) {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+    font-size: 1.25rem;
+  }
+  .adm :global(.adm__days) {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .adm :global(.adm__days li) {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 2px 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .adm :global(.adm__day) {
+    font: 700 1rem var(--font-body);
+    text-align: left;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--blue);
+    text-decoration: underline;
+    cursor: pointer;
+    min-height: 32px;
+  }
+  .adm :global(.adm__status) {
+    grid-column: 2;
+    color: var(--grey);
+    font-size: 0.88rem;
+  }
+  .adm :global(.adm__card) {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--ink);
+    padding: 12px 14px;
+    margin: 10px 0;
+  }
+  .adm :global(.adm__card p) {
+    margin: 3px 0;
+  }
+  .adm :global(.adm__time) {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+  .adm :global(.adm__badges) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .adm :global(.adm__badge) {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: var(--cell);
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .adm :global(.adm__badge--warn) {
+    background: var(--orange-tint);
+    color: var(--orange-dark);
+  }
+  .adm :global(.adm__badge--good) {
+    background: #e2f1e5;
+    color: #1d5a2c;
+  }
+  .adm :global(.adm__badge--bad) {
+    background: #f8dcd6;
+    color: #8a1c0a;
+  }
+  .adm :global(.adm__flyers),
+  .adm :global(.adm__standby) {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0;
+  }
+  .adm :global(.adm__flyers li),
+  .adm :global(.adm__standby li) {
+    padding: 3px 0;
+  }
+  .adm :global(input:not([type='checkbox'])),
+  .adm :global(select),
+  .adm :global(textarea) {
+    font: inherit;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid var(--grey);
+    background: var(--paper);
+    color: var(--ink);
+    max-width: 100%;
+  }
+  .adm :global(textarea),
+  .adm :global(.adm__panel input[type='text']) {
+    width: 100%;
+    display: block;
+    margin: 6px 0;
+  }
+  .adm :global(.adm__notes) {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+    margin: 8px 0;
+  }
+  .adm :global(.adm__field) {
+    display: grid;
+    gap: 4px;
+    margin: 8px 0;
+    font-weight: 600;
+  }
+  .adm :global(.adm__field input),
+  .adm :global(.adm__field select) {
+    width: 100%;
+  }
+  .adm :global(.adm__check) {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-weight: 400;
+    margin: 6px 0;
+  }
+  .adm :global(.adm__check input) {
+    width: 20px;
+    height: 20px;
+  }
+  .adm :global(.adm__signin) {
+    display: grid;
+    gap: 8px;
+    max-width: 24rem;
+  }
+  .adm :global(.adm__info) {
+    background: var(--sky);
+    padding: 10px 14px;
+  }
+  .adm :global(.adm__info p) {
+    margin: 3px 0;
+  }
+</style>

@@ -8,6 +8,7 @@
  *   form=booking Discovery Flight bookings from the calendar (see Booking.gs, which also has doGet).
  *   form=waiver  A signed waiver from /waiver/ (see Waivers.gs).
  *   form=etransfer  Discovery Flights bought by e-transfer (see Etransfer.gs).
+ *   form=admin   The club's admin page (see Admin.gs).
  *
  * Settings live in Project Settings > Script Properties, not in this file:
  *   SHEET_ID     the spreadsheet that holds the "Guest requests" tab
@@ -36,6 +37,7 @@ function doPost(e) {
   if (p.form === 'standby') return standbyPost(p);
   if (p.form === 'waiver') return waiverPost(p);
   if (p.form === 'etransfer') return etransferPost(p);
+  if (p.form === 'admin') return adminPost(p);
 
   if (p.form === 'pack') return packRequest(p, next);
 

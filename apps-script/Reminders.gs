@@ -36,6 +36,7 @@ function runReminders() {
     var rows = sh.getDataRange().getValues();
     var flexCol = BOOKING.HEADERS.indexOf('Either weekend day'), movedCol = BOOKING.HEADERS.indexOf('Moved from');
     var waiverCol = BOOKING.HEADERS.indexOf('Waiver key');
+    var followCol = BOOKING.HEADERS.indexOf('Follow-up sent');
     var availByDate = null;
     for (var i = 1; i < rows.length; i++) {
       var r = rows[i];
@@ -43,9 +44,13 @@ function runReminders() {
       var b = { date: isoOf(r[1]), start: hhmmOf(r[2]), people: Number(r[3]) || 1, name: String(r[6]), email: String(r[7]),
         waiversSigned: Number(r[waiverCol + 1]) || 0 };
       var daysUntil = daysBetween(today, b.date);
-      if (daysUntil < 0) continue;
       var day = byDate[b.date] || { statusText: '', weather: '', instructor: false };
-      var held = r[5] === 'Held';
+      if (thankYouDue(String(r[5]), daysUntil, hour, classifyStatus(day.statusText), r[followCol])) {
+        sendThankYou(sh, i, r, b);
+        continue;
+      }
+      if (daysUntil < 0) continue;
+      var held = r[5] === 'Held' || r[5] === 'Confirmed';
 
       // Flexible weekend guests move to the other day when theirs is cancelled (not on two-day weekends).
       if (held && r[flexCol] === 'Yes' && !r[movedCol] && classifyStatus(day.statusText) === 'cancelled') {
@@ -81,6 +86,7 @@ function runReminders() {
     lock.releaseLock();
   }
   try { checkEtransfers(); } catch (err) { console.error(err); }
+  try { ensureCrm(); } catch (err) { console.error(err); }
   try { refreshAvailabilityCache(); } catch (err) { /* visitors fall back to a fresh read */ }
 }
 
@@ -99,4 +105,24 @@ function sendSampleEmails() {
     statusEmail(b, true, off, links),
     confirmationEmail(b, false, links)
   ].forEach(function (m) { sendGuestEmail(to, { subject: '[SAMPLE] ' + m.subject, html: m.html, text: m.text }); });
+}
+
+/** The thank-you note to the booker and every flyer with a different email (from their waivers). */
+function sendThankYou(sh, i, r, b) {
+  var bookingId = String(r[BOOKING.HEADERS.indexOf('Booking ID')] || '');
+  var to = [{ email: b.email, name: b.name }];
+  if (bookingId) {
+    var fl = tab(CRM.FLYERS, CRM.FLYERS_HEADERS);
+    for (var k = 0; k < fl.rows.length; k++) {
+      if (fl.row(k, 'Booking ID') === bookingId && fl.row(k, 'Flown') !== 'No') to.push({ email: String(fl.row(k, 'Email')), name: String(fl.row(k, 'Name')) });
+    }
+  }
+  var seen = {}, links = emailLinks('');
+  to.forEach(function (p) {
+    var e = p.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || seen[e]) return;
+    seen[e] = true;
+    sendGuestEmail(p.email.trim(), thankYouEmail(String(p.name).split(/\s+/)[0], b.date, links), { bookingId: bookingId });
+  });
+  sh.getRange(i + 1, BOOKING.HEADERS.indexOf('Follow-up sent') + 1).setValue(new Date());
 }

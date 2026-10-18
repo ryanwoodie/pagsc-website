@@ -45,6 +45,7 @@ const schema = z
       airfield_entrance: url,
       flying_schedule: url,
       membership_form: url,
+      google_review: url,
       discovery_flight_payment: url,
       discovery_flight_group_payment: url,
       soar_manual_pdf: url,

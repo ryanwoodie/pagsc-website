@@ -386,3 +386,49 @@ function cancelPageHtml(title, message, calendarUrl, buttonText) {
     '<div style="max-width:560px;margin:0 auto;padding:28px 20px">' + heading(title) + para(esc(message)) +
     (calendarUrl ? button(buttonText || 'Pick another day', calendarUrl) : '') + '</div></body></html>';
 }
+
+// ---------- After the flight ----------
+
+// links.google_review and links.membership_form in content/club-facts.yaml (npm test checks they match).
+var THANKS = {
+  REVIEW: 'https://maps.app.goo.gl/nAXc5mgtSPXvekaV6',
+  MEMBERSHIP: 'https://forms.gle/ZrPrU5r4kEfuRdu39',
+  HOUR: 19,          // sent from 7 pm the day after the flight
+  SOLO_AGE: 14,      // training.solo_age
+  LICENCE_AGE: 16    // training.licence_age
+};
+
+/** The thank-you note the evening after a flight. */
+function thankYouEmail(first, date, links) {
+  var learn = links.site + '/learn-to-fly/';
+  var sub = function (t) { return '<h2 style="margin:18px 0 6px;font-family:' + EMAIL.DISPLAY + ';font-size:22px;line-height:1.1;font-weight:700;color:' + EMAIL.INK + '">' + esc(t) + '</h2>'; };
+  var body = heading('Thanks for flying with us') +
+    para('Hi ' + esc(first) + ',') +
+    para('Thanks for coming out to Birch Hills Airport on ' + esc(longDate(date)) + '. We hope you enjoyed your first flight in a glider.') +
+    sub('Enjoyed it?') +
+    para('A short Google review helps other people find the club. It takes a minute.') +
+    button('Leave a Google review', THANKS.REVIEW) +
+    sub('Something we could do better?') +
+    para('Reply to this email and tell us. It comes straight to the club, and the volunteers who run the flying days read it.') +
+    sub('Want to keep going?') +
+    para('Your Discovery Flight counts as your first lesson. Students fly solo from age ' + THANKS.SOLO_AGE + ' and can earn a licence from ' + THANKS.LICENCE_AGE + ', and there is always another skill to learn after that.') +
+    button('Learn to fly', learn) + button('Membership form', THANKS.MEMBERSHIP, true) +
+    para('Thanks again,<br>' + EMAIL.CLUB);
+  return {
+    subject: 'Thanks for flying with us',
+    html: layout('How was your first flight?', body, links),
+    text: ['Hi ' + first + ',', '',
+      'Thanks for coming out to Birch Hills Airport on ' + longDate(date) + '. We hope you enjoyed your first flight in a glider.', '',
+      'Enjoyed it? A short Google review helps other people find the club: ' + THANKS.REVIEW, '',
+      'Something we could do better? Reply to this email and tell us. It comes straight to the club.', '',
+      'Want to keep going? Your Discovery Flight counts as your first lesson. Students fly solo from age ' + THANKS.SOLO_AGE + ' and can earn a licence from ' + THANKS.LICENCE_AGE + '.',
+      'Learn to fly: ' + learn, 'Membership form: ' + THANKS.MEMBERSHIP, '', 'Thanks again,', EMAIL.CLUB].join('\n')
+  };
+}
+
+/** Is a booking due its thank-you note? Day after the flight from THANKS.HOUR, not cancelled, a no-show, an unconfirmed request, or on a day off. */
+function thankYouDue(status, daysUntil, hour, dayStatus, sent) {
+  if (sent || daysUntil !== -1 || hour < THANKS.HOUR) return false;
+  if (status !== 'Held' && status !== 'Confirmed' && status !== 'Flown') return false;
+  return dayStatus !== 'cancelled';
+}

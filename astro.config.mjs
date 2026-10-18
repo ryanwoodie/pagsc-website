@@ -18,7 +18,7 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'always' },
   integrations: [
     sitemap({
-      filter: (page) => !page.includes('/discovery-flight/requested/') && !page.includes('/welcome-pack-sent/') && !page.includes('/discovery-flight/paid/') && !page.includes('/welcome-pack/'),
+      filter: (page) => !page.includes('/discovery-flight/requested/') && !page.includes('/welcome-pack-sent/') && !page.includes('/discovery-flight/paid/') && !page.includes('/welcome-pack/') && !page.includes('/admin/') && !page.includes('/waiver/') && !page.includes('/e-transfer/'),
     }),
   ],
   // Old WordPress paths (reference/current-site-audit.md). Emitted as static

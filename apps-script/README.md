@@ -231,6 +231,33 @@ Type `etransfer`, Status `Awaiting e-transfer`, with no code yet. $50 each, or $
 **Setup (once):** the script now reads the club Gmail. After pushing, open the editor, pick `checkEtransfers` and Run,
 and approve Gmail access as the club account. Until that is approved, the 10-minute check stops running.
 
+## Contacts, thank-you notes and the admin page (Data.gs, Admin.gs)
+
+**Records.** Three tabs join everything up, filled in automatically (new bookings and waivers straight away, older
+rows by the 10-minute check):
+
+- **People**: one row per person, matched by email and name (a parent and child sharing an email stay two people).
+- **Flyers**: one row per person in a booking. The booker is the first; the rest start as "Guest 2", "Guest 3"…
+  and fill in as each signs the waiver through the booking's link.
+- **Messages**: every email sent to a guest, by the script ("automatic") or by a volunteer from the admin page.
+
+Bookings gain **Booking ID**, **Person ID**, **Follow-up sent** and **Notes**; Waivers gain **Person ID**. Booking
+Status can now also be **Confirmed** (a weekday request the club accepted), **Flown** or **No-show**.
+
+**Thank-you note.** From 7 pm the day after a flight, the booker and every flyer with an email (from their waivers)
+get "Thanks for flying with us": a Google review link (`links.google_review`), a reply-for-feedback line, and Learn to
+fly and the membership form. Not sent for cancelled bookings, no-shows, unconfirmed weekday requests or days marked
+off. Follow-up sent records it.
+
+**Admin page** at `/admin/` (not linked or indexed). Sign in with an email listed in the Script Property
+`ADMIN_EMAILS` (comma-separated; without it, only `CLUB_EMAIL`): the page emails a sign-in link that lasts 30 days on
+that device. It shows the next four weeks, and per day: the schedule status, spots left, each booking with its flyers,
+waivers and payment, the day's standby list and recent waivers not yet linked. From there: confirm a weekday request
+(emails the guest "You're booked in"), mark Flown or No-show, move to another free time (emails the guest), cancel (with
+or without an email), message the guest, add a phone-in booking, link a waiver, keep notes, and message standby
+sign-ups. "Needs attention" lists weekday requests, waivers missing for the next 2 days, e-transfers awaited or
+unmatched, and plain-form requests, each with "Mark done" where it applies. Changes record who made them.
+
 ## Updating the deployed script
 
 After changing `Code.gs`: paste the new version into the Apps Script editor, then

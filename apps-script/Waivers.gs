@@ -21,7 +21,7 @@ var WAIVER = {
   HEADERS: ['Signed', 'Participant', 'Date of birth', 'Age', 'Email', 'Phone', 'Address',
     'Emergency contact', 'Emergency phone', 'Signed at', 'Signature',
     'Guardian', 'Relationship', 'Guardian phone', 'Booking key', 'Flight date',
-    'Version', 'Text SHA-256', 'Device', 'PDF', 'ID']
+    'Version', 'Text SHA-256', 'Device', 'PDF', 'ID', 'Person ID']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/waiver.test.mjs) ----------
@@ -200,7 +200,9 @@ function signedCount(rows, key) {
 // ---------- Google services ----------
 
 function waiversSheet() {
-  return sheet(WAIVER.TAB, WAIVER.HEADERS);
+  var sh = sheet(WAIVER.TAB, WAIVER.HEADERS);
+  if (sh.getLastColumn() < WAIVER.HEADERS.length) sh.getRange(1, 1, 1, WAIVER.HEADERS.length).setValues([WAIVER.HEADERS]);
+  return sh;
 }
 
 function waiverFolder() {
@@ -257,14 +259,17 @@ function waiverPost(p) {
     var bi = bookingForKey(brows, f.key);
     if (bi >= 0) flightDate = isoOf(brows[bi][1]);
     var wsh = waiversSheet();
+    var personId = upsertPerson(tab(CRM.PEOPLE, CRM.PEOPLE_HEADERS), { name: f.participant, email: f.email, phone: f.phone }, 'Waiver');
     wsh.appendRow([now, f.participant, "'" + f.dob, f.age, f.email, f.phone, f.address,
       f.emergencyName, f.emergencyPhone, f.place, f.method,
       f.guardian, f.relationship, f.guardianPhone, bi >= 0 ? f.key : '', flightDate,
-      f.version, f.hash, f.device, file.getUrl(), f.id]);
+      f.version, f.hash, f.device, file.getUrl(), f.id, personId]);
     if (bi >= 0) {
       signed = signedCount(wsh.getDataRange().getValues(), f.key);
       people = Number(brows[bi][3]) || 1;
       bsh.getRange(bi + 1, BOOKING.HEADERS.indexOf('Waivers signed') + 1).setValue(signed);
+      var bookingId = brows[bi][BOOKING.HEADERS.indexOf('Booking ID')];
+      if (bookingId) linkWaiverToFlyer(String(bookingId), { id: f.id, name: f.participant, email: f.email, personId: personId });
     }
   } finally {
     lock.releaseLock();

@@ -42,7 +42,8 @@ var BOOKING = {
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
     'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates',
-    'Either weekend day', 'Moved from', 'Move confirmed', 'Waiver key', 'Waivers signed']
+    'Either weekend day', 'Moved from', 'Move confirmed', 'Waiver key', 'Waivers signed', 'Booking ID', 'Person ID',
+    'Follow-up sent', 'Notes']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -498,7 +499,8 @@ function clearAvailabilityCache() {
   CacheService.getScriptCache().remove(AVAILABILITY_CACHE);
 }
 
-function bookingPost(p) {
+/** admin (optional, set only by Admin.gs) = the signed-in volunteer adding a phone-in booking. */
+function bookingPost(p, admin) {
   var b = {
     date: clean(p.date),
     start: clean(p.start),
@@ -541,7 +543,7 @@ function bookingPost(p) {
     if (why) return json({ ok: false, error: why, refresh: true });
     // Weekend spots are held only for paid flights until the club opens the day to the standby list
     // ("Discovery flights available" in the Status row); then anyone can book.
-    if (day.kind === 'weekend' && !prepaid && !day.open) {
+    if (day.kind === 'weekend' && !prepaid && !day.open && !admin) {
       return json({ ok: false, error: 'Weekend spots are for paid flights until the club opens the day to the standby list. Buy a flight to book now, or choose "pay at the field" to join the standby list.' });
     }
     var codeCheck = checkCodes(b.codes, b.people);
@@ -550,7 +552,7 @@ function bookingPost(p) {
     var partner = weekendPartner(b.date);
     var partnerDay = null;
     days.forEach(function (d) { if (d.date === partner) partnerDay = d; });
-    if (partnerDay && classifyStatus(partnerDay.statusText) !== 'cancelled' && !b.flexible) {
+    if (partnerDay && classifyStatus(partnerDay.statusText) !== 'cancelled' && !b.flexible && !admin) {
       return json({ ok: false, error: 'Please tell us whether the other day of that weekend would also work.' });
     }
     var kind = day.kind === 'weekend' ? 'Held' : 'Requested';
@@ -561,11 +563,14 @@ function bookingPost(p) {
     var text = scheduleText(kind, first, b.start, b.people, b.flexible === 'Yes' ? partner : null);
     var cell = writeToSchedule(sched, grid, days, b.date, text, true);
 
+    b.bookingId = newId('B');
+    var personId = upsertPerson(tab(CRM.PEOPLE, CRM.PEOPLE_HEADERS), b, 'Booking');
     bookingsSheet().appendRow([
       new Date(), b.date, "'" + b.start, b.people, day.kind, kind, b.name, b.email, b.phone,
       b.interest, b.payment, b.message, token, cell, text, '', day.statusText, b.codes.join(', '),
-      b.flexible, '', '', b.waiverKey, 0
+      b.flexible, '', '', b.waiverKey, 0, b.bookingId, personId, '', admin ? Utilities.formatDate(new Date(), BOOKING.TZ, 'MMM d') + ' ' + admin.split('@')[0] + ': added by phone' : ''
     ]);
+    addFlyers(b.bookingId, b.people, { personId: personId, name: b.name, email: b.email });
     markCodesBooked(codeCheck.rows, token, b.date);
     if (etransfer) {
       var payBy = payByMs(Date.now(), b.date, b.start);
@@ -631,15 +636,17 @@ function emailLinks(token, waiverKey) {
   };
 }
 
-function sendGuestEmail(to, mail) {
+/** meta (optional) = {bookingId, by}: noted in the Messages tab. */
+function sendGuestEmail(to, mail, meta) {
   MailApp.sendEmail({ to: to, replyTo: prop('CLUB_EMAIL'), name: EMAIL.CLUB, subject: mail.subject, body: mail.text, htmlBody: mail.html });
+  logMessage(to, mail.subject, meta && meta.bookingId, meta && meta.by);
 }
 
 function sendBookingEmails(b, r) {
   var held = r.kind === 'Held';
   var links = emailLinks(r.token, b.waiverKey);
   links.late = minutesUntil(b.date, b.start, todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES;
-  sendGuestEmail(b.email, confirmationEmail(b, held, links));
+  sendGuestEmail(b.email, confirmationEmail(b, held, links), { bookingId: b.bookingId });
   var when = whenText(b);
   MailApp.sendEmail({
     to: prop('CLUB_EMAIL'),
