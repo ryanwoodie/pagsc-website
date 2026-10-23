@@ -107,6 +107,9 @@ test('status-change emails', () => {
   assert.equal(statusChangeDue('', 'Delayed to 1pm', 0, 16), false);
   assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 10, 2), true);
   assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 10, 3), false); // daily cap
+  assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 22, 3), true);  // one late catch-up
+  assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 23, 4), false);
+  assert.equal(statusChangeDue('Delayed to 1pm', 'Delayed to 1pm', 3, 22, 3), false); // no change since
 });
 
 test('status emails are counted per day', () => {

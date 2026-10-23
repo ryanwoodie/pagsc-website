@@ -40,6 +40,7 @@ var BOOKING = {
   DAY_BEFORE_HOUR: 16,   // the day-before reminder goes out from this hour, after most status updates
   STATUS_DAYS: 7,        // status-change emails for bookings this many days out or fewer
   STATUS_PER_DAY: 3,     // at most this many status-change emails to one booking per day (the sheet is publicly editable)
+  STATUS_LATE_HOUR: 22,  // past the cap, one more from this hour if the status changed again
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
     'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates',
@@ -384,13 +385,15 @@ function reminderDue(lead, daysUntil, hour, sent) {
 
 /**
  * Should the guest hear about a status change? Only for real changes to a non-empty status, within a week,
- * and not more than STATUS_PER_DAY times a day. A change held back by the cap goes out the next day.
+ * and not more than STATUS_PER_DAY times a day, plus one catch-up from STATUS_LATE_HOUR if the status
+ * changed again after the cap.
  * @param sentToday status emails already sent to this booking today (see statusEmailsToday)
  */
 function statusChangeDue(lastStatus, currentStatus, daysUntil, hour, sentToday) {
   var cur = String(currentStatus || '').trim();
   if (!cur || cur === String(lastStatus || '').trim()) return false;
-  if ((sentToday || 0) >= BOOKING.STATUS_PER_DAY) return false;
+  var sent = sentToday || 0;
+  if (sent > BOOKING.STATUS_PER_DAY || (sent === BOOKING.STATUS_PER_DAY && hour < BOOKING.STATUS_LATE_HOUR)) return false;
   if (daysUntil < 0 || daysUntil > BOOKING.STATUS_DAYS) return false;
   if (daysUntil === 0 && hour >= 15) return false; // too late in the day to matter
   return true;
