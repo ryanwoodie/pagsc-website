@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs', 'Waivers.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
+const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, statusEmailsToday, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -105,6 +105,16 @@ test('status-change emails', () => {
   assert.equal(statusChangeDue('', 'Day is a go', 9, 10), false); // too far out
   assert.equal(statusChangeDue('', 'Delayed to 1pm', 0, 9), true);
   assert.equal(statusChangeDue('', 'Delayed to 1pm', 0, 16), false);
+  assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 10, 2), true);
+  assert.equal(statusChangeDue('Day is a go', 'Delayed to 1pm', 3, 10, 3), false); // daily cap
+});
+
+test('status emails are counted per day', () => {
+  assert.equal(statusEmailsToday('', '2026-10-24'), 0);
+  assert.equal(statusEmailsToday(undefined, '2026-10-24'), 0);
+  assert.equal(statusEmailsToday('2026-10-24:2', '2026-10-24'), 2);
+  assert.equal(statusEmailsToday('2026-10-23:3', '2026-10-24'), 0); // yesterday's count
+  assert.equal(statusEmailsToday('junk', '2026-10-24'), 0);
 });
 
 test('email text uses the site\'s time style and escapes names', () => {

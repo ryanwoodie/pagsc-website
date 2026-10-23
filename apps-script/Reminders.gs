@@ -37,6 +37,7 @@ function runReminders() {
     var flexCol = BOOKING.HEADERS.indexOf('Either weekend day'), movedCol = BOOKING.HEADERS.indexOf('Moved from');
     var waiverCol = BOOKING.HEADERS.indexOf('Waiver key');
     var followCol = BOOKING.HEADERS.indexOf('Follow-up sent');
+    var statusCountCol = BOOKING.HEADERS.indexOf('Status emails');
     var availByDate = null;
     for (var i = 1; i < rows.length; i++) {
       var r = rows[i];
@@ -76,9 +77,11 @@ function runReminders() {
         sh.getRange(i + 1, 17).setValue(day.statusText); // the reminder carried the latest status
         continue;
       }
-      if (statusChangeDue(r[16], day.statusText, daysUntil, hour)) {
+      var sentToday = statusEmailsToday(r[statusCountCol], today);
+      if (statusChangeDue(r[16], day.statusText, daysUntil, hour, sentToday)) {
         sendGuestEmail(b.email, statusEmail(b, held, day, links));
         sh.getRange(i + 1, 17).setValue(day.statusText);
+        sh.getRange(i + 1, statusCountCol + 1).setValue(today + ':' + (sentToday + 1));
       }
     }
     openStandby(today);

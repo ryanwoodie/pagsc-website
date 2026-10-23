@@ -83,6 +83,6 @@ test('volunteer messages are escaped and kept in paragraphs', () => {
 
 test('bookings carry the new columns at the end', () => {
   const h = [...ctx.__b.HEADERS];
-  assert.deepEqual(h.slice(-4), ['Booking ID', 'Person ID', 'Follow-up sent', 'Notes']);
+  assert.deepEqual(h.slice(-5), ['Booking ID', 'Person ID', 'Follow-up sent', 'Notes', 'Status emails']);
   assert.equal(h.indexOf('Token'), 12); // older code reads columns by position
 });

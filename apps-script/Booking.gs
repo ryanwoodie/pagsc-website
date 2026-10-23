@@ -39,11 +39,12 @@ var BOOKING = {
   REMIND_HOUR: 9,        // week and 3-day reminders go out from this hour (field time)
   DAY_BEFORE_HOUR: 16,   // the day-before reminder goes out from this hour, after most status updates
   STATUS_DAYS: 7,        // status-change emails for bookings this many days out or fewer
+  STATUS_PER_DAY: 3,     // at most this many status-change emails to one booking per day (the sheet is publicly editable)
   CAPS_TAB: 'Guest caps',
   HEADERS: ['Received', 'Date', 'Start', 'People', 'Kind', 'Status', 'Name', 'Email', 'Phone',
     'Interest', 'Payment', 'Message', 'Token', 'Schedule cell', 'Schedule text', 'Reminders sent', 'Last status', 'Certificates',
     'Either weekend day', 'Moved from', 'Move confirmed', 'Waiver key', 'Waivers signed', 'Booking ID', 'Person ID',
-    'Follow-up sent', 'Notes']
+    'Follow-up sent', 'Notes', 'Status emails']
 };
 
 // ---------- Pure logic (no Google services; tested in scripts/booking.test.mjs) ----------
@@ -381,13 +382,24 @@ function reminderDue(lead, daysUntil, hour, sent) {
   return '';
 }
 
-/** Should the guest hear about a status change? Only for real changes to a non-empty status, within a week. */
-function statusChangeDue(lastStatus, currentStatus, daysUntil, hour) {
+/**
+ * Should the guest hear about a status change? Only for real changes to a non-empty status, within a week,
+ * and not more than STATUS_PER_DAY times a day. A change held back by the cap goes out the next day.
+ * @param sentToday status emails already sent to this booking today (see statusEmailsToday)
+ */
+function statusChangeDue(lastStatus, currentStatus, daysUntil, hour, sentToday) {
   var cur = String(currentStatus || '').trim();
   if (!cur || cur === String(lastStatus || '').trim()) return false;
+  if ((sentToday || 0) >= BOOKING.STATUS_PER_DAY) return false;
   if (daysUntil < 0 || daysUntil > BOOKING.STATUS_DAYS) return false;
   if (daysUntil === 0 && hour >= 15) return false; // too late in the day to matter
   return true;
+}
+
+/** Status emails sent today, from the "Status emails" cell ("2026-10-24:2"); 0 if the count is from another day. */
+function statusEmailsToday(cell, today) {
+  var m = /^(\d{4}-\d{2}-\d{2}):(\d+)$/.exec(String(cell || '').trim());
+  return m && m[1] === today ? Number(m[2]) : 0;
 }
 
 // ---------- Google services ----------
