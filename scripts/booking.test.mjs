@@ -8,7 +8,7 @@ import { parse } from 'yaml';
 const ctx = {};
 vm.createContext(ctx);
 for (const f of ['Booking.gs', 'Emails.gs', 'Standby.gs', 'Waivers.gs']) vm.runInContext(readFileSync(new URL(`../apps-script/${f}`, import.meta.url), 'utf8'), ctx);
-const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, timeRange, reminderDue, statusChangeDue, statusEmailsToday, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
+const { standbyScheduleText, writeToSchedule, guestOpening, standbyNotifiedList, standbyOpenDay, standbyEmail, standbyOpenEmail, standbyAnyOpenDays, standbyAskToStay, standbyScope, standbyLink, weekendPartner, planWeekendMove, scheduleText, moveEmail, upcomingDays, manualEntry, slotTimes, scheduleDays, computeAvailability, canBook, earlyStarts, timeRange, reminderDue, statusChangeDue, statusEmailsToday, clock12, timeRange12, longDate, confirmationEmail, reminderEmail, statusEmail, minutesUntil } = ctx;
 
 // Synthetic schedule in the documented layout. No real names.
 const grid = [
@@ -75,6 +75,7 @@ test('club-facts.yaml booking settings match Booking.gs', () => {
   assert.equal(facts.minutes_per_person, B.STEP);
   assert.equal(facts.max_group, B.MAX_GROUP);
   assert.equal(facts.days_ahead, B.DAYS_AHEAD);
+  assert.equal(facts.early_window_minutes, B.EARLY_WINDOW);
 });
 
 test('reminder timing', () => {
@@ -217,8 +218,13 @@ test('flexible weekend: partner day, move planning and schedule note', () => {
   assert.equal(scheduleText('Held', 'Jane', '13:30', 2, '2026-10-11'), 'Jane 13:30 (2) web (or Sun)');
   assert.equal(scheduleText('Held', 'Jane', '13:30', 1, null), 'Jane 13:30 web');
 
-  const sat = { date: '2026-10-17', status: '', remaining: 12, slots: ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'].map((t) => ({ time: t, free: true })) };
-  const sun = { ...sat, date: '2026-10-18', slots: sat.slots.map((x) => ({ ...x, free: x.time !== '13:30' })) };
+  const all = ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+  // Mornings booked, so the earliest free time is 13:00 and 13:00 to 14:30 can be booked.
+  const sat = { date: '2026-10-17', status: '', remaining: 12, slots: all.map((t) => ({ time: t, free: t >= '13:00' })) };
+  const sun = { ...sat, date: '2026-10-18', slots: sat.slots.map((x) => ({ ...x, free: x.free && x.time !== '13:30' })) };
+  // An empty day: the move goes to the nearest time the day is filling, not later
+  const empty = { ...sat, slots: all.map((t) => ({ time: t, free: true })) };
+  assert.deepEqual({ ...planWeekendMove({ date: '2026-10-18', start: '15:00', people: 1 }, { '2026-10-17': empty }) }, { date: '2026-10-17', start: '12:30' });
   // Sunday cancelled, guest booked Sunday 13:30: moves to Saturday 13:30
   assert.deepEqual({ ...planWeekendMove({ date: '2026-10-18', start: '13:30', people: 1 }, { '2026-10-17': sat }) }, { date: '2026-10-17', start: '13:30' });
   // Saturday cancelled, Sunday 13:30 taken: nearest free time (13:00 before 14:00)
@@ -407,4 +413,26 @@ test('email links use the live web app address', () => {
   assert.ok(readFileSync(new URL('../src/config.ts', import.meta.url), 'utf8').includes(`'${url}'`));
   const id = url.split('/s/')[1].split('/')[0];
   assert.ok(readFileSync(new URL('../package.json', import.meta.url), 'utf8').includes(`clasp deploy -i ${id}`));
+});
+
+test('early starts: the day fills from the earliest free time', () => {
+  const all = ['11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
+  const day = (taken, remaining = 12) => ({ status: '', remaining, slots: all.map((t) => ({ time: t, free: !taken.includes(t) })) });
+  assert.deepEqual([...earlyStarts(day([]), 1)], ['11:00', '11:30', '12:00', '12:30']);
+  // 11:00 to 12:00 taken: the window moves on
+  assert.deepEqual([...earlyStarts(day(['11:00', '11:30', '12:00']), 1)], ['12:30', '13:00', '13:30', '14:00']);
+  // a cancellation at 11:00 pulls it back; later bookings stay where they are
+  assert.deepEqual([...earlyStarts(day(['11:30', '12:00', '12:30']), 1)], ['11:00']);
+  // a group of 3 starts where it fits inside the window
+  assert.deepEqual([...earlyStarts(day([]), 3)], ['11:00', '11:30', '12:00', '12:30']);
+  // a group that fits nowhere in the window gets the first start where it does
+  assert.deepEqual([...earlyStarts(day(['11:30']), 4)], ['12:00', '12:30']);
+  assert.deepEqual([...earlyStarts(day(['11:30', '12:30']), 4)], ['13:00']);
+  assert.deepEqual([...earlyStarts(day([], 1), 2)], []);
+  assert.deepEqual([...earlyStarts(null, 1)], []);
+});
+
+test('the calendar and the script share the early-start rule', () => {
+  const astro = readFileSync(new URL('../src/components/BookingCalendar.astro', import.meta.url), 'utf8');
+  assert.ok(astro.includes('function earlyStarts(') && astro.includes('cfg.earlyWindow') && astro.includes('bk.early_window_minutes'));
 });

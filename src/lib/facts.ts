@@ -84,6 +84,7 @@ const schema = z
       minutes_per_person: z.number().int().positive(),
       max_group: z.number().int().positive(),
       days_ahead: z.number().int().positive(),
+      early_window_minutes: z.number().int().positive(),
     }),
     waiver: z.strictObject({
       guardian_under: z.number().int().positive(),

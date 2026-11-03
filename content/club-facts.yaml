@@ -88,6 +88,7 @@ booking:   # the online calendar; keep in step with BOOKING in apps-script/Booki
   minutes_per_person: 30
   max_group: 4
   days_ahead: 28
+  early_window_minutes: 120   # guests pick from the earliest free times; later times open as those fill
 
 waiver:   # signed online at /waiver/; the wording is content/waiver.md. Keep in step with WAIVER in apps-script/Waivers.gs
   guardian_under: 18   # "Parent or guardian (required if the participant is under 18)"

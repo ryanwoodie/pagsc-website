@@ -33,6 +33,7 @@ var BOOKING = {
   WEEKEND_CAP: 8,        // guest flights per weekend, Saturday and Sunday combined
   MAX_GROUP: 4,          // people per booking
   DAYS_AHEAD: 28,
+  EARLY_WINDOW: 120,     // guests can start within this many minutes of the day's earliest free time; later times open as those fill
   SAME_DAY_LEAD: 60,     // on a day opened to the standby list, book the same day up to this many minutes before a start time
   TZ: 'America/Regina',
   TAB: 'Bookings',
@@ -331,13 +332,26 @@ function planWeekendMove(b, availByDate) {
   var a = partner && availByDate[partner];
   if (!a || a.status === 'cancelled') return null;
   var want = toMinutes(b.start);
-  var times = a.slots.map(function (s) { return s.time; }).sort(function (x, y) {
+  var times = earlyStarts(a, b.people).sort(function (x, y) {
     return Math.abs(toMinutes(x) - want) - Math.abs(toMinutes(y) - want) || toMinutes(x) - toMinutes(y);
   });
-  for (var i = 0; i < times.length; i++) {
-    if (canBook(a, times[i], b.people) === '') return { date: partner, start: times[i] };
-  }
-  return null;
+  return times.length ? { date: partner, start: times[0] } : null;
+}
+
+/**
+ * The start times a guest can pick, so the day fills from the earliest time: those within EARLY_WINDOW
+ * minutes of the earliest free slot where the group fits. If the group fits nowhere in that window,
+ * the first start where it does. [] if none. Volunteers on the admin page can use any free time.
+ * Keep in step with earlyStarts in src/components/BookingCalendar.astro.
+ */
+function earlyStarts(day, people) {
+  if (!day) return [];
+  var fits = day.slots.filter(function (s) { return canBook(day, s.time, people) === ''; }).map(function (s) { return s.time; });
+  if (!fits.length) return [];
+  var firstFree = null;
+  day.slots.forEach(function (s) { if (s.free && firstFree == null) firstFree = toMinutes(s.time); });
+  var near = fits.filter(function (t) { return toMinutes(t) < firstFree + BOOKING.EARLY_WINDOW; });
+  return near.length ? near : [fits[0]];
 }
 
 /** Can a group of `people` start at `start` on this availability day? */
@@ -557,6 +571,9 @@ function bookingPost(p, admin) {
     avail.forEach(function (d) { if (d.date === b.date) day = d; });
     var why = canBook(day, b.start, b.people);
     if (why) return json({ ok: false, error: why, refresh: true });
+    if (!admin && earlyStarts(day, b.people).indexOf(b.start) < 0) {
+      return json({ ok: false, error: 'That time opens once earlier times fill. Please pick an earlier time.', refresh: true });
+    }
     // Weekend spots are held only for paid flights until the club opens the day to the standby list
     // ("Discovery flights available" in the Status row); then anyone can book.
     if (day.kind === 'weekend' && !prepaid && !day.open && !admin) {

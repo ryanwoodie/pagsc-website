@@ -20,6 +20,7 @@ const config = {
   endpoint: FORM_ENDPOINT,
   maxGroup: bk.max_group,
   minutes: bk.minutes_per_person,
+  earlyWindow: bk.early_window_minutes,
   maxWeight: df.max_weight_lbs,
   guestPayment: facts.fees.guest_payment.toLowerCase(),
   email: facts.contact.email,
@@ -52,7 +53,7 @@ const config = {
   type Slot = { time: string; free: boolean };
   type Day = { date: string; kind: 'weekend' | 'weekday'; status: string; open?: boolean; confirmed?: boolean; statusText: string; remaining: number; slots: Slot[] };
   type Snapshot = { updated: string | null; days: Day[] };
-  type Config = { endpoint: string; maxGroup: number; minutes: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string; price: number; groupPrice: number; groupMin: number };
+  type Config = { endpoint: string; maxGroup: number; minutes: number; earlyWindow: number; maxWeight: number; guestPayment: string; email: string; phone: string; tel: string; paid: boolean; snapshot: Snapshot; buyUrl: string; price: number; groupPrice: number; groupMin: number };
   const CACHE_KEY = 'pagsc-availability';
   const MAX_AGE = 24 * 3600 * 1000;
   const fieldToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Regina' }).format(new Date());
@@ -94,6 +95,15 @@ const config = {
     const i = day.slots.findIndex((s) => s.time === start);
     if (i < 0 || i + people > day.slots.length) return false;
     return day.slots.slice(i, i + people).every((s) => s.free);
+  }
+
+  /** Start times on offer: the day fills from its earliest free time. Mirrors earlyStarts in apps-script/Booking.gs. */
+  function earlyStarts(day: Day, people: number, window: number): string[] {
+    const fits = day.slots.filter((s) => canBook(day, s.time, people)).map((s) => s.time);
+    const firstFree = day.slots.find((s) => s.free);
+    if (!fits.length || !firstFree) return [];
+    const near = fits.filter((t) => toMin(t) < toMin(firstFree.time) + window);
+    return near.length ? near : [fits[0]];
   }
 
   for (const root of document.querySelectorAll<HTMLElement>('.booking')) {
@@ -156,7 +166,7 @@ const config = {
         // Someone already filling in the form keeps it, unless their time is no longer free.
         const typing = !!app.querySelector('.bk-form');
         const day = days.find((d) => d.date === state.date);
-        const stillFree = !!day && !!state.start && canBook(day, state.start, state.people);
+        const stillFree = !!day && !!state.start && earlyStarts(day, state.people, cfg.earlyWindow).includes(state.start);
         show(days);
         if (!(typing && stillFree)) render();
       } catch {
@@ -218,15 +228,27 @@ const config = {
       if (isStandbyDay(day)) timeStep.append(el('p', { class: 'bk-weekday' }, 'Weekend spots are held for flights paid in advance. ',
         el('a', { href: cfg.buyUrl }, 'Buy a flight'), ' and book with the code on your certificate. Paying at the field? Join the standby list below: when the club confirms a flying day, we email you and any spots left are open to book.'));
       const times = el('div', { class: 'bk-times' });
+      const early = earlyStarts(day, state.people, cfg.earlyWindow);
+      let later = false;
       for (const s of day.slots) {
-        const ok = canBook(day, s.time, state.people);
+        const ok = early.includes(s.time);
+        // Free, but the day fills from the earliest time first.
+        const waits = !ok && canBook(day, s.time, state.people) && toMin(s.time) > toMin(early[0] ?? s.time);
+        if (waits) later = true;
         const end = fromMin(toMin(s.time) + state.people * cfg.minutes);
-        const b = el('button', { type: 'button', class: 'bk-time', 'aria-pressed': String(state.start === s.time), 'aria-label': `${clock(s.time)} to ${clock(end)}` }, clock(s.time));
+        const b = el('button', {
+          type: 'button',
+          class: `bk-time${waits ? ' bk-time--later' : ''}`,
+          'aria-pressed': String(state.start === s.time),
+          'aria-label': `${clock(s.time)} to ${clock(end)}${waits ? ', opens once earlier times fill' : ''}`,
+        }, clock(s.time));
         if (!ok) b.setAttribute('disabled', '');
         b.addEventListener('click', () => { state.start = s.time; render(); app.querySelector<HTMLInputElement>('#bk-name')?.focus(); });
         times.append(b);
       }
       timeStep.append(times);
+      if (later) timeStep.append(el('p', { class: 'bk-hint' }, 'The day fills from the earliest time. Dotted times open once earlier ones fill. Need a later time? Email ',
+        el('a', { href: `mailto:${cfg.email}` }, cfg.email), '.'));
       app.append(timeStep);
 
       if (!state.start) return;
@@ -509,6 +531,14 @@ const config = {
     opacity: 0.4;
     cursor: not-allowed;
     text-decoration: line-through;
+  }
+  /* Free, but opens once earlier times fill: not crossed out */
+  .booking :global(button.bk-time--later:disabled) {
+    opacity: 1;
+    border-style: dotted;
+    border-color: var(--grey);
+    color: var(--grey);
+    text-decoration: none;
   }
   .booking :global(button.bk-day:disabled .bk-day__note) {
     text-decoration: none;
