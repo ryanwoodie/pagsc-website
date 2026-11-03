@@ -46,7 +46,9 @@ function runReminders() {
         waiversSigned: Number(r[waiverCol + 1]) || 0 };
       var daysUntil = daysBetween(today, b.date);
       var day = byDate[b.date] || { statusText: '', weather: '', instructor: false };
-      if (thankYouDue(String(r[5]), daysUntil, hour, classifyStatus(day.statusText), r[followCol])) {
+      // Past days drop off the Flying Schedule; then the last status the guest was sent stands in for the day's.
+      var dayStatus = classifyStatus(byDate[b.date] ? day.statusText : r[16]);
+      if (thankYouDue(String(r[5]), daysUntil, hour, dayStatus, r[followCol])) {
         sendThankYou(sh, i, r, b);
         continue;
       }

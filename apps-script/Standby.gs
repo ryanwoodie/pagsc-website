@@ -100,7 +100,7 @@ function standbyLink(site, date, codes) {
 /** Email links plus the link to leave the standby list for one sign-up. */
 function standbyLinks(token) {
   var links = emailLinks('');
-  links.off = ScriptApp.getService().getUrl() + '?action=standby-off&token=' + encodeURIComponent(token);
+  links.off = WEB_APP_URL + '?action=standby-off&token=' + encodeURIComponent(token);
   return links;
 }
 

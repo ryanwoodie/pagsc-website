@@ -216,7 +216,7 @@ function reminderEmail(b, held, which, day, links) {
     whenPanel(b, held ? 'Your flight time' : 'Your weekday request') +
     fieldPanel(day) +
     (status === 'cancelled'
-      ? para('The club has posted that flying is off. Cancel this time and pick another day; it only takes a minute.') + button('Cancel and rebook', links.cancel)
+      ? para('The club has posted that flying is off. Pick another day; it only takes a minute.') + button('Rebook', links.rebook || links.cancel)
       : nothingYet
         ? para('Nothing has been posted for the day yet, which is normal' + (which === '1' ? '' : ' this far out') + '. Flying depends on the weather and volunteers, so your time is still pencilled in rather than guaranteed. We will email you as soon as the club posts an update.')
         : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.')) +
@@ -233,7 +233,7 @@ function reminderEmail(b, held, which, day, links) {
       'Status: ' + (day.statusText || 'No update posted yet.'),
       'Forecast: ' + (day.weather || 'Not posted yet.'),
       'Instructors: ' + (day.instructor ? 'An instructor has signed up.' : 'None signed up yet.'), '',
-      status === 'cancelled' ? 'Flying is off that day. Cancel this time and pick another day: ' + links.cancel : 'Flying depends on the weather and volunteers, so things can still change. We will email you if they do.',
+      status === 'cancelled' ? 'Flying is off that day. Pick another day: ' + (links.rebook || links.cancel) : 'Flying depends on the weather and volunteers, so things can still change. We will email you if they do.',
       status === 'cancelled' ? '' : waiverText(b, links),
       which === '1' && status !== 'cancelled' ? '\nArriving: follow the gravel road in, then turn right to park. Map: ' + links.site + ARRIVAL.MAP + ' Entrance: ' + ARRIVAL.ENTRANCE : '',
       '', status === 'cancelled' ? '' : changeText(links), '', EMAIL.CLUB
@@ -251,13 +251,13 @@ function statusEmail(b, held, day, links) {
     whenPanel(b, held ? 'Your flight time' : 'Your weekday request') +
     fieldPanel(day) +
     (status === 'cancelled'
-      ? para('Cancel this time and pick another day; it only takes a minute. If the club posts that flying is back on, we will email you again.') + button('Cancel and rebook', links.cancel)
+      ? para('Pick another day; it only takes a minute. If you would rather wait, we will email you if the club posts that flying is back on.') + button('Rebook', links.rebook || links.cancel)
       : para('Flying depends on the weather and volunteers, so things can still change. We will email you if they do.') + changeHtml(links));
   return {
     subject: title + ': ' + longDate(b.date),
     html: layout(title + ': ' + day.statusText, body, links),
     text: ['Hi ' + first + ',', '', 'Update for ' + whenText(b) + ':', '"' + day.statusText + '"', '',
-      status === 'cancelled' ? 'Cancel this time and pick another day: ' + links.cancel : 'Things can still change; we will email you if they do.',
+      status === 'cancelled' ? 'Pick another day: ' + (links.rebook || links.cancel) + '\nIf you would rather wait, we will email you if the club posts that flying is back on.' : 'Things can still change; we will email you if they do.',
       '', status === 'cancelled' ? '' : changeText(links), '', EMAIL.CLUB].join('\n')
   };
 }

@@ -135,7 +135,9 @@ test('email text uses the site\'s time style and escapes names', () => {
   assert.ok(!/arrive when we tell you/i.test(c.html + c.text));
   const r = reminderEmail(b, true, '1', { statusText: 'Cancelled: wind', weather: '', instructor: false }, links);
   assert.match(r.subject, /^Flying is off/);
-  assert.ok(r.html.includes('Cancel and rebook'));
+  assert.ok(r.html.includes('>Rebook<') && !r.html.includes('Cancel and rebook'));
+  const off = statusEmail(b, true, { statusText: 'Cancelled: wind', weather: '', instructor: false }, { ...links, rebook: 'https://example.com/c?t=1&rebook=1' });
+  assert.ok(off.html.includes('>Rebook<') && off.html.includes('rebook=1') && off.text.includes('rebook=1'));
   assert.match(statusEmail(b, true, { statusText: 'Day is a go', weather: 'Sunny', instructor: true }, links).subject, /^Flying is on/);
 
   // Arrival map in the confirmation and the day-before reminder, linked to the full-size image.
@@ -397,4 +399,12 @@ test('a confirmed weekend day books guests in rather than pencilling them in', (
   assert.match(booked.subject, /^You're booked in: /);
   assert.ok(!/pencil/i.test(booked.html + booked.text));
   assert.match(confirmationEmail(b, true, links).subject, /^You're pencilled in: /);
+});
+
+test('email links use the live web app address', () => {
+  const url = vm.runInContext('WEB_APP_URL', ctx);
+  assert.match(url, /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/);
+  assert.ok(readFileSync(new URL('../src/config.ts', import.meta.url), 'utf8').includes(`'${url}'`));
+  const id = url.split('/s/')[1].split('/')[0];
+  assert.ok(readFileSync(new URL('../package.json', import.meta.url), 'utf8').includes(`clasp deploy -i ${id}`));
 });

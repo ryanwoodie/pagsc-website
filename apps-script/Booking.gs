@@ -411,7 +411,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'availability') return json(availabilityResponse());
   if (p.action === 'days') return json(daysResponse());
-  if (p.action === 'cancel') return cancelBooking(p.token);
+  if (p.action === 'cancel') return cancelBooking(p.token, p.rebook === '1');
   if (p.action === 'confirm') return confirmMove(p.token);
   if (p.action === 'voucher') return json(voucherResponse(p.session_id));
   if (p.action === 'standby-off') return standbyOff(p.token);
@@ -637,12 +637,20 @@ function siteOrigin() {
   return ((PropertiesService.getScriptProperties().getProperty('SITE_ORIGINS') || 'https://www.pagsc.ca').split(',')[0]).trim();
 }
 
+/**
+ * The live web app (the deployment in package.json's script:deploy, and FORM_ENDPOINT in src/config.ts).
+ * Not ScriptApp.getService().getUrl(): from a timed trigger that gives the editor-only /dev address.
+ */
+var WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyKwvFK2BaFayMuv8GwQkr3f8JUTUv3GzGJbgGw6CsN4OjaUrSnPtYXeVE43X0cc-cCTA/exec';
+
 /** Links used in every guest email. waiverKey (optional) links the booking's waiver page. */
 function emailLinks(token, waiverKey) {
   var site = siteOrigin();
+  var cancel = WEB_APP_URL + '?action=cancel&token=' + encodeURIComponent(token);
   return {
-    cancel: ScriptApp.getService().getUrl() + '?action=cancel&token=' + encodeURIComponent(token),
-    confirm: ScriptApp.getService().getUrl() + '?action=confirm&token=' + encodeURIComponent(token),
+    cancel: cancel,
+    rebook: cancel + '&rebook=1', // for a day the club has called off
+    confirm: WEB_APP_URL + '?action=confirm&token=' + encodeURIComponent(token),
     calendar: site + '/discovery-flight/#request',
     // Off until the site serves /waiver/: set Script Property WAIVER_LINKS to "on".
     waiver: PropertiesService.getScriptProperties().getProperty('WAIVER_LINKS') === 'on' ? site + '/waiver/' + (waiverKey ? '?b=' + encodeURIComponent(waiverKey) : '') : '',
@@ -780,7 +788,8 @@ function cancelBookingRow(sh, rows, i) {
   }
 }
 
-function cancelBooking(token) {
+/** rebook: the guest came from a "Rebook" button (their day was called off). */
+function cancelBooking(token, rebook) {
   token = String(token || '');
   var calendar = siteOrigin() + '/discovery-flight/#request';
   var page = function (title, message, showCalendar) {
@@ -795,20 +804,22 @@ function cancelBooking(token) {
     // Within 24 hours the volunteers are already planning around the guest: they call instead, unless the
     // club has called the day off or moved them (then rebooking online is the point).
     var date = isoOf(rows[i][1]);
-    if (minutesUntil(date, hhmmOf(rows[i][2]), todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES && !rows[i][BOOKING.HEADERS.indexOf('Moved from')]) {
-      var dayOff = scheduleDays(scheduleSheet().getDataRange().getDisplayValues()).some(function (d) {
-        return d.date === date && classifyStatus(d.statusText) === 'cancelled';
-      });
-      if (!dayOff) {
-        return page('Less than 24 hours to go', 'Your flight is less than 24 hours away, so it can no longer be changed online. Our volunteers are already planning the day around you. If you can\'t make it, please call us at ' + emailLinks('').phone + ' or reply to your confirmation email.', false);
-      }
+    var dayOff = scheduleDays(scheduleSheet().getDataRange().getDisplayValues()).some(function (d) {
+      return d.date === date && classifyStatus(d.statusText) === 'cancelled';
+    });
+    if (minutesUntil(date, hhmmOf(rows[i][2]), todayOnField(), nowOnField()) < SELF_CANCEL_MINUTES && !rows[i][BOOKING.HEADERS.indexOf('Moved from')] && !dayOff) {
+      return page('Less than 24 hours to go', 'Your flight is less than 24 hours away, so it can no longer be changed online. Our volunteers are already planning the day around you. If you can\'t make it, please call us at ' + emailLinks('').phone + ' or reply to your confirmation email.', false);
     }
     cancelBookingRow(sh, rows, i);
     MailApp.sendEmail({
       to: prop('CLUB_EMAIL'),
-      subject: 'Guest cancelled: ' + rows[i][6] + ', ' + longDate(isoOf(rows[i][1])) + ' at ' + clock12(hhmmOf(rows[i][2])),
-      body: rows[i][6] + ' cancelled their website booking. The slot is free again.'
+      subject: (dayOff ? 'Guest rebooking: ' : 'Guest cancelled: ') + rows[i][6] + ', ' + longDate(date) + ' at ' + clock12(hhmmOf(rows[i][2])),
+      body: rows[i][6] + (dayOff ? ' is rebooking because the day was called off.' : ' cancelled their website booking.') + ' The slot is free again.'
     });
+    if (dayOff || rebook) {
+      var codes = String(rows[i][BOOKING.HEADERS.indexOf('Certificates')] || '').trim();
+      return page('Pick a new day', 'Your ' + longDate(date) + ' time is cleared.' + (codes ? ' Your certificate codes work again: enter them when you book.' : ''), true);
+    }
     return page('Your booking is cancelled', 'The spot is free for someone else. Pick another day whenever it suits you.', true);
   }
   return page('Booking not found', 'We could not find that booking.', true);
